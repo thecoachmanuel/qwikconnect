@@ -8,6 +8,14 @@ export async function getAttachmentUrlById(
 ): Promise<string> {
   if (!id) return '/assets/frontend/img/no-image.png';
 
+  if (typeof id === 'string' && (id.startsWith('/') || id.startsWith('http') || id.startsWith('data:'))) {
+    return id;
+  }
+
+  if (!process.env.DATABASE_URL) {
+    return '/assets/frontend/img/no-image.png';
+  }
+
   try {
     const numId = typeof id === 'bigint' ? id : BigInt(id);
     const media = await prisma.mediaUpload.findUnique({
@@ -28,6 +36,10 @@ export async function getAttachmentAltById(
   id: string | number | bigint | null | undefined
 ): Promise<string> {
   if (!id) return 'Image';
+
+  if (!process.env.DATABASE_URL) {
+    return 'Image';
+  }
 
   try {
     const numId = typeof id === 'bigint' ? id : BigInt(id);

@@ -19,13 +19,15 @@ export async function POST(
     const { status } = body;
 
     if (typeof status === 'number') {
-      try {
-        await prisma.order.update({
-          where: { id: BigInt(orderId) },
-          data: { status, updated_at: new Date() },
-        });
-      } catch (e) {
-        // Fallback to MongoDB store
+      if (process.env.DATABASE_URL) {
+        try {
+          await prisma.order.update({
+            where: { id: BigInt(orderId) },
+            data: { status, updated_at: new Date() },
+          });
+        } catch (e) {
+          // Fallback to MongoDB store
+        }
       }
       await updateOrderStatus(orderId, status);
     }

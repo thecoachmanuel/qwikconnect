@@ -72,33 +72,35 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             }
           } catch (e) {}
 
-          try {
-            const admin = await prisma.admin.findFirst({
-              where: {
-                OR: [
-                  { username: credentials.username as string },
-                  { email: credentials.username as string },
-                ],
-              },
-            });
+          if (process.env.DATABASE_URL) {
+            try {
+              const admin = await prisma.admin.findFirst({
+                where: {
+                  OR: [
+                    { username: credentials.username as string },
+                    { email: credentials.username as string },
+                  ],
+                },
+              });
 
-            if (admin && admin.password) {
-              const normalizedHash = admin.password.replace(/^\$2y\$/, '$2a$');
-              const isValid = await bcrypt.compare(password, normalizedHash);
-              if (isValid) {
-                return {
-                  id: String(admin.id),
-                  name: admin.name || admin.username,
-                  email: admin.email,
-                  image: admin.image || null,
-                  user_type: 0,
-                  role: admin.role,
-                  guard: 'admin',
-                };
+              if (admin && admin.password) {
+                const normalizedHash = admin.password.replace(/^\$2y\$/, '$2a$');
+                const isValid = await bcrypt.compare(password, normalizedHash);
+                if (isValid) {
+                  return {
+                    id: String(admin.id),
+                    name: admin.name || admin.username,
+                    email: admin.email,
+                    image: admin.image || null,
+                    user_type: 0,
+                    role: admin.role,
+                    guard: 'admin',
+                  };
+                }
               }
+            } catch (dbErr) {
+              console.warn('Prisma admin query failed:', dbErr);
             }
-          } catch (dbErr) {
-            console.warn('Prisma admin query failed:', dbErr);
           }
 
           return null;

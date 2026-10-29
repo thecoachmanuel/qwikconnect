@@ -100,24 +100,26 @@ export async function POST(request: Request) {
       }
     } catch (e) {}
 
-    // Also attempt Prisma
-    try {
-      await prisma.service.create({
-        data: {
-          title: data.title,
-          slug: finalSlug,
-          category_id: BigInt(data.category_id),
-          seller_id: BigInt(sellerId),
-          description: data.description,
-          price: data.price,
-          delivery_days: BigInt(data.delivery_days),
-          image: data.image || '/assets/uploads/media-uploader/banner11638279446.png',
-          status: 1,
-          is_service_on: 1,
-        },
-      });
-    } catch (dbErr) {
-      console.warn('Prisma service create fallback:', dbErr);
+    // Also attempt Prisma if configured
+    if (process.env.DATABASE_URL) {
+      try {
+        await prisma.service.create({
+          data: {
+            title: data.title,
+            slug: finalSlug,
+            category_id: BigInt(data.category_id),
+            seller_id: BigInt(sellerId),
+            description: data.description,
+            price: data.price,
+            delivery_days: BigInt(data.delivery_days),
+            image: data.image || '/assets/uploads/media-uploader/banner11638279446.png',
+            status: 1,
+            is_service_on: 1,
+          },
+        });
+      } catch (dbErr) {
+        console.warn('Prisma service create fallback:', dbErr);
+      }
     }
 
     return NextResponse.json({
