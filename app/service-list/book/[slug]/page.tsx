@@ -256,6 +256,11 @@ function BookingContent({ params }: BookingPageProps) {
             }),
           });
           const payData = await payRes.json();
+          if (!payRes.ok) {
+            setErrorMessage(payData.message || 'Payment initiation failed. Please check your payment details or choose another payment method.');
+            setIsLoading(false);
+            return;
+          }
           if (payData.redirectUrl) {
             window.location.href = payData.redirectUrl;
             return;

@@ -8,7 +8,9 @@ import FrontendLayout from '@/components/layout/FrontendLayout';
 function OrderSuccessContent() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get('order_id') || '1';
-  const invoice = searchParams.get('invoice') || 'INV-0001';
+  const invoice = searchParams.get('invoice') || `INV-${orderId}`;
+  const isPaid = searchParams.get('demo_paid') === '1' || !!searchParams.get('reference');
+  const gateway = searchParams.get('gateway') || '';
 
   return (
     <FrontendLayout>
@@ -44,10 +46,12 @@ function OrderSuccessContent() {
             </div>
 
             <h2 style={{ fontSize: '28px', fontWeight: 700, color: '#1e293b', marginBottom: '10px' }}>
-              Order Placed Successfully!
+              {isPaid ? 'Payment Confirmed & Order Placed!' : 'Order Placed Successfully!'}
             </h2>
             <p style={{ color: '#64748b', fontSize: '15px', lineHeight: '1.6', marginBottom: '25px' }}>
-              Thank you for booking with QwikConnect. Your service request has been transmitted to the provider.
+              {isPaid
+                ? 'Your payment was successfully received. The service provider has been notified and will contact you promptly.'
+                : 'Thank you for booking with QwikConnect. Your service request has been transmitted to the provider.'}
             </p>
 
             <div
@@ -70,8 +74,14 @@ function OrderSuccessContent() {
                 <strong style={{ color: '#1e293b' }}>{invoice}</strong>
               </div>
               <div style={{ borderLeft: '1px solid #cbd5e1', paddingLeft: '20px' }}>
-                <span style={{ color: '#64748b', display: 'block', fontSize: '12px' }}>Status</span>
-                <span style={{ color: '#eab308', fontWeight: 600 }}>Pending Confirmation</span>
+                <span style={{ color: '#64748b', display: 'block', fontSize: '12px' }}>Payment Status</span>
+                {isPaid ? (
+                  <span style={{ color: '#16a34a', fontWeight: 600 }}>
+                    <i className="las la-check-circle"></i> Paid & Verified
+                  </span>
+                ) : (
+                  <span style={{ color: '#eab308', fontWeight: 600 }}>Cash on Delivery / Pending</span>
+                )}
               </div>
             </div>
 

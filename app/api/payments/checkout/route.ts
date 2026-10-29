@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
       getPlatformSettings(),
     ]);
 
-    const order = (allOrders as any[]).find((o: any) => Number(o.id) === Number(orderId));
+    const order = (allOrders as any[]).find((o: any) => Number(o.id) === Number(orderId) || String(o.id) === String(orderId));
 
     if (!order) {
       return NextResponse.json({ message: 'Order not found' }, { status: 404 });
@@ -31,8 +31,9 @@ export async function POST(request: NextRequest) {
     const allServices = await getServices();
     const service = (allServices as any[]).find((s: any) => Number(s.id) === Number(order.service_id));
 
-    const origin = request.headers.get('origin') || 'http://localhost:3000';
-    const successUrl = `${origin}/order-success?order_id=${order.id}`;
+    const origin = request.headers.get('origin') || process.env.NEXTAUTH_URL || 'http://localhost:3000';
+    const invoiceNum = order.invoice || `INV-${order.id}`;
+    const successUrl = `${origin}/order-success?order_id=${order.id}&invoice=${encodeURIComponent(invoiceNum)}`;
     const cancelUrl = `${origin}/service-list`;
 
     const selectedGateway = (gateway || order.payment_gateway || 'cash_on_delivery').toLowerCase();

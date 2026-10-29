@@ -19,7 +19,12 @@ export async function initializeFlutterwave(options: PaymentIntentOptions): Prom
     if (err.message?.includes('disabled')) throw err;
   }
 
-  const isDemoKey = !secretKey || secretKey.includes('placeholder') || secretKey.startsWith('demo');
+  const isDemoKey =
+    !secretKey ||
+    secretKey.includes('placeholder') ||
+    secretKey.includes('your_') ||
+    secretKey.includes('test_your') ||
+    secretKey.startsWith('demo');
 
   if (isDemoKey) {
     return {

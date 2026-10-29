@@ -57,11 +57,11 @@ export async function POST(request: Request) {
       seller_image: sellerUser?.image || null,
       seller: sellerUser
         ? {
-            id: sellerUser.id,
-            name: sellerUser.name,
-            username: sellerUser.username,
-            image: sellerUser.image || null,
-          }
+          id: sellerUser.id,
+          name: sellerUser.name,
+          username: sellerUser.username,
+          image: sellerUser.image || null,
+        }
         : null,
       description: data.description,
       price: data.price,
@@ -86,7 +86,7 @@ export async function POST(request: Request) {
     if (db) {
       try {
         await db.collection('services').insertOne(newServiceObj);
-      } catch (e) {}
+      } catch (e) { }
     }
 
     // Save to local backup store
@@ -98,7 +98,7 @@ export async function POST(request: Request) {
         parsed.services.unshift(newServiceObj);
         fs.writeFileSync(dataFile, JSON.stringify(parsed, null, 2), 'utf-8');
       }
-    } catch (e) {}
+    } catch (e) { }
 
     // Also attempt Prisma if configured
     if (process.env.DATABASE_URL) {

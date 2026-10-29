@@ -19,7 +19,13 @@ export async function initializePaystack(options: PaymentIntentOptions): Promise
     if (err.message?.includes('disabled')) throw err;
   }
 
-  const isDemoKey = !secretKey || secretKey.includes('placeholder') || secretKey.includes('test_2a458001d806c878aba51955b962b3c8ed78f04b') || secretKey.startsWith('demo');
+  const isDemoKey =
+    !secretKey ||
+    secretKey.includes('placeholder') ||
+    secretKey.includes('your_') ||
+    secretKey.includes('test_your') ||
+    secretKey.includes('test_2a458001d806c878aba51955b962b3c8ed78f04b') ||
+    secretKey.startsWith('demo');
 
   if (isDemoKey) {
     return {

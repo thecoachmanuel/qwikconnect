@@ -1,9 +1,15 @@
 import { MongoClient, Db } from 'mongodb';
 import fs from 'fs';
 import path from 'path';
-import seedBlogs from '@/scripts/extracted_blogs.json';
+let seedBlogs: any[] = [];
+try {
+  const blogsPath = path.join(process.cwd(), 'scripts', 'extracted_blogs.json');
+  if (fs.existsSync(blogsPath)) {
+    seedBlogs = JSON.parse(fs.readFileSync(blogsPath, 'utf-8'));
+  }
+} catch (e) {}
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/qixer';
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://qwikconnect:yza5POzBBpnnLeS2@cluster0.8r3acxq.mongodb.net/';
 const DB_NAME = 'qixer';
 
 let cachedClient: MongoClient | null = null;
@@ -145,6 +151,7 @@ const SEED_DATA = {
       name: 'Super Admin',
       email: 'admin@qixer.com',
       username: 'super_admin',
+      password: '$2b$10$C6llWhobKHh2n3bYqr3vV.fAIryE3/Jiwr8tA0ju0ssVzeoS4IPjm',
       phone: '+234 801 234 5678',
       user_type: 0,
       role: 'admin',
@@ -157,6 +164,7 @@ const SEED_DATA = {
       name: 'Chioma Adebayo',
       email: 'chioma.adebayo@qwikconnect.ng',
       username: 'chioma_adebayo',
+      password: '$2b$10$C6llWhobKHh2n3bYqr3vV.fAIryE3/Jiwr8tA0ju0ssVzeoS4IPjm',
       phone: '+234 802 345 6789',
       user_type: 0, // Seller
       role: 'seller',
@@ -180,6 +188,7 @@ const SEED_DATA = {
       name: 'Babajide Olatunji',
       email: 'babajide.olatunji@qwikconnect.ng',
       username: 'babajide_olatunji',
+      password: '$2b$10$C6llWhobKHh2n3bYqr3vV.fAIryE3/Jiwr8tA0ju0ssVzeoS4IPjm',
       phone: '+234 803 456 7890',
       user_type: 0, // Seller
       role: 'seller',
@@ -203,6 +212,7 @@ const SEED_DATA = {
       name: 'Emma Watson',
       email: 'emma.w@example.com',
       username: 'emmaw',
+      password: '$2b$10$C6llWhobKHh2n3bYqr3vV.fAIryE3/Jiwr8tA0ju0ssVzeoS4IPjm',
       phone: '+234 804 567 8901',
       user_type: 1, // Buyer
       role: 'buyer',
@@ -215,6 +225,7 @@ const SEED_DATA = {
       name: 'Michael Chen',
       email: 'mchen@example.com',
       username: 'mchen',
+      password: '$2b$10$C6llWhobKHh2n3bYqr3vV.fAIryE3/Jiwr8tA0ju0ssVzeoS4IPjm',
       phone: '+234 805 678 9012',
       user_type: 1, // Buyer
       role: 'buyer',
@@ -227,6 +238,7 @@ const SEED_DATA = {
       name: 'Ngozi Dike',
       email: 'ngozi.dike@qwikconnect.ng',
       username: 'ngozi_dike',
+      password: '$2b$10$C6llWhobKHh2n3bYqr3vV.fAIryE3/Jiwr8tA0ju0ssVzeoS4IPjm',
       phone: '+234 806 789 0123',
       user_type: 0, // Seller
       role: 'seller',
@@ -1030,16 +1042,20 @@ function writeDataFile(data: any) {
 }
 
 // Connect to MongoDB
+let mongoClientPromise: Promise<MongoClient> | null = null;
+
 export async function getMongoDb(): Promise<Db | null> {
   if (cachedDb) return cachedDb;
 
   try {
     if (!cachedClient) {
-      cachedClient = new MongoClient(MONGODB_URI, {
-        serverSelectionTimeoutMS: 2000,
-        connectTimeoutMS: 2000,
-      });
-      await cachedClient.connect();
+      if (!mongoClientPromise) {
+        mongoClientPromise = MongoClient.connect(MONGODB_URI, {
+          serverSelectionTimeoutMS: 10000,
+          connectTimeoutMS: 10000,
+        });
+      }
+      cachedClient = await mongoClientPromise;
     }
     cachedDb = cachedClient.db(DB_NAME);
 
@@ -1047,21 +1063,52 @@ export async function getMongoDb(): Promise<Db | null> {
     const collections = await cachedDb.listCollections().toArray();
     const colNames = collections.map((c) => c.name);
 
-    if (!colNames.includes('categories')) {
+    if (!colNames.includes('categories') || (await cachedDb.collection('categories').countDocuments()) === 0) {
       await cachedDb.collection('categories').insertMany(SEED_DATA.categories);
+    }
+    if (!colNames.includes('services') || (await cachedDb.collection('services').countDocuments()) === 0) {
       await cachedDb.collection('services').insertMany(SEED_DATA.services);
+    }
+    if (!colNames.includes('users') || (await cachedDb.collection('users').countDocuments()) === 0) {
       await cachedDb.collection('users').insertMany(SEED_DATA.users);
+    }
+    if (!colNames.includes('orders') || (await cachedDb.collection('orders').countDocuments()) === 0) {
       await cachedDb.collection('orders').insertMany(SEED_DATA.orders);
+    }
+    if (!colNames.includes('payouts') || (await cachedDb.collection('payouts').countDocuments()) === 0) {
       await cachedDb.collection('payouts').insertMany(SEED_DATA.payouts);
+    }
+    if (!colNames.includes('coupons') || (await cachedDb.collection('coupons').countDocuments()) === 0) {
       await cachedDb.collection('coupons').insertMany(SEED_DATA.coupons);
+    }
+    if (!colNames.includes('reviews') || (await cachedDb.collection('reviews').countDocuments()) === 0) {
       await cachedDb.collection('reviews').insertMany(SEED_DATA.reviews);
+    }
+    if (!colNames.includes('tickets') || (await cachedDb.collection('tickets').countDocuments()) === 0) {
       await cachedDb.collection('tickets').insertMany(SEED_DATA.tickets);
+    }
+    if (!colNames.includes('reports') || (await cachedDb.collection('reports').countDocuments()) === 0) {
       await cachedDb.collection('reports').insertMany(SEED_DATA.reports);
+    }
+    if (!colNames.includes('messages') || (await cachedDb.collection('messages').countDocuments()) === 0) {
       await cachedDb.collection('messages').insertMany(SEED_DATA.messages);
+    }
+    if (!colNames.includes('settings') || (await cachedDb.collection('settings').countDocuments({ type: 'payment_gateways' })) === 0) {
+      await cachedDb.collection('settings').insertOne({
+        type: 'payment_gateways',
+        data: DEFAULT_PAYMENT_GATEWAYS,
+        updated_at: new Date().toISOString(),
+      });
+    }
+    if (!colNames.includes('blogs') || (await cachedDb.collection('blogs').countDocuments()) === 0) {
+      if (Array.isArray(seedBlogs) && seedBlogs.length > 0) {
+        await cachedDb.collection('blogs').insertMany(seedBlogs);
+      }
     }
 
     return cachedDb;
   } catch (err) {
+    console.warn('MongoDB connection failed, using local file store:', err);
     // Graceful fallback to persistent JSON file store
     return null;
   }
@@ -1461,7 +1508,9 @@ export async function getUserByEmailOrUsername(identifier: string): Promise<Mong
         $or: [
           { email: clean },
           { username: clean },
+          { username: targetUsername },
           { username: { $regex: new RegExp(`^${clean}$`, 'i') } },
+          { username: { $regex: new RegExp(`^${targetUsername}$`, 'i') } },
           { email: { $regex: new RegExp(`^${clean}$`, 'i') } },
         ],
       });
@@ -1635,6 +1684,44 @@ export async function getOrders(filter: { seller_id?: number; buyer_id?: number 
   }));
 }
 
+export async function getOrderById(id: number | string) {
+  const numId = Number(id);
+  const db = await getMongoDb();
+  if (db) {
+    try {
+      const order = await db.collection('orders').findOne({
+        $or: [{ id: numId }, { id: String(id) }],
+      });
+      if (order) {
+        const { _id, ...rest } = order;
+        const users = await getUsers();
+        const services = await getServices();
+        const userMap = new Map(users.map((u) => [u.id, u]));
+        const serviceMap = new Map((services as any[]).map((s) => [s.id, s]));
+        return {
+          ...rest,
+          seller: userMap.get(rest.seller_id),
+          buyer: userMap.get(rest.buyer_id),
+          service: serviceMap.get(rest.service_id),
+        };
+      }
+    } catch (e) {}
+  }
+
+  const data = readDataFile();
+  const order = data.orders.find((o: any) => Number(o.id) === numId || String(o.id) === String(id));
+  if (!order) return null;
+
+  const userMap = new Map(data.users.map((u) => [u.id, u]));
+  const serviceMap = new Map(data.services.map((s) => [s.id, s]));
+  return {
+    ...order,
+    seller: userMap.get(order.seller_id),
+    buyer: userMap.get(order.buyer_id),
+    service: serviceMap.get(order.service_id),
+  };
+}
+
 export async function createOrder(order: any) {
   const newOrder = {
     id: Date.now(),
@@ -1658,21 +1745,25 @@ export async function createOrder(order: any) {
   return newOrder;
 }
 
-export async function updateOrderStatus(id: number, status?: number, extraFields: any = {}) {
+export async function updateOrderStatus(id: number | string, status?: number, extraFields: any = {}) {
+  const numId = Number(id);
   const updateObj: any = { updated_at: new Date().toISOString(), ...extraFields };
   if (status !== undefined) updateObj.status = status;
 
   const db = await getMongoDb();
   if (db) {
     try {
-      await db.collection('orders').updateOne({ id }, { $set: updateObj });
+      await db.collection('orders').updateOne(
+        { $or: [{ id: numId }, { id: String(id) }] },
+        { $set: updateObj }
+      );
     } catch (e) {}
   }
 
   const data = readDataFile();
-  data.orders = data.orders.map((o) => (o.id === id ? { ...o, ...updateObj } : o));
+  data.orders = data.orders.map((o) => (Number(o.id) === numId || String(o.id) === String(id) ? { ...o, ...updateObj } : o));
   writeDataFile(data);
-  return data.orders.find((o) => o.id === id);
+  return data.orders.find((o) => Number(o.id) === numId || String(o.id) === String(id));
 }
 
 // 5. PAYOUTS

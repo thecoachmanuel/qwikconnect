@@ -48,8 +48,21 @@ export default function LoginContent() {
         setErrorMessage('Invalid username or password.');
         setIsLoading(false);
       } else {
-        const isSellerUser = username.toLowerCase() === 'test_seller' || username.toLowerCase() === 'demo@bytesed.com';
-        const defaultDestination = isSellerUser ? '/seller/dashboard' : '/buyer/dashboard';
+        const lower = username.toLowerCase().trim();
+        const isAdmin = lower === 'admin' || lower === 'super_admin' || lower === 'admin@qixer.com';
+        const isSellerUser =
+          lower === 'test_seller' ||
+          lower === 'seller' ||
+          lower === 'chioma_adebayo' ||
+          lower === 'babajide_olatunji' ||
+          lower === 'ngozi_dike' ||
+          lower.includes('seller') ||
+          lower.includes('@qwikconnect.ng');
+        const defaultDestination = isAdmin
+          ? '/admin/dashboard'
+          : isSellerUser
+          ? '/seller/dashboard'
+          : '/buyer/dashboard';
         const targetUrl = callbackUrl && callbackUrl !== '/' && !callbackUrl.includes('/user/login')
           ? callbackUrl
           : defaultDestination;
@@ -66,7 +79,11 @@ export default function LoginContent() {
             } catch (e) {}
           }
 
-          if (isSellerUser) {
+          if (isAdmin) {
+            const p = { name: 'Super Admin', image: '/assets/frontend/img/static/user_profile.png', email: 'admin@qixer.com' };
+            localStorage.setItem('qixer_profile_admin', JSON.stringify(p));
+            localStorage.setItem('qixer_user_profile', JSON.stringify(p));
+          } else if (isSellerUser) {
             const p = { name: 'Chioma Adebayo', image: existingCustomImg || '/assets/uploads/media-uploader/banner11638279446.png', email: 'chioma.adebayo@qwikconnect.ng' };
             localStorage.setItem('qixer_profile_seller', JSON.stringify(p));
             localStorage.setItem('qixer_user_profile', JSON.stringify(p));
