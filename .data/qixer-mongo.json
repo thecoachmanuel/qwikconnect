@@ -1,0 +1,2155 @@
+{
+  "categories": [
+    {
+      "id": 1,
+      "name": "Electrical Repair",
+      "slug": "electrical-repair",
+      "icon": "las la-bolt",
+      "description": "Certified wiring, fixture installation, and power troubleshooting",
+      "status": 1
+    },
+    {
+      "id": 2,
+      "name": "Cleaning Services",
+      "slug": "cleaning-services",
+      "icon": "las la-broom",
+      "description": "Deep home cleaning, office janitorial and sanitization",
+      "status": 1
+    },
+    {
+      "id": 3,
+      "name": "Plumbing Solutions",
+      "slug": "plumbing-solutions",
+      "icon": "las la-wrench",
+      "description": "Pipe leak repairs, drainage, borehole and water heaters",
+      "status": 1
+    },
+    {
+      "id": 4,
+      "name": "Painting & Renovation",
+      "slug": "painting-renovation",
+      "icon": "las la-paint-roller",
+      "description": "Interior/exterior wall screeding, painting and finishing",
+      "status": 1
+    },
+    {
+      "id": 5,
+      "name": "AC & Refrigeration Repair",
+      "slug": "ac-refrigeration-repair",
+      "icon": "las la-snowflake",
+      "description": "Air conditioner installation, gas refills and maintenance",
+      "status": 1
+    },
+    {
+      "id": 6,
+      "name": "Salon & Spa",
+      "slug": "salon-spa",
+      "icon": "las la-spa",
+      "description": "Luxury hair styling, facial therapy, manicure, massage & spa treatments",
+      "status": 1
+    },
+    {
+      "id": 7,
+      "name": "Carpentry & Furniture",
+      "slug": "carpentry-furniture",
+      "icon": "las la-hammer",
+      "description": "Custom woodwork, kitchen cabinets, doors and wardrobes",
+      "status": 1
+    },
+    {
+      "id": 8,
+      "name": "Home Relocation & Moving",
+      "slug": "home-relocation-moving",
+      "icon": "las la-people-carry",
+      "description": "Packing, household relocation and truck moving services",
+      "status": 1
+    }
+  ],
+  "services": [
+    {
+      "id": 1,
+      "title": "Full Home & Office Deep Cleaning & Sanitization",
+      "slug": "full-home-deep-cleaning",
+      "price": 35000,
+      "image": "/assets/uploads/media-uploader/service_cleaning_nigerian.jpg",
+      "city": "Lagos",
+      "country": "Nigeria",
+      "seller_id": 2,
+      "category_id": 2,
+      "category_slug": "cleaning-services",
+      "status": 1,
+      "created_at": "2026-09-15T00:00:00.000Z",
+      "view": 12,
+      "seller_image": "/assets/uploads/media-uploader/banner21638339592_1792934035963.jpg",
+      "seller": {
+        "id": 2,
+        "name": "Chioma Adebayo",
+        "username": "chioma_adebayo",
+        "image": "/assets/uploads/media-uploader/banner21638339592_1792934035963.jpg"
+      }
+    },
+    {
+      "id": 2,
+      "title": "Emergency Residential Electrical Repair & Inverter Setup",
+      "slug": "emergency-residential-electrical-repair",
+      "price": 25000,
+      "image": "/assets/uploads/media-uploader/service_electrical_nigerian.jpg",
+      "city": "Abuja",
+      "country": "Nigeria",
+      "seller_id": 3,
+      "category_id": 1,
+      "category_slug": "electrical-repair",
+      "status": 1,
+      "created_at": "2026-09-20T00:00:00.000Z",
+      "view": 5,
+      "seller": {
+        "id": 3,
+        "name": "Babajide Olatunji",
+        "username": "babajide_olatunji",
+        "image": "/assets/frontend/img/static/user_profile.png"
+      }
+    },
+    {
+      "id": 3,
+      "title": "Complete Plumbing Leak Detection & Borehole Pipe Repair",
+      "slug": "plumbing-leak-detection",
+      "price": 20000,
+      "image": "/assets/uploads/media-uploader/service_plumbing_nigerian.jpg",
+      "city": "Abuja",
+      "country": "Nigeria",
+      "seller_id": 3,
+      "category_id": 3,
+      "category_slug": "plumbing-solutions",
+      "status": 1,
+      "created_at": "2026-09-25T00:00:00.000Z",
+      "view": 1,
+      "seller": {
+        "id": 3,
+        "name": "Babajide Olatunji",
+        "username": "babajide_olatunji",
+        "image": "/assets/frontend/img/static/user_profile.png"
+      }
+    },
+    {
+      "id": 4,
+      "title": "Professional Interior & Exterior Wall Screeding and Painting",
+      "slug": "professional-interior-painting",
+      "price": 50000,
+      "image": "/assets/uploads/media-uploader/service_painting_nigerian.jpg",
+      "city": "Lagos",
+      "country": "Nigeria",
+      "seller_id": 6,
+      "category_id": 4,
+      "category_slug": "painting-renovation",
+      "status": 1,
+      "created_at": "2026-10-01T00:00:00.000Z",
+      "view": 2,
+      "seller": {
+        "id": 6,
+        "name": "Ngozi Dike",
+        "username": "ngozi_dike",
+        "image": "/assets/frontend/img/static/user_profile.png"
+      }
+    },
+    {
+      "id": 5,
+      "title": "Split Unit AC Servicing, Chemical Cleaning & Gas Refill",
+      "slug": "ac-servicing-gas-refill",
+      "price": 18000,
+      "image": "/assets/uploads/media-uploader/service_ac_repair_nigerian.jpg",
+      "city": "Lagos",
+      "country": "Nigeria",
+      "seller_id": 2,
+      "category_id": 5,
+      "category_slug": "ac-refrigeration-repair",
+      "status": 1,
+      "created_at": "2026-10-05T00:00:00.000Z",
+      "view": 15,
+      "seller_image": "/assets/uploads/media-uploader/banner21638339592_1792934035963.jpg",
+      "seller": {
+        "id": 2,
+        "name": "Chioma Adebayo",
+        "username": "chioma_adebayo",
+        "image": "/assets/uploads/media-uploader/banner21638339592_1792934035963.jpg"
+      }
+    },
+    {
+      "id": 6,
+      "title": "Luxury Hair Styling, Facial Therapy & Full Body Spa Treatment",
+      "slug": "luxury-hair-styling-facial-body-spa",
+      "price": 30000,
+      "image": "/assets/uploads/media-uploader/service_salon_spa_nigerian.jpg",
+      "city": "Lagos",
+      "country": "Nigeria",
+      "seller_id": 6,
+      "category_id": 6,
+      "category_slug": "salon-spa",
+      "status": 1,
+      "created_at": "2026-10-10T00:00:00.000Z",
+      "view": 6,
+      "seller": {
+        "id": 6,
+        "name": "Ngozi Dike",
+        "username": "ngozi_dike",
+        "image": "/assets/frontend/img/static/user_profile.png"
+      }
+    },
+    {
+      "id": 7,
+      "title": "Custom Wooden Kitchen Cabinets & Wardrobe Construction",
+      "slug": "custom-wooden-cabinets-wardrobe",
+      "price": 75000,
+      "image": "/assets/uploads/media-uploader/service_carpentry_nigerian.jpg",
+      "city": "Abuja",
+      "country": "Nigeria",
+      "seller_id": 3,
+      "category_id": 7,
+      "category_slug": "carpentry-furniture",
+      "status": 1,
+      "created_at": "2026-10-14T00:00:00.000Z",
+      "seller": {
+        "id": 3,
+        "name": "Babajide Olatunji",
+        "username": "babajide_olatunji",
+        "image": "/assets/frontend/img/static/user_profile.png"
+      },
+      "view": 1
+    },
+    {
+      "id": 8,
+      "title": "Household Furniture Relocation, Packing & Interstate Transport",
+      "slug": "household-furniture-relocation",
+      "price": 65000,
+      "image": "/assets/uploads/media-uploader/service_moving_nigerian.jpg",
+      "city": "Lagos",
+      "country": "Nigeria",
+      "seller_id": 2,
+      "category_id": 8,
+      "category_slug": "home-relocation-moving",
+      "status": 1,
+      "created_at": "2026-10-16T00:00:00.000Z",
+      "view": 2,
+      "seller_image": "/assets/uploads/media-uploader/banner21638339592_1792934035963.jpg",
+      "seller": {
+        "id": 2,
+        "name": "Chioma Adebayo",
+        "username": "chioma_adebayo",
+        "image": "/assets/uploads/media-uploader/banner21638339592_1792934035963.jpg"
+      }
+    }
+  ],
+  "users": [
+    {
+      "id": 1,
+      "name": "Super Admin",
+      "email": "admin@qixer.com",
+      "username": "super_admin",
+      "phone": "+234 801 234 5678",
+      "user_type": 0,
+      "role": "admin",
+      "user_status": 1,
+      "email_verified": "1",
+      "created_at": "2024-01-15T00:00:00.000Z"
+    },
+    {
+      "id": 2,
+      "name": "Chioma Adebayo",
+      "email": "chioma.adebayo@qwikconnect.ng",
+      "username": "chioma_adebayo",
+      "phone": "+234 802 345 6789",
+      "user_type": 0,
+      "user_status": 1,
+      "email_verified": "1",
+      "created_at": "2024-02-10T00:00:00.000Z",
+      "role": "seller",
+      "image": "/assets/uploads/media-uploader/banner21638339592_1792934035963.jpg",
+      "address": "Plot 14, Commercial Avenue, Ikeja, Lagos",
+      "post_code": "100271",
+      "country": "Nigeria",
+      "country_id": 1,
+      "service_city": "Lagos",
+      "service_area": "Ikeja GRA & Lekki",
+      "about": "Certified residential & commercial sanitation expert with 8+ years experience across Lagos mainland and island. Specialized in post-construction deep cleaning, office hygiene maintenance, and eco-friendly fumigation.",
+      "tax_number": "TIN-24890123-001",
+      "experience": "8+ Years Professional Experience",
+      "specialities": "Deep Home Cleaning, Post-Construction Cleaning & Office Janitorial",
+      "fb_url": "",
+      "tw_url": "",
+      "li_url": "",
+      "in_url": "",
+      "yo_url": "",
+      "profile_background": "/assets/uploads/media-uploader/banner11638279446.png"
+    },
+    {
+      "id": 3,
+      "name": "Babajide Olatunji",
+      "email": "babajide.olatunji@qwikconnect.ng",
+      "username": "babajide_olatunji",
+      "phone": "+234 803 456 7890",
+      "user_type": 0,
+      "user_status": 1,
+      "email_verified": "1",
+      "created_at": "2024-03-01T00:00:00.000Z",
+      "role": "seller",
+      "image": null,
+      "profile_background": null,
+      "country": "Nigeria",
+      "country_id": 1,
+      "service_city": "Abuja",
+      "service_area": "Maitama, Wuse II & Garki",
+      "about": "COREN-registered electrical engineer and licensed master plumber with over 10 years of hands-on expertise across the Federal Capital Territory. Proven track record in solar inverter installations, heavy-duty surge protection, distribution board upgrades, and precision borehole plumbing.",
+      "specialities": "Solar/Inverter Installation, Electrical Wiring & Borehole Plumbing Repair",
+      "address": "Suite 4B, Ahmadu Bello Way, Area 11, Garki, Abuja",
+      "post_code": "900103",
+      "tax_number": "TIN-18765432-002",
+      "experience": "10+ Years Licensed Contractor"
+    },
+    {
+      "id": 4,
+      "name": "Emma Watson",
+      "email": "emma.w@example.com",
+      "username": "emmaw",
+      "phone": "+234 804 567 8901",
+      "user_type": 1,
+      "user_status": 1,
+      "email_verified": "1",
+      "created_at": "2024-03-12T00:00:00.000Z",
+      "role": "buyer"
+    },
+    {
+      "id": 5,
+      "name": "Michael Chen",
+      "email": "mchen@example.com",
+      "username": "mchen",
+      "phone": "+234 805 678 9012",
+      "user_type": 1,
+      "user_status": 1,
+      "email_verified": "1",
+      "created_at": "2024-04-05T00:00:00.000Z",
+      "role": "buyer"
+    },
+    {
+      "id": 6,
+      "name": "Ngozi Dike",
+      "email": "ngozi.dike@qwikconnect.ng",
+      "username": "ngozi_dike",
+      "phone": "+234 806 789 0123",
+      "user_type": 0,
+      "user_status": 1,
+      "email_verified": "1",
+      "created_at": "2024-04-18T00:00:00.000Z",
+      "role": "seller",
+      "image": null,
+      "profile_background": null,
+      "country": "Nigeria",
+      "country_id": 1,
+      "service_city": "Lagos",
+      "service_area": "Victoria Island, Ikoyi & Lekki Phase 1",
+      "about": "Lead aesthetics artisan, professional wall screeder, and celebrity stylist with 7+ years of experience transforming luxury homes and event styling in Lagos. Renowned for flawless Venetian wall screeding, waterproof exterior emulsion, luxury bridal hair styling, and rejuvenating spa treatments.",
+      "specialities": "Luxury Hair Styling, Venetian Wall Screeding & Holistic Spa Therapy",
+      "address": "18 Adeola Odeku Street, Victoria Island, Lagos",
+      "post_code": "101241",
+      "tax_number": "TIN-31094857-003",
+      "experience": "7+ Years Artisan & Stylist"
+    }
+  ],
+  "orders": [
+    {
+      "id": 1793057611642,
+      "created_at": "2026-10-26T23:33:31.642Z",
+      "status": 1,
+      "payment_status": "complete",
+      "invoice": "INV-611641-4202",
+      "service_id": 5,
+      "seller_id": 2,
+      "buyer_id": 2,
+      "name": "Manuel",
+      "email": "root@readygrocery.com",
+      "phone": "0000000",
+      "address": "Lagos",
+      "post_code": "223211",
+      "date": "2026-10-26",
+      "schedule": "09:00 AM - 11:00 AM",
+      "package_fee": 18000,
+      "extra_service": 5000,
+      "coupon_code": null,
+      "coupon_discount": 0,
+      "sub_total": 23000,
+      "tax": 0,
+      "total": 23000,
+      "payment_gateway": "paystack",
+      "order_note": null,
+      "_id": "6adfe34b6d45b17e0a1b8c7a",
+      "updated_at": "2026-10-26T23:35:59.333Z",
+      "transaction_id": "demo_pstk_1793057611958",
+      "charge_currency": "NGN",
+      "charge_amount": 23000,
+      "exchange_rate": 1
+    },
+    {
+      "id": 101,
+      "seller_id": 2,
+      "buyer_id": 4,
+      "service_id": 1,
+      "name": "Emma Watson",
+      "email": "emma.w@example.com",
+      "phone": "+234 804 567 8901",
+      "address": "Plot 14 Victoria Island, Lagos",
+      "city": "Lagos",
+      "date": "2026-10-25",
+      "schedule": "09:00 AM - 12:00 PM",
+      "package_fee": 35000,
+      "total": 35000,
+      "payment_gateway": "mollie",
+      "payment_status": "complete",
+      "status": 0,
+      "order_note": "Please arrive before noon.",
+      "created_at": "2026-10-22T00:00:00.000Z",
+      "commission_amount": 3500,
+      "tax": 0,
+      "service_title": "Full Home Deep Cleaning & Sanitization",
+      "updated_at": "2026-10-26T22:45:48.089Z",
+      "transaction_id": "tr_eX7Ggeg7XxNRuzJUFbhYJ",
+      "charge_currency": "EUR",
+      "charge_amount": 21.88,
+      "exchange_rate": 1
+    },
+    {
+      "id": 102,
+      "seller_id": 3,
+      "buyer_id": 5,
+      "service_id": 2,
+      "name": "Michael Chen",
+      "email": "mchen@example.com",
+      "phone": "+234 805 678 9012",
+      "address": "22 Gana Street, Maitama, Abuja",
+      "city": "Abuja",
+      "date": "2026-10-26",
+      "schedule": "02:00 PM - 05:00 PM",
+      "package_fee": 25000,
+      "total": 25000,
+      "payment_gateway": "paystack",
+      "payment_status": "complete",
+      "status": 2,
+      "order_note": "Main inverter breaker needs testing.",
+      "created_at": "2026-10-21T00:00:00.000Z"
+    },
+    {
+      "id": 103,
+      "seller_id": 2,
+      "buyer_id": 4,
+      "service_id": 5,
+      "name": "Emma Watson",
+      "email": "emma.w@example.com",
+      "phone": "+234 804 567 8901",
+      "address": "Plot 14 Victoria Island, Lagos",
+      "city": "Lagos",
+      "date": "2026-10-28",
+      "schedule": "11:00 AM - 01:00 PM",
+      "package_fee": 18000,
+      "total": 18000,
+      "payment_gateway": "paystack",
+      "payment_status": "pending",
+      "status": 2,
+      "order_note": "",
+      "created_at": "2026-10-23T00:00:00.000Z",
+      "updated_at": "2026-10-25T13:16:17.098Z"
+    },
+    {
+      "id": 104,
+      "seller_id": 2,
+      "buyer_id": 4,
+      "service_id": 1,
+      "service_title": "Full Home Deep Cleaning & Sanitization",
+      "name": "Emma Watson",
+      "email": "emma.w@example.com",
+      "phone": "+234 804 567 8901",
+      "address": "Plot 14 Victoria Island, Lagos",
+      "city": "Lagos",
+      "date": "2026-10-18",
+      "schedule": "09:00 AM - 01:00 PM",
+      "package_fee": 120000,
+      "tax": 0,
+      "commission_amount": 12000,
+      "total": 120000,
+      "payment_gateway": "paystack",
+      "payment_status": "complete",
+      "status": 2,
+      "order_note": "Whole house move-in cleaning",
+      "created_at": "2026-10-18T10:00:00.000Z"
+    },
+    {
+      "id": 105,
+      "seller_id": 2,
+      "buyer_id": 5,
+      "service_id": 6,
+      "service_title": "Interior Painting & Wall Finishing",
+      "name": "Michael Chen",
+      "email": "mchen@example.com",
+      "phone": "+234 805 678 9012",
+      "address": "22 Gana Street, Maitama, Abuja",
+      "city": "Abuja",
+      "date": "2026-10-15",
+      "schedule": "08:00 AM - 04:00 PM",
+      "package_fee": 85000,
+      "tax": 0,
+      "commission_amount": 8500,
+      "total": 85000,
+      "payment_gateway": "stripe",
+      "payment_status": "complete",
+      "status": 2,
+      "order_note": "Living room and hallway",
+      "created_at": "2026-10-15T08:30:00.000Z"
+    },
+    {
+      "id": 106,
+      "seller_id": 2,
+      "buyer_id": 4,
+      "service_id": 1,
+      "service_title": "Full Home Deep Cleaning & Sanitization",
+      "name": "Emma Watson",
+      "email": "emma.w@example.com",
+      "phone": "+234 804 567 8901",
+      "address": "Plot 14 Victoria Island, Lagos",
+      "city": "Lagos",
+      "date": "2026-10-10",
+      "schedule": "10:00 AM - 01:00 PM",
+      "package_fee": 60000,
+      "tax": 0,
+      "commission_amount": 6000,
+      "total": 60000,
+      "payment_gateway": "paystack",
+      "payment_status": "complete",
+      "status": 2,
+      "order_note": "Post-event cleanup",
+      "created_at": "2026-10-10T11:00:00.000Z"
+    },
+    {
+      "id": 107,
+      "seller_id": 3,
+      "buyer_id": 4,
+      "service_id": 2,
+      "service_title": "Emergency Residential Electrical Repair",
+      "name": "Emma Watson",
+      "email": "emma.w@example.com",
+      "phone": "+234 804 567 8901",
+      "address": "Plot 14 Victoria Island, Lagos",
+      "city": "Lagos",
+      "date": "2026-10-12",
+      "schedule": "02:00 PM - 05:00 PM",
+      "package_fee": 80000,
+      "tax": 0,
+      "commission_amount": 8000,
+      "total": 80000,
+      "payment_gateway": "paystack",
+      "payment_status": "complete",
+      "status": 2,
+      "order_note": "Circuit breaker diagnosis",
+      "created_at": "2026-10-12T14:00:00.000Z"
+    },
+    {
+      "id": 108,
+      "seller_id": 3,
+      "buyer_id": 5,
+      "service_id": 2,
+      "service_title": "Emergency Residential Electrical Repair",
+      "name": "Michael Chen",
+      "email": "mchen@example.com",
+      "phone": "+234 805 678 9012",
+      "address": "22 Gana Street, Maitama, Abuja",
+      "city": "Abuja",
+      "date": "2026-10-08",
+      "schedule": "09:00 AM - 01:00 PM",
+      "package_fee": 95000,
+      "tax": 0,
+      "commission_amount": 9500,
+      "total": 95000,
+      "payment_gateway": "paystack",
+      "payment_status": "complete",
+      "status": 2,
+      "order_note": "Inverter wiring backup system",
+      "created_at": "2026-10-08T09:30:00.000Z"
+    },
+    {
+      "id": 109,
+      "seller_id": 6,
+      "buyer_id": 4,
+      "service_id": 4,
+      "service_title": "Split Unit AC Servicing & Chemical Cleaning",
+      "name": "Emma Watson",
+      "email": "emma.w@example.com",
+      "phone": "+234 804 567 8901",
+      "address": "Plot 14 Victoria Island, Lagos",
+      "city": "Lagos",
+      "date": "2026-10-19",
+      "schedule": "10:00 AM - 12:00 PM",
+      "package_fee": 50000,
+      "tax": 0,
+      "commission_amount": 5000,
+      "total": 50000,
+      "payment_gateway": "paystack",
+      "payment_status": "complete",
+      "status": 2,
+      "order_note": "Regular AC service",
+      "created_at": "2026-10-19T10:00:00.000Z"
+    },
+    {
+      "id": 110,
+      "seller_id": 6,
+      "buyer_id": 5,
+      "service_id": 4,
+      "service_title": "Split Unit AC Servicing & Chemical Cleaning",
+      "name": "Michael Chen",
+      "email": "mchen@example.com",
+      "phone": "+234 805 678 9012",
+      "address": "22 Gana Street, Maitama, Abuja",
+      "city": "Abuja",
+      "date": "2026-10-14",
+      "schedule": "02:00 PM - 05:00 PM",
+      "package_fee": 70000,
+      "tax": 0,
+      "commission_amount": 7000,
+      "total": 70000,
+      "payment_gateway": "stripe",
+      "payment_status": "complete",
+      "status": 2,
+      "order_note": "Two bedroom AC units chemical wash",
+      "created_at": "2026-10-14T14:30:00.000Z"
+    }
+  ],
+  "payouts": [
+    {
+      "id": 101,
+      "seller_id": 2,
+      "amount": 150000,
+      "payment_gateway": "Bank Transfer (Paystack)",
+      "seller_note": "Payout for October services",
+      "admin_note": "Processed via Bank transfer #PSTK-99482",
+      "status": 1,
+      "created_at": "2026-10-18T00:00:00.000Z"
+    },
+    {
+      "id": 102,
+      "seller_id": 3,
+      "amount": 85000,
+      "payment_gateway": "Bank Transfer (Paystack)",
+      "seller_note": "Account ending in 4920",
+      "admin_note": "Processed via Bank Transfer / Payment Gateway",
+      "status": 1,
+      "created_at": "2026-10-22T00:00:00.000Z",
+      "updated_at": "2026-10-25T10:30:14.497Z"
+    },
+    {
+      "id": 103,
+      "seller_id": 3,
+      "amount": 50000,
+      "payment_gateway": "Bank Transfer (Paystack)",
+      "seller_note": "Disbursement for September",
+      "admin_note": "Approved and transferred",
+      "status": 1,
+      "created_at": "2026-10-05T00:00:00.000Z"
+    }
+  ],
+  "coupons": [
+    {
+      "id": 1,
+      "code": "SAVE20NOW",
+      "discount": 20,
+      "discount_type": "percentage",
+      "expire_date": "2026-12-31",
+      "status": 1,
+      "seller_id": 2,
+      "used_count": 14,
+      "created_at": "2026-10-01T00:00:00.000Z"
+    },
+    {
+      "id": 2,
+      "code": "WELCOME10",
+      "discount": 10,
+      "discount_type": "amount",
+      "expire_date": "2026-11-15",
+      "status": 1,
+      "seller_id": 3,
+      "used_count": 28,
+      "created_at": "2026-10-05T00:00:00.000Z"
+    }
+  ],
+  "reviews": [
+    {
+      "id": 1,
+      "order_id": 101,
+      "service_id": 1,
+      "seller_id": 2,
+      "buyer_id": 4,
+      "rating": 5,
+      "name": "Emma Watson",
+      "email": "emma.w@example.com",
+      "message": "Absolutely fantastic work! Arrived right on schedule, extremely courteous and thorough. The kitchen and bathrooms look brand new. Will definitely book again next month!",
+      "type": 1,
+      "seller_reply": "Thank you so much Emma! It was a pleasure helping out, look forward to working with you again.",
+      "status": 1,
+      "created_at": "2026-10-21T09:40:00.000Z",
+      "seller_image": "/assets/uploads/media-uploader/banner21638339592_1792934035963.jpg"
+    },
+    {
+      "id": 2,
+      "order_id": 102,
+      "service_id": 2,
+      "seller_id": 3,
+      "buyer_id": 5,
+      "rating": 5,
+      "name": "Michael Chen",
+      "email": "mchen@example.com",
+      "message": "Resolved our circuit breaker tripping issue in less than an hour. Very knowledgeable and explained everything clearly. Highly recommend this provider.",
+      "type": 1,
+      "status": 1,
+      "created_at": "2026-10-19T16:15:00.000Z"
+    },
+    {
+      "id": 3,
+      "order_id": 101,
+      "service_id": 1,
+      "seller_id": 2,
+      "buyer_id": 4,
+      "rating": 5,
+      "name": "Chioma Adebayo",
+      "email": "chioma.adebayo@qwikconnect.ng",
+      "message": "Wonderful client! Welcoming, punctual, and prompt communication. Highly recommended to all pros!",
+      "type": 0,
+      "status": 1,
+      "created_at": "2026-10-21T11:00:00.000Z",
+      "reply": "Thanks",
+      "reply_at": "2026-10-25T10:31:49.452Z",
+      "seller_image": "/assets/uploads/media-uploader/banner21638339592_1792934035963.jpg"
+    }
+  ],
+  "tickets": [
+    {
+      "id": 1793038422644,
+      "status": "resolved",
+      "replies_count": 0,
+      "created_at": "2026-10-26T18:13:42.644Z",
+      "user_id": 4,
+      "subject": "[Contact Form] Subject",
+      "department": "General Support",
+      "priority": "normal",
+      "description": "New message submitted from Contact Page:\n\nName: Manuel\nEmail: root@readygrocery.com\nPhone: 0000000\nSubject: Subject\n\nMessage:\nHello",
+      "sender_name": "Manuel",
+      "sender_role": "buyer",
+      "messages": [
+        {
+          "id": 1,
+          "sender": "buyer",
+          "sender_name": "Manuel",
+          "message": "New message submitted from Contact Page:\n\nName: Manuel\nEmail: root@readygrocery.com\nPhone: 0000000\nSubject: Subject\n\nMessage:\nHello",
+          "created_at": "2026-10-26T18:13:42.644Z"
+        }
+      ],
+      "_id": "6adf9856c79873d4d259c002",
+      "updated_at": "2026-10-26T18:16:24.724Z"
+    },
+    {
+      "id": 1793037051152,
+      "status": "resolved",
+      "replies_count": 0,
+      "created_at": "2026-10-26T17:50:51.152Z",
+      "user_id": 4,
+      "subject": "[Contact Form] Service Inquiry for Ikeja Lagos",
+      "department": "General Support",
+      "priority": "normal",
+      "description": "New message submitted from Contact Page:\n\nName: Chinedu Eze\nEmail: chinedu.eze@example.com\nPhone: +234 803 123 4567\nSubject: Service Inquiry for Ikeja Lagos\n\nMessage:\nHello Qixer Admin, I would like to inquire about commercial cleaning contracts for our office complex in Ikeja.",
+      "sender_name": "Chinedu Eze",
+      "sender_role": "buyer",
+      "messages": [
+        {
+          "id": 1,
+          "sender": "buyer",
+          "sender_name": "Chinedu Eze",
+          "message": "New message submitted from Contact Page:\n\nName: Chinedu Eze\nEmail: chinedu.eze@example.com\nPhone: +234 803 123 4567\nSubject: Service Inquiry for Ikeja Lagos\n\nMessage:\nHello Qixer Admin, I would like to inquire about commercial cleaning contracts for our office complex in Ikeja.",
+          "created_at": "2026-10-26T17:50:51.152Z"
+        }
+      ],
+      "_id": "6adf92fbc79873d4d259bfff",
+      "updated_at": "2026-10-26T18:16:21.813Z"
+    },
+    {
+      "id": 1042,
+      "subject": "Question regarding payout verification timeframe",
+      "department": "Billing & Payouts",
+      "priority": "normal",
+      "status": "resolved",
+      "description": "Hello, I submitted a payout request 3 days ago. Could you please confirm if all documents are in order?",
+      "user_id": 2,
+      "created_at": "2026-10-18T10:00:00.000Z",
+      "admin_reply": "All documents verified and payout processed to your registered Paystack bank account.",
+      "replied_at": "2026-10-18T14:30:00.000Z",
+      "replies_count": 1,
+      "messages": [
+        {
+          "id": 1,
+          "sender": "seller",
+          "sender_name": "Chioma Adebayo",
+          "message": "Hello, I submitted a payout request 3 days ago. Could you please confirm if all documents are in order?",
+          "created_at": "2026-10-18T10:00:00.000Z"
+        },
+        {
+          "id": 2,
+          "sender": "admin",
+          "sender_name": "Support Team",
+          "message": "All documents verified and payout processed to your registered Paystack bank account.",
+          "created_at": "2026-10-18T14:30:00.000Z"
+        }
+      ]
+    },
+    {
+      "id": 1058,
+      "subject": "Request to update primary service category mapping",
+      "department": "Listing Support",
+      "priority": "low",
+      "status": "in_progress",
+      "description": "I would like to update my electrical repair services to also include solar installations.",
+      "user_id": 3,
+      "created_at": "2026-10-22T08:15:00.000Z",
+      "replies_count": 0,
+      "messages": [
+        {
+          "id": 1,
+          "sender": "seller",
+          "sender_name": "Babajide Olatunji",
+          "message": "I would like to update my electrical repair services to also include solar installations.",
+          "created_at": "2026-10-22T08:15:00.000Z"
+        }
+      ]
+    },
+    {
+      "id": 1065,
+      "subject": "Request assistance with schedule change for booked service",
+      "department": "Customer Care",
+      "priority": "normal",
+      "status": "open",
+      "description": "Hello, I booked a home cleaning for Saturday morning but would like to shift it to 2:00 PM if the seller is available. Thank you!",
+      "user_id": 4,
+      "created_at": "2026-10-24T14:30:00.000Z",
+      "replies_count": 0,
+      "messages": [
+        {
+          "id": 1,
+          "sender": "buyer",
+          "sender_name": "Emma Watson",
+          "message": "Hello, I booked a home cleaning for Saturday morning but would like to shift it to 2:00 PM if the seller is available. Thank you!",
+          "created_at": "2026-10-24T14:30:00.000Z"
+        }
+      ]
+    }
+  ],
+  "reports": [
+    {
+      "id": 301,
+      "order_id": "#ORD-849195",
+      "service_name": "Plumbing Leak Detection & Pipe Repair",
+      "seller_name": "Babajide Olatunji",
+      "buyer_name": "Emma Watson",
+      "seller_id": 3,
+      "buyer_id": 4,
+      "report_from": "buyer",
+      "report_to": "seller",
+      "reason": "Incomplete Service Scope",
+      "status": "resolved",
+      "admin_decision": "Provider returned and completed seal replacement. Case closed satisfactorily.",
+      "description": "The kitchen sink drain was still dripping slightly after the initial service visit.",
+      "created_at": "2026-10-10T15:45:00.000Z"
+    },
+    {
+      "id": 302,
+      "order_id": "#ORD-849102",
+      "service_name": "Split Unit AC Servicing & Chemical Cleaning",
+      "seller_name": "Chioma Adebayo",
+      "buyer_name": "Emma Watson",
+      "seller_id": 2,
+      "buyer_id": 4,
+      "report_from": "buyer",
+      "report_to": "seller",
+      "reason": "Technician arrival delayed by 2 hours",
+      "status": "under_review",
+      "admin_decision": "Dispute submitted and queued for mediator review.",
+      "description": "The scheduled booking was for 10:00 AM but technician arrived after 12:15 PM without prior notification.",
+      "created_at": "2026-10-23T11:00:00.000Z"
+    }
+  ],
+  "messages": [
+    {
+      "id": 1,
+      "from_user": 4,
+      "to_user": 2,
+      "message": "Hello, what time will the cleaners arrive tomorrow?",
+      "created_at": "2026-10-22T10:00:00.000Z"
+    },
+    {
+      "id": 2,
+      "from_user": 2,
+      "to_user": 4,
+      "message": "Hi Emma! Our team is scheduled for 9:00 AM sharp.",
+      "created_at": "2026-10-22T10:05:00.000Z"
+    },
+    {
+      "id": 1792925750108,
+      "from_user": 2,
+      "to_user": 4,
+      "message": "Hello",
+      "created_at": "2026-10-25T10:55:50.108Z",
+      "_id": "6adde036c79873d4d259bffd"
+    }
+  ],
+  "payment_gateways": [
+    {
+      "id": "paystack",
+      "name": "Paystack Payment Gateway",
+      "icon": "las la-credit-card",
+      "enabled": true,
+      "sandbox": true,
+      "fields": {
+        "public_key": "pk_test_a7e58f850adce9a73750e61668d4f492f67abcd9",
+        "secret_key": "sk_test_2a458001d806c878aba51955b962b3c8ed78f04b",
+        "merchant_email": "billing@qixer.ng"
+      }
+    },
+    {
+      "id": "flutterwave",
+      "name": "Flutterwave",
+      "icon": "las la-wave-square",
+      "enabled": true,
+      "sandbox": true,
+      "fields": {
+        "public_key": "FLWPUBK_TEST-86cce2ec43c63e09a517290a8347fcab-X",
+        "secret_key": "FLWSECK_TEST-d37a42d8917db84f1b2f47c125252d0a-X"
+      }
+    },
+    {
+      "id": "stripe",
+      "name": "Stripe",
+      "icon": "lab la-stripe",
+      "enabled": true,
+      "sandbox": true,
+      "fields": {
+        "publishable_key": "pk_test_51GwS1SEmGOuJLTMsIeYKFtfAT3o3Fc6IOC7wyFmmxA2FIFQ3ZigJ2z1s4ZOweKQKlhaQr1blTH9y6HR2PMjtq1Rx00vqE8LO0x",
+        "secret_key": "sk_test_51GwS1SEmGOuJLTMs2vhSliTwAGkOt4fKJMBrxzTXeCJoLrRu8HFf4I0C5QuyE3l3bQHBJm3c0qFmeVjd0V9nFb6Z00VrWDJ9Uw"
+      }
+    },
+    {
+      "id": "paypal",
+      "name": "PayPal",
+      "icon": "lab la-paypal",
+      "enabled": true,
+      "sandbox": true,
+      "fields": {
+        "client_id": "ATx-SYQyPtXHw1bZaBDhJUZabxbutIqAqqZORgvgEoK_-9MrAkUzYkbt8pSnUyKNEdNN3aJt8tcpcY1I",
+        "secret": "ELJCWPUabUnnMamfw5-ZxaUsvir3KAJrPnAcSeS11znsroi45HP0p7y7vGZcYsBsAAi7Ou6kelCpj69K"
+      }
+    },
+    {
+      "id": "cod",
+      "name": "Cash On Delivery",
+      "icon": "las la-hand-holding-usd",
+      "enabled": true,
+      "sandbox": false,
+      "fields": {
+        "instructions": "Pay in cash directly to the service provider upon service completion."
+      }
+    },
+    {
+      "id": "razorpay",
+      "name": "Razorpay",
+      "icon": "las la-bolt",
+      "enabled": true,
+      "sandbox": true,
+      "fields": {
+        "key_id": "rzp_test_SXk7LZqsBPpAkj",
+        "key_secret": "Nenvq0aYArtYBDOGgmMH7JNv"
+      }
+    },
+    {
+      "id": "mollie",
+      "name": "Mollie",
+      "icon": "las la-credit-card",
+      "enabled": true,
+      "sandbox": true,
+      "fields": {
+        "api_key": "test_fVk76gNbAp6ryrtRjfAVvzjxSHxC2v"
+      }
+    }
+  ],
+  "settings": {
+    "siteTitle": "QwikConnect - Service Marketplace & Finder",
+    "siteTagline": "Connect with top-rated local professionals",
+    "contactEmail": "admin@qixer.ng",
+    "contactPhone": "+234 800 123 4560",
+    "siteAddress": "14 Broad Street, Lagos Island, Lagos, Nigeria",
+    "currencySymbol": "₦",
+    "currencyCode": "NGN",
+    "usdExchangeRate": "1500",
+    "commissionType": "percentage",
+    "commissionRate": "10",
+    "autoApproveServices": false,
+    "enableLiveChat": true,
+    "maintenanceMode": false,
+    "copyrightText": "© 2026 QwikConnect Nigeria. All Rights Reserved.",
+    "siteLogo": "",
+    "siteFavicon": ""
+  },
+  "days": [
+    {
+      "id": 1,
+      "day": "Sat",
+      "seller_id": 2,
+      "status": 1,
+      "total_day": 7
+    },
+    {
+      "id": 2,
+      "day": "Sun",
+      "seller_id": 2,
+      "status": 1,
+      "total_day": 7
+    },
+    {
+      "id": 3,
+      "day": "Mon",
+      "seller_id": 2,
+      "status": 1,
+      "total_day": 7
+    },
+    {
+      "id": 4,
+      "day": "Tue",
+      "seller_id": 2,
+      "status": 1,
+      "total_day": 7
+    },
+    {
+      "id": 5,
+      "day": "Wed",
+      "seller_id": 2,
+      "status": 1,
+      "total_day": 7
+    },
+    {
+      "id": 6,
+      "day": "Thu",
+      "seller_id": 2,
+      "status": 1,
+      "total_day": 7
+    },
+    {
+      "id": 7,
+      "day": "Fri",
+      "seller_id": 2,
+      "status": 1,
+      "total_day": 7
+    },
+    {
+      "id": 8,
+      "day": "Sat",
+      "seller_id": 3,
+      "status": 1,
+      "total_day": 7
+    },
+    {
+      "id": 9,
+      "day": "Sun",
+      "seller_id": 3,
+      "status": 1,
+      "total_day": 7
+    },
+    {
+      "id": 10,
+      "day": "Mon",
+      "seller_id": 3,
+      "status": 1,
+      "total_day": 7
+    },
+    {
+      "id": 11,
+      "day": "Tue",
+      "seller_id": 3,
+      "status": 1,
+      "total_day": 7
+    },
+    {
+      "id": 12,
+      "day": "Wed",
+      "seller_id": 3,
+      "status": 1,
+      "total_day": 7
+    },
+    {
+      "id": 13,
+      "day": "Thu",
+      "seller_id": 3,
+      "status": 1,
+      "total_day": 7
+    },
+    {
+      "id": 14,
+      "day": "Fri",
+      "seller_id": 3,
+      "status": 1,
+      "total_day": 7
+    },
+    {
+      "id": 15,
+      "day": "Sat",
+      "seller_id": 6,
+      "status": 1,
+      "total_day": 7
+    },
+    {
+      "id": 16,
+      "day": "Sun",
+      "seller_id": 6,
+      "status": 1,
+      "total_day": 7
+    },
+    {
+      "id": 17,
+      "day": "Mon",
+      "seller_id": 6,
+      "status": 1,
+      "total_day": 7
+    },
+    {
+      "id": 18,
+      "day": "Tue",
+      "seller_id": 6,
+      "status": 1,
+      "total_day": 7
+    },
+    {
+      "id": 19,
+      "day": "Wed",
+      "seller_id": 6,
+      "status": 1,
+      "total_day": 7
+    },
+    {
+      "id": 20,
+      "day": "Thu",
+      "seller_id": 6,
+      "status": 1,
+      "total_day": 7
+    },
+    {
+      "id": 21,
+      "day": "Fri",
+      "seller_id": 6,
+      "status": 1,
+      "total_day": 7
+    }
+  ],
+  "schedules": [
+    {
+      "id": 1,
+      "day_id": 1,
+      "seller_id": 2,
+      "schedule": "09:00 AM - 11:00 AM",
+      "status": 1,
+      "allow_multiple_schedule": "no"
+    },
+    {
+      "id": 2,
+      "day_id": 1,
+      "seller_id": 2,
+      "schedule": "11:00 AM - 01:00 PM",
+      "status": 1,
+      "allow_multiple_schedule": "no"
+    },
+    {
+      "id": 3,
+      "day_id": 1,
+      "seller_id": 2,
+      "schedule": "02:00 PM - 04:00 PM",
+      "status": 1,
+      "allow_multiple_schedule": "no"
+    },
+    {
+      "id": 4,
+      "day_id": 2,
+      "seller_id": 2,
+      "schedule": "10:00 AM - 12:00 PM",
+      "status": 1,
+      "allow_multiple_schedule": "no"
+    },
+    {
+      "id": 5,
+      "day_id": 2,
+      "seller_id": 2,
+      "schedule": "02:00 PM - 05:00 PM",
+      "status": 1,
+      "allow_multiple_schedule": "no"
+    },
+    {
+      "id": 6,
+      "day_id": 3,
+      "seller_id": 2,
+      "schedule": "09:00 AM - 11:00 AM",
+      "status": 1,
+      "allow_multiple_schedule": "no"
+    },
+    {
+      "id": 7,
+      "day_id": 3,
+      "seller_id": 2,
+      "schedule": "11:00 AM - 01:00 PM",
+      "status": 1,
+      "allow_multiple_schedule": "no"
+    },
+    {
+      "id": 8,
+      "day_id": 3,
+      "seller_id": 2,
+      "schedule": "02:00 PM - 04:00 PM",
+      "status": 1,
+      "allow_multiple_schedule": "no"
+    },
+    {
+      "id": 9,
+      "day_id": 3,
+      "seller_id": 2,
+      "schedule": "04:00 PM - 06:00 PM",
+      "status": 1,
+      "allow_multiple_schedule": "no"
+    },
+    {
+      "id": 10,
+      "day_id": 4,
+      "seller_id": 2,
+      "schedule": "09:00 AM - 11:00 AM",
+      "status": 1,
+      "allow_multiple_schedule": "no"
+    },
+    {
+      "id": 11,
+      "day_id": 4,
+      "seller_id": 2,
+      "schedule": "01:00 PM - 03:00 PM",
+      "status": 1,
+      "allow_multiple_schedule": "no"
+    },
+    {
+      "id": 12,
+      "day_id": 4,
+      "seller_id": 2,
+      "schedule": "04:00 PM - 06:00 PM",
+      "status": 1,
+      "allow_multiple_schedule": "no"
+    },
+    {
+      "id": 13,
+      "day_id": 5,
+      "seller_id": 2,
+      "schedule": "09:00 AM - 11:00 AM",
+      "status": 1,
+      "allow_multiple_schedule": "no"
+    },
+    {
+      "id": 14,
+      "day_id": 5,
+      "seller_id": 2,
+      "schedule": "11:00 AM - 01:00 PM",
+      "status": 1,
+      "allow_multiple_schedule": "no"
+    },
+    {
+      "id": 15,
+      "day_id": 5,
+      "seller_id": 2,
+      "schedule": "02:00 PM - 04:00 PM",
+      "status": 1,
+      "allow_multiple_schedule": "no"
+    },
+    {
+      "id": 16,
+      "day_id": 6,
+      "seller_id": 2,
+      "schedule": "09:00 AM - 11:00 AM",
+      "status": 1,
+      "allow_multiple_schedule": "no"
+    },
+    {
+      "id": 17,
+      "day_id": 6,
+      "seller_id": 2,
+      "schedule": "02:00 PM - 05:00 PM",
+      "status": 1,
+      "allow_multiple_schedule": "no"
+    },
+    {
+      "id": 18,
+      "day_id": 7,
+      "seller_id": 2,
+      "schedule": "09:00 AM - 12:00 PM",
+      "status": 1,
+      "allow_multiple_schedule": "no"
+    },
+    {
+      "id": 19,
+      "day_id": 7,
+      "seller_id": 2,
+      "schedule": "02:00 PM - 05:00 PM",
+      "status": 1,
+      "allow_multiple_schedule": "no"
+    },
+    {
+      "id": 20,
+      "day_id": 10,
+      "seller_id": 3,
+      "schedule": "09:00 AM - 12:00 PM",
+      "status": 1,
+      "allow_multiple_schedule": "no"
+    },
+    {
+      "id": 21,
+      "day_id": 10,
+      "seller_id": 3,
+      "schedule": "02:00 PM - 05:00 PM",
+      "status": 1,
+      "allow_multiple_schedule": "no"
+    },
+    {
+      "id": 22,
+      "day_id": 11,
+      "seller_id": 3,
+      "schedule": "09:00 AM - 12:00 PM",
+      "status": 1,
+      "allow_multiple_schedule": "no"
+    },
+    {
+      "id": 23,
+      "day_id": 11,
+      "seller_id": 3,
+      "schedule": "02:00 PM - 05:00 PM",
+      "status": 1,
+      "allow_multiple_schedule": "no"
+    },
+    {
+      "id": 24,
+      "day_id": 12,
+      "seller_id": 3,
+      "schedule": "10:00 AM - 01:00 PM",
+      "status": 1,
+      "allow_multiple_schedule": "no"
+    },
+    {
+      "id": 25,
+      "day_id": 12,
+      "seller_id": 3,
+      "schedule": "03:00 PM - 06:00 PM",
+      "status": 1,
+      "allow_multiple_schedule": "no"
+    },
+    {
+      "id": 26,
+      "day_id": 8,
+      "seller_id": 3,
+      "schedule": "09:00 AM - 11:00 AM",
+      "status": 1,
+      "allow_multiple_schedule": "no"
+    },
+    {
+      "id": 27,
+      "day_id": 8,
+      "seller_id": 3,
+      "schedule": "11:00 AM - 01:00 PM",
+      "status": 1,
+      "allow_multiple_schedule": "no"
+    },
+    {
+      "id": 28,
+      "day_id": 8,
+      "seller_id": 3,
+      "schedule": "02:00 PM - 04:00 PM",
+      "status": 1,
+      "allow_multiple_schedule": "no"
+    },
+    {
+      "id": 29,
+      "day_id": 8,
+      "seller_id": 3,
+      "schedule": "04:00 PM - 06:00 PM",
+      "status": 1,
+      "allow_multiple_schedule": "no"
+    },
+    {
+      "id": 30,
+      "day_id": 9,
+      "seller_id": 3,
+      "schedule": "09:00 AM - 11:00 AM",
+      "status": 1,
+      "allow_multiple_schedule": "no"
+    },
+    {
+      "id": 31,
+      "day_id": 9,
+      "seller_id": 3,
+      "schedule": "11:00 AM - 01:00 PM",
+      "status": 1,
+      "allow_multiple_schedule": "no"
+    },
+    {
+      "id": 32,
+      "day_id": 9,
+      "seller_id": 3,
+      "schedule": "02:00 PM - 04:00 PM",
+      "status": 1,
+      "allow_multiple_schedule": "no"
+    },
+    {
+      "id": 33,
+      "day_id": 9,
+      "seller_id": 3,
+      "schedule": "04:00 PM - 06:00 PM",
+      "status": 1,
+      "allow_multiple_schedule": "no"
+    },
+    {
+      "id": 34,
+      "day_id": 13,
+      "seller_id": 3,
+      "schedule": "09:00 AM - 11:00 AM",
+      "status": 1,
+      "allow_multiple_schedule": "no"
+    },
+    {
+      "id": 35,
+      "day_id": 13,
+      "seller_id": 3,
+      "schedule": "11:00 AM - 01:00 PM",
+      "status": 1,
+      "allow_multiple_schedule": "no"
+    },
+    {
+      "id": 36,
+      "day_id": 13,
+      "seller_id": 3,
+      "schedule": "02:00 PM - 04:00 PM",
+      "status": 1,
+      "allow_multiple_schedule": "no"
+    },
+    {
+      "id": 37,
+      "day_id": 13,
+      "seller_id": 3,
+      "schedule": "04:00 PM - 06:00 PM",
+      "status": 1,
+      "allow_multiple_schedule": "no"
+    },
+    {
+      "id": 38,
+      "day_id": 14,
+      "seller_id": 3,
+      "schedule": "09:00 AM - 11:00 AM",
+      "status": 1,
+      "allow_multiple_schedule": "no"
+    },
+    {
+      "id": 39,
+      "day_id": 14,
+      "seller_id": 3,
+      "schedule": "11:00 AM - 01:00 PM",
+      "status": 1,
+      "allow_multiple_schedule": "no"
+    },
+    {
+      "id": 40,
+      "day_id": 14,
+      "seller_id": 3,
+      "schedule": "02:00 PM - 04:00 PM",
+      "status": 1,
+      "allow_multiple_schedule": "no"
+    },
+    {
+      "id": 41,
+      "day_id": 14,
+      "seller_id": 3,
+      "schedule": "04:00 PM - 06:00 PM",
+      "status": 1,
+      "allow_multiple_schedule": "no"
+    },
+    {
+      "id": 42,
+      "day_id": 15,
+      "seller_id": 6,
+      "schedule": "09:00 AM - 11:00 AM",
+      "status": 1,
+      "allow_multiple_schedule": "no"
+    },
+    {
+      "id": 43,
+      "day_id": 15,
+      "seller_id": 6,
+      "schedule": "11:00 AM - 01:00 PM",
+      "status": 1,
+      "allow_multiple_schedule": "no"
+    },
+    {
+      "id": 44,
+      "day_id": 15,
+      "seller_id": 6,
+      "schedule": "02:00 PM - 04:00 PM",
+      "status": 1,
+      "allow_multiple_schedule": "no"
+    },
+    {
+      "id": 45,
+      "day_id": 15,
+      "seller_id": 6,
+      "schedule": "04:00 PM - 06:00 PM",
+      "status": 1,
+      "allow_multiple_schedule": "no"
+    },
+    {
+      "id": 46,
+      "day_id": 16,
+      "seller_id": 6,
+      "schedule": "09:00 AM - 11:00 AM",
+      "status": 1,
+      "allow_multiple_schedule": "no"
+    },
+    {
+      "id": 47,
+      "day_id": 16,
+      "seller_id": 6,
+      "schedule": "11:00 AM - 01:00 PM",
+      "status": 1,
+      "allow_multiple_schedule": "no"
+    },
+    {
+      "id": 48,
+      "day_id": 16,
+      "seller_id": 6,
+      "schedule": "02:00 PM - 04:00 PM",
+      "status": 1,
+      "allow_multiple_schedule": "no"
+    },
+    {
+      "id": 49,
+      "day_id": 16,
+      "seller_id": 6,
+      "schedule": "04:00 PM - 06:00 PM",
+      "status": 1,
+      "allow_multiple_schedule": "no"
+    },
+    {
+      "id": 50,
+      "day_id": 17,
+      "seller_id": 6,
+      "schedule": "09:00 AM - 11:00 AM",
+      "status": 1,
+      "allow_multiple_schedule": "no"
+    },
+    {
+      "id": 51,
+      "day_id": 17,
+      "seller_id": 6,
+      "schedule": "11:00 AM - 01:00 PM",
+      "status": 1,
+      "allow_multiple_schedule": "no"
+    },
+    {
+      "id": 52,
+      "day_id": 17,
+      "seller_id": 6,
+      "schedule": "02:00 PM - 04:00 PM",
+      "status": 1,
+      "allow_multiple_schedule": "no"
+    },
+    {
+      "id": 53,
+      "day_id": 17,
+      "seller_id": 6,
+      "schedule": "04:00 PM - 06:00 PM",
+      "status": 1,
+      "allow_multiple_schedule": "no"
+    },
+    {
+      "id": 54,
+      "day_id": 18,
+      "seller_id": 6,
+      "schedule": "09:00 AM - 11:00 AM",
+      "status": 1,
+      "allow_multiple_schedule": "no"
+    },
+    {
+      "id": 55,
+      "day_id": 18,
+      "seller_id": 6,
+      "schedule": "11:00 AM - 01:00 PM",
+      "status": 1,
+      "allow_multiple_schedule": "no"
+    },
+    {
+      "id": 56,
+      "day_id": 18,
+      "seller_id": 6,
+      "schedule": "02:00 PM - 04:00 PM",
+      "status": 1,
+      "allow_multiple_schedule": "no"
+    },
+    {
+      "id": 57,
+      "day_id": 18,
+      "seller_id": 6,
+      "schedule": "04:00 PM - 06:00 PM",
+      "status": 1,
+      "allow_multiple_schedule": "no"
+    },
+    {
+      "id": 58,
+      "day_id": 19,
+      "seller_id": 6,
+      "schedule": "09:00 AM - 11:00 AM",
+      "status": 1,
+      "allow_multiple_schedule": "no"
+    },
+    {
+      "id": 59,
+      "day_id": 19,
+      "seller_id": 6,
+      "schedule": "11:00 AM - 01:00 PM",
+      "status": 1,
+      "allow_multiple_schedule": "no"
+    },
+    {
+      "id": 60,
+      "day_id": 19,
+      "seller_id": 6,
+      "schedule": "02:00 PM - 04:00 PM",
+      "status": 1,
+      "allow_multiple_schedule": "no"
+    },
+    {
+      "id": 61,
+      "day_id": 19,
+      "seller_id": 6,
+      "schedule": "04:00 PM - 06:00 PM",
+      "status": 1,
+      "allow_multiple_schedule": "no"
+    },
+    {
+      "id": 62,
+      "day_id": 20,
+      "seller_id": 6,
+      "schedule": "09:00 AM - 11:00 AM",
+      "status": 1,
+      "allow_multiple_schedule": "no"
+    },
+    {
+      "id": 63,
+      "day_id": 20,
+      "seller_id": 6,
+      "schedule": "11:00 AM - 01:00 PM",
+      "status": 1,
+      "allow_multiple_schedule": "no"
+    },
+    {
+      "id": 64,
+      "day_id": 20,
+      "seller_id": 6,
+      "schedule": "02:00 PM - 04:00 PM",
+      "status": 1,
+      "allow_multiple_schedule": "no"
+    },
+    {
+      "id": 65,
+      "day_id": 20,
+      "seller_id": 6,
+      "schedule": "04:00 PM - 06:00 PM",
+      "status": 1,
+      "allow_multiple_schedule": "no"
+    },
+    {
+      "id": 66,
+      "day_id": 21,
+      "seller_id": 6,
+      "schedule": "09:00 AM - 11:00 AM",
+      "status": 1,
+      "allow_multiple_schedule": "no"
+    },
+    {
+      "id": 67,
+      "day_id": 21,
+      "seller_id": 6,
+      "schedule": "11:00 AM - 01:00 PM",
+      "status": 1,
+      "allow_multiple_schedule": "no"
+    },
+    {
+      "id": 68,
+      "day_id": 21,
+      "seller_id": 6,
+      "schedule": "02:00 PM - 04:00 PM",
+      "status": 1,
+      "allow_multiple_schedule": "no"
+    },
+    {
+      "id": 69,
+      "day_id": 21,
+      "seller_id": 6,
+      "schedule": "04:00 PM - 06:00 PM",
+      "status": 1,
+      "allow_multiple_schedule": "no"
+    }
+  ],
+  "subscriptions": [
+    {
+      "id": 1,
+      "title": "Starter Freelancer",
+      "type": "monthly",
+      "price": 0,
+      "connect": 20,
+      "service": 3,
+      "job": 5,
+      "status": 1,
+      "is_popular": false,
+      "features": [
+        "3 Active Service Listings",
+        "20 Monthly Job Connects",
+        "Direct Client Chat Messaging",
+        "Standard Platform Commission (12%)",
+        "Standard Seller Profile"
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Professional Pro",
+      "type": "monthly",
+      "price": 5000,
+      "connect": 80,
+      "service": 15,
+      "job": 25,
+      "status": 1,
+      "is_popular": true,
+      "features": [
+        "15 Active Service Listings",
+        "80 Monthly Job Connects",
+        "Verified Pro Badge on Profile & Cards",
+        "Discounted Platform Commission (7%)",
+        "Priority Search & Category Placement",
+        "24/7 Priority Support"
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Agency Enterprise",
+      "type": "monthly",
+      "price": 15000,
+      "connect": 250,
+      "service": 50,
+      "job": 80,
+      "status": 1,
+      "is_popular": false,
+      "features": [
+        "50 Active Service Listings",
+        "250 Monthly Job Connects",
+        "Top Verified Badge & Agency Profile",
+        "Lowest Platform Commission (4%)",
+        "Featured Hero Homepage Placement",
+        "Dedicated VIP Account Manager"
+      ]
+    }
+  ],
+  "seller_subscriptions": [
+    {
+      "id": 1,
+      "subscription_id": 2,
+      "seller_id": 2,
+      "type": "monthly",
+      "connect": 85,
+      "initial_connect": 100,
+      "service": 12,
+      "initial_service": 15,
+      "job": 28,
+      "initial_job": 30,
+      "price": 25000,
+      "expire_date": "2026-11-25T00:00:00.000Z",
+      "status": 1,
+      "payment_gateway": "paystack",
+      "payment_status": "complete",
+      "transaction_id": "SUB-PSTK-99214",
+      "created_at": "2026-10-20T00:00:00.000Z"
+    },
+    {
+      "id": 2,
+      "subscription_id": 1,
+      "seller_id": 3,
+      "type": "monthly",
+      "connect": 24,
+      "initial_connect": 30,
+      "service": 4,
+      "initial_service": 5,
+      "job": 8,
+      "initial_job": 10,
+      "price": 10000,
+      "expire_date": "2026-11-18T00:00:00.000Z",
+      "status": 1,
+      "payment_gateway": "paystack",
+      "payment_status": "complete",
+      "transaction_id": "SUB-PSTK-84729",
+      "created_at": "2026-10-18T00:00:00.000Z"
+    }
+  ],
+  "todos": [
+    {
+      "id": 1,
+      "user_id": 2,
+      "title": "Prepare deep-cleaning equipment for Saturday booking",
+      "description": "Check steam extractor pressure nozzles and restock eco-friendly carpet solutions.",
+      "status": 1,
+      "created_at": "2026-10-20T00:00:00.000Z"
+    },
+    {
+      "id": 2,
+      "user_id": 2,
+      "title": "Follow up with Emma Watson on AC filter change",
+      "description": "Send service review request and remind about scheduled 6-month duct checkup.",
+      "status": 0,
+      "created_at": "2026-10-23T00:00:00.000Z"
+    },
+    {
+      "id": 3,
+      "user_id": 3,
+      "title": "Order replacement brass pipe fittings from distributor",
+      "description": "Need 15x 1/2 inch ball valves and Teflon sealing tapes for upcoming plumbing jobs.",
+      "status": 0,
+      "created_at": "2026-10-24T00:00:00.000Z"
+    }
+  ],
+  "favorites": [
+    {
+      "id": 1,
+      "user_id": 4,
+      "service_id": 1,
+      "created_at": "2026-10-20T00:00:00.000Z"
+    },
+    {
+      "id": 2,
+      "user_id": 4,
+      "service_id": 2,
+      "created_at": "2026-10-21T00:00:00.000Z"
+    }
+  ],
+  "seller_verifies": [],
+  "notifications": [
+    {
+      "id": 11,
+      "role": "admin",
+      "user_id": null,
+      "order_id": null,
+      "ticket_id": null,
+      "job_post_id": null,
+      "title": "New Contact Inquiry: Subject",
+      "message": "From Manuel (root@readygrocery.com): Hello",
+      "link": "/admin/support-tickets",
+      "icon": "las la-envelope",
+      "type": "ticket",
+      "status": 1,
+      "created_at": "2026-10-26T18:13:42.638Z"
+    },
+    {
+      "id": 10,
+      "role": "admin",
+      "user_id": null,
+      "order_id": null,
+      "ticket_id": null,
+      "job_post_id": null,
+      "title": "New Contact Inquiry: Service Inquiry for Ikeja Lagos",
+      "message": "From Chinedu Eze (chinedu.eze@example.com): Hello Qixer Admin, I would like to inquire about commercial cleaning contracts f...",
+      "link": "/admin/support-tickets",
+      "icon": "las la-envelope",
+      "type": "ticket",
+      "status": 1,
+      "created_at": "2026-10-26T17:50:51.142Z"
+    },
+    {
+      "id": 9,
+      "role": "seller",
+      "user_id": 3,
+      "order_id": null,
+      "ticket_id": null,
+      "job_post_id": null,
+      "title": "Payout Approved & Sent",
+      "message": "Your payout of ₦85,000 has been approved and processed.",
+      "link": "/seller/payouts",
+      "icon": "las la-check-circle",
+      "type": "payout",
+      "status": 0,
+      "created_at": "2026-10-25T10:30:14.504Z"
+    },
+    {
+      "id": 1,
+      "role": "admin",
+      "order_id": 101,
+      "title": "New Order Placed #101",
+      "message": "Emma Watson booked Full Home Deep Cleaning & Sanitization (₦35,000)",
+      "link": "/admin/orders",
+      "icon": "las la-shopping-cart",
+      "type": "order",
+      "status": 1,
+      "created_at": "2026-10-25T08:51:19.308Z"
+    },
+    {
+      "id": 2,
+      "role": "admin",
+      "title": "Payout Request Pending #102",
+      "message": "Babajide Olatunji requested ₦85,000 withdrawal via Bank Transfer",
+      "link": "/admin/payouts",
+      "icon": "las la-money-bill-wave",
+      "type": "payout",
+      "status": 1,
+      "created_at": "2026-10-25T08:21:19.320Z"
+    },
+    {
+      "id": 3,
+      "role": "admin",
+      "ticket_id": 1,
+      "title": "New Support Ticket #1",
+      "message": "Emma Watson submitted ticket: Rescheduling deep cleaning session",
+      "link": "/admin/support-tickets",
+      "icon": "las la-ticket-alt",
+      "type": "ticket",
+      "status": 1,
+      "created_at": "2026-10-25T07:06:19.321Z"
+    },
+    {
+      "id": 4,
+      "role": "seller",
+      "user_id": 2,
+      "order_id": 103,
+      "title": "New Order Received #103",
+      "message": "Emma Watson booked AC Repair & Servicing (₦18,000)",
+      "link": "/seller/orders",
+      "icon": "las la-shopping-cart",
+      "type": "order",
+      "status": 1,
+      "created_at": "2026-10-25T08:36:19.321Z"
+    },
+    {
+      "id": 5,
+      "role": "seller",
+      "user_id": 2,
+      "order_id": 101,
+      "title": "Client Review Received (5★)",
+      "message": "Sophia Anderson left a 5-star review: Absolutely fantastic work!",
+      "link": "/seller/reviews",
+      "icon": "las la-star",
+      "type": "review",
+      "status": 1,
+      "created_at": "2026-10-25T06:06:19.321Z"
+    },
+    {
+      "id": 6,
+      "role": "seller",
+      "user_id": 2,
+      "title": "Payout Disbursed #101",
+      "message": "₦150,000 successfully disbursed to your bank account via Paystack",
+      "link": "/seller/payouts",
+      "icon": "las la-wallet",
+      "type": "payout",
+      "status": 1,
+      "created_at": "2026-10-24T09:06:19.321Z"
+    },
+    {
+      "id": 7,
+      "role": "buyer",
+      "user_id": 4,
+      "order_id": 101,
+      "title": "Booking Completed #101",
+      "message": "Chioma Adebayo marked your deep cleaning session as Complete",
+      "link": "/buyer/orders",
+      "icon": "las la-check-circle",
+      "type": "order",
+      "status": 0,
+      "created_at": "2026-10-25T08:26:19.321Z"
+    },
+    {
+      "id": 8,
+      "role": "buyer",
+      "user_id": 4,
+      "order_id": 101,
+      "title": "Seller Feedback Received (5★)",
+      "message": "Chioma Adebayo rated your order with 5 stars: Great client, clear instructions!",
+      "link": "/buyer/orders",
+      "icon": "las la-user-check",
+      "type": "review",
+      "status": 0,
+      "created_at": "2026-10-25T07:26:19.321Z"
+    }
+  ],
+  "blogs": [
+    {
+      "id": 2,
+      "title": "AC Repair Service By Expert AC Repair Machenic",
+      "slug": "ac-repair-service-by-expert-ac-repair-machenic",
+      "category": "Electric & AC Repair",
+      "category_id": "1",
+      "image": "/assets/uploads/media-uploader/young-beautiful-cleaner-woman-holding-bucket-with-products-pointing-camera-against-blue-backdrop-51643712682.png",
+      "author": "Admin",
+      "excerpt": "80 days around the world, we’ll find a pot of gold just sitting where the rainbow’s ending.",
+      "content": "<div style=\"text-align: justify;\"><p style=\"text-align: left;\"><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\">Barnaby The Bear’s my name, never call me Jack or James, I will sing my way to fame, Barnaby the Bear’s my name. Birds taught me to sing, when they took me to their king, first I had to fly, in the sky so high so high, so high so high so high, so — if you want to sing this way, think of what you’d like to say, add a tune and you will see, just how easy it can be. Treacle pudding, fish and chips, fizzy drinks and liquorice, flowers, rivers, sand and sea, snowflakes and the stars are free.</span></font></p><p style=\"text-align: left;\"><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\"><br></span></font></p><p style=\"text-align: left;\"><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\">Ulysses, Ulysses — Soaring through all the galaxies. In search of Earth, flying in to the night. Ulysses, Ulysses — Fighting evil and tyranny, with all his power, and with all of his might. Ulysses — no-one else can do the things you do. Ulysses — like a bolt of thunder from the blue. Ulysses — always fighting all the evil forces bringing peace and justice to all.</span></font></p><p style=\"text-align: left;\"><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\"><br></span></font></p><p style=\"text-align: left;\"><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\">Hey there where ya goin’, not exactly knowin’, who says you have to call just one place home. He’s goin’ everywhere, B.J. McKay and his best friend Bear. He just keeps on movin’, ladies keep improvin’, every day is better than the last. New dreams and better scenes, and best of all I don’t pay property tax. Rollin’ down to Dallas, who’s providin’ my palace, off to New Orleans or who knows where. Places new and ladies, too, I’m B.J. McKay and this is my best friend Bear.</span></font></p><p style=\"text-align: left;\"><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\"><br></span></font></p><p style=\"text-align: left;\"><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\">80 days around the world, we’ll find a pot of gold just sitting where the rainbow’s ending. Time — we’ll fight against the time, and we’ll fly on the white wings of the wind. 80 days around the world, no we won’t say a word before the ship is really back. Round, round, all around the world. Round, all around the world. Round, all around the world. Round, all around the world.</span></font></p><p style=\"text-align: left;\"><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\"><br></span></font></p><p style=\"text-align: left;\"><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\">I never spend much time in school but I taught ladies plenty. It’s true I hire my body out for pay, hey hey. I’ve gotten burned over Cheryl Tiegs, blown up for Raquel Welch. But when I end up in the hay it’s only hay, hey hey. I might jump an open drawbridge, or Tarzan from a vine. ’Cause I’m the unknown stuntman that makes Eastwood look so fine.&nbsp;</span></font></p></div>",
+      "created_at": "2024-03-15"
+    },
+    {
+      "id": 3,
+      "title": "Get Beard Shaving Service At Low Price",
+      "slug": "get-beard-shaving-service-at-low-price",
+      "category": "Salon & Spa",
+      "category_id": "5",
+      "image": "/assets/uploads/media-uploader/young-beautiful-cleaner-woman-holding-bucket-with-products-pointing-camera-against-blue-backdrop-291643712832.png",
+      "author": "Admin",
+      "excerpt": "80 days around the world, we’ll find a pot of gold just sitting where the rainbow’s ending.",
+      "content": "<p><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\">Barnaby The Bear’s my name, never call me Jack or James, I will sing my way to fame, Barnaby the Bear’s my name. Birds taught me to sing, when they took me to their king, first I had to fly, in the sky so high so high, so high so high so high, so — if you want to sing this way, think of what you’d like to say, add a tune and you will see, just how easy it can be. Treacle pudding, fish and chips, fizzy drinks and liquorice, flowers, rivers, sand and sea, snowflakes and the stars are free.</span></font></p><p><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\"><br></span></font></p><p><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\">Ulysses, Ulysses — Soaring through all the galaxies. In search of Earth, flying in to the night. Ulysses, Ulysses — Fighting evil and tyranny, with all his power, and with all of his might. Ulysses — no-one else can do the things you do. Ulysses — like a bolt of thunder from the blue. Ulysses — always fighting all the evil forces bringing peace and justice to all.</span></font></p><p><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\"><br></span></font></p><p><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\">Hey there where ya goin’, not exactly knowin’, who says you have to call just one place home. He’s goin’ everywhere, B.J. McKay and his best friend Bear. He just keeps on movin’, ladies keep improvin’, every day is better than the last. New dreams and better scenes, and best of all I don’t pay property tax. Rollin’ down to Dallas, who’s providin’ my palace, off to New Orleans or who knows where. Places new and ladies, too, I’m B.J. McKay and this is my best friend Bear.</span></font></p><p><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\"><br></span></font></p><p><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\">80 days around the world, we’ll find a pot of gold just sitting where the rainbow’s ending. Time — we’ll fight against the time, and we’ll fly on the white wings of the wind. 80 days around the world, no we won’t say a word before the ship is really back. Round, round, all around the world. Round, all around the world. Round, all around the world. Round, all around the world.</span></font></p><p><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\"><br></span></font></p><p><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\">I never spend much time in school but I taught ladies plenty. It’s true I hire my body out for pay, hey hey. I’ve gotten burned over Cheryl Tiegs, blown up for Raquel Welch. But when I end up in the hay it’s only hay, hey hey. I might jump an open drawbridge, or Tarzan from a vine. ’Cause I’m the unknown stuntman that makes Eastwood look so fine.&nbsp;</span></font></p>",
+      "created_at": "2024-03-15"
+    },
+    {
+      "id": 4,
+      "title": "Painting & Renovation Service From Us At Affordable Price",
+      "slug": "painting-&-renovation-service-from-us-at-affordable-price",
+      "category": "Painting & Decor",
+      "category_id": "4",
+      "image": "/assets/uploads/media-uploader/young-beautiful-cleaner-woman-holding-bucket-with-products-pointing-camera-against-blue-backdrop-81643712998.png",
+      "author": "Admin",
+      "excerpt": "80 days around the world, we’ll find a pot of gold just sitting where the rainbow’s ending.",
+      "content": "<div style=\"text-align: justify;\"><p style=\"text-align: left;\"><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\">Barnaby The Bear’s my name, never call me Jack or James, I will sing my way to fame, Barnaby the Bear’s my name. Birds taught me to sing, when they took me to their king, first I had to fly, in the sky so high so high, so high so high so high, so — if you want to sing this way, think of what you’d like to say, add a tune and you will see, just how easy it can be. Treacle pudding, fish and chips, fizzy drinks and liquorice, flowers, rivers, sand and sea, snowflakes and the stars are free.</span></font></p><p style=\"text-align: left;\"><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\"><br></span></font></p><p style=\"text-align: left;\"><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\">Ulysses, Ulysses — Soaring through all the galaxies. In search of Earth, flying in to the night. Ulysses, Ulysses — Fighting evil and tyranny, with all his power, and with all of his might. Ulysses — no-one else can do the things you do. Ulysses — like a bolt of thunder from the blue. Ulysses — always fighting all the evil forces bringing peace and justice to all.</span></font></p><p style=\"text-align: left;\"><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\"><br></span></font></p><p style=\"text-align: left;\"><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\">Hey there where ya goin’, not exactly knowin’, who says you have to call just one place home. He’s goin’ everywhere, B.J. McKay and his best friend Bear. He just keeps on movin’, ladies keep improvin’, every day is better than the last. New dreams and better scenes, and best of all I don’t pay property tax. Rollin’ down to Dallas, who’s providin’ my palace, off to New Orleans or who knows where. Places new and ladies, too, I’m B.J. McKay and this is my best friend Bear.</span></font></p><p style=\"text-align: left;\"><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\"><br></span></font></p><p style=\"text-align: left;\"><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\">80 days around the world, we’ll find a pot of gold just sitting where the rainbow’s ending. Time — we’ll fight against the time, and we’ll fly on the white wings of the wind. 80 days around the world, no we won’t say a word before the ship is really back. Round, round, all around the world. Round, all around the world. Round, all around the world. Round, all around the world.</span></font></p><p style=\"text-align: left;\"><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\"><br></span></font></p><p style=\"text-align: left;\"><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\">I never spend much time in school but I taught ladies plenty. It’s true I hire my body out for pay, hey hey. I’ve gotten burned over Cheryl Tiegs, blown up for Raquel Welch. But when I end up in the hay it’s only hay, hey hey. I might jump an open drawbridge, or Tarzan from a vine. ’Cause I’m the unknown stuntman that makes Eastwood look so fine.&nbsp;</span></font></p></div>",
+      "created_at": "2024-03-15"
+    },
+    {
+      "id": 5,
+      "title": "Cleaning & Renovation Service By Our Expert Cleaner",
+      "slug": "cleaning-&-renovation-service-by-our-expert-cleaner",
+      "category": "Cleaning Services",
+      "category_id": "2",
+      "image": "/assets/uploads/media-uploader/young-beautiful-cleaner-woman-holding-bucket-with-products-pointing-camera-against-blue-backdrop-611643715007.png",
+      "author": "Admin",
+      "excerpt": "80 days around the world, we’ll find a pot of gold just sitting where the rainbow’s ending.",
+      "content": "<div style=\"text-align: justify;\"><p style=\"text-align: left;\"><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\">Barnaby The Bear’s my name, never call me Jack or James, I will sing my way to fame, Barnaby the Bear’s my name. Birds taught me to sing, when they took me to their king, first I had to fly, in the sky so high so high, so high so high so high, so — if you want to sing this way, think of what you’d like to say, add a tune and you will see, just how easy it can be. Treacle pudding, fish and chips, fizzy drinks and liquorice, flowers, rivers, sand and sea, snowflakes and the stars are free.</span></font></p><p style=\"text-align: left;\"><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\"><br></span></font></p><p style=\"text-align: left;\"><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\">Ulysses, Ulysses — Soaring through all the galaxies. In search of Earth, flying in to the night. Ulysses, Ulysses — Fighting evil and tyranny, with all his power, and with all of his might. Ulysses — no-one else can do the things you do. Ulysses — like a bolt of thunder from the blue. Ulysses — always fighting all the evil forces bringing peace and justice to all.</span></font></p><p style=\"text-align: left;\"><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\"><br></span></font></p><p style=\"text-align: left;\"><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\">Hey there where ya goin’, not exactly knowin’, who says you have to call just one place home. He’s goin’ everywhere, B.J. McKay and his best friend Bear. He just keeps on movin’, ladies keep improvin’, every day is better than the last. New dreams and better scenes, and best of all I don’t pay property tax. Rollin’ down to Dallas, who’s providin’ my palace, off to New Orleans or who knows where. Places new and ladies, too, I’m B.J. McKay and this is my best friend Bear.</span></font></p><p style=\"text-align: left;\"><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\"><br></span></font></p><p style=\"text-align: left;\"><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\">80 days around the world, we’ll find a pot of gold just sitting where the rainbow’s ending. Time — we’ll fight against the time, and we’ll fly on the white wings of the wind. 80 days around the world, no we won’t say a word before the ship is really back. Round, round, all around the world. Round, all around the world. Round, all around the world. Round, all around the world.</span></font></p><p style=\"text-align: left;\"><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\"><br></span></font></p><p style=\"text-align: left;\"><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\">I never spend much time in school but I taught ladies plenty. It’s true I hire my body out for pay, hey hey. I’ve gotten burned over Cheryl Tiegs, blown up for Raquel Welch. But when I end up in the hay it’s only hay, hey hey. I might jump an open drawbridge, or Tarzan from a vine. ’Cause I’m the unknown stuntman that makes Eastwood look so fine.&nbsp;</span></font></p></div>",
+      "created_at": "2024-03-15"
+    },
+    {
+      "id": 6,
+      "title": "AC Cleaning Service ! Get ASAP And Take The Best Benifits",
+      "slug": "ac-cleaning-service-!-get-asap-and-take-the-best-benifits",
+      "category": "Electric & AC Repair",
+      "category_id": "1",
+      "image": "/assets/uploads/media-uploader/young-beautiful-cleaner-woman-holding-bucket-with-products-pointing-camera-against-blue-backdrop-581643715103.png",
+      "author": "Admin",
+      "excerpt": "80 days around the world, we’ll find a pot of gold just sitting where the rainbow’s ending.",
+      "content": "<div style=\"text-align: justify;\"><div style=\"text-align: left;\"><p><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\">Barnaby The Bear’s my name, never call me Jack or James, I will sing my way to fame, Barnaby the Bear’s my name. Birds taught me to sing, when they took me to their king, first I had to fly, in the sky so high so high, so high so high so high, so — if you want to sing this way, think of what you’d like to say, add a tune and you will see, just how easy it can be. Treacle pudding, fish and chips, fizzy drinks and liquorice, flowers, rivers, sand and sea, snowflakes and the stars are free.</span></font></p><p><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\"><br></span></font></p><p><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\">Ulysses, Ulysses — Soaring through all the galaxies. In search of Earth, flying in to the night. Ulysses, Ulysses — Fighting evil and tyranny, with all his power, and with all of his might. Ulysses — no-one else can do the things you do. Ulysses — like a bolt of thunder from the blue. Ulysses — always fighting all the evil forces bringing peace and justice to all.</span></font></p><p><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\"><br></span></font></p><p><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\">Hey there where ya goin’, not exactly knowin’, who says you have to call just one place home. He’s goin’ everywhere, B.J. McKay and his best friend Bear. He just keeps on movin’, ladies keep improvin’, every day is better than the last. New dreams and better scenes, and best of all I don’t pay property tax. Rollin’ down to Dallas, who’s providin’ my palace, off to New Orleans or who knows where. Places new and ladies, too, I’m B.J. McKay and this is my best friend Bear.</span></font></p><p><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\"><br></span></font></p><p><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\">80 days around the world, we’ll find a pot of gold just sitting where the rainbow’s ending. Time — we’ll fight against the time, and we’ll fly on the white wings of the wind. 80 days around the world, no we won’t say a word before the ship is really back. Round, round, all around the world. Round, all around the world. Round, all around the world. Round, all around the world.</span></font></p><p><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\"><br></span></font></p><p><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\">I never spend much time in school but I taught ladies plenty. It’s true I hire my body out for pay, hey hey. I’ve gotten burned over Cheryl Tiegs, blown up for Raquel Welch. But when I end up in the hay it’s only hay, hey hey. I might jump an open drawbridge, or Tarzan from a vine. ’Cause I’m the unknown stuntman that makes Eastwood look so fine.&nbsp;</span></font></p></div></div>",
+      "created_at": "2024-03-15"
+    },
+    {
+      "id": 7,
+      "title": "Moving Service From One Place to Another",
+      "slug": "moving-service-from-one-place-to-another",
+      "category": "Home Move",
+      "category_id": "3",
+      "image": "/assets/uploads/media-uploader/young-beautiful-cleaner-woman-holding-bucket-with-products-pointing-camera-against-blue-backdrop-541643714922.png",
+      "author": "Admin",
+      "excerpt": "80 days around the world, we’ll find a pot of gold just sitting where the rainbow’s ending.",
+      "content": "<div style=\"text-align: justify;\"><p style=\"text-align: left;\"><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\">Barnaby The Bear’s my name, never call me Jack or James, I will sing my way to fame, Barnaby the Bear’s my name. Birds taught me to sing, when they took me to their king, first I had to fly, in the sky so high so high, so high so high so high, so — if you want to sing this way, think of what you’d like to say, add a tune and you will see, just how easy it can be. Treacle pudding, fish and chips, fizzy drinks and liquorice, flowers, rivers, sand and sea, snowflakes and the stars are free.</span></font></p><p style=\"text-align: left;\"><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\"><br></span></font></p><p style=\"text-align: left;\"><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\">Ulysses, Ulysses — Soaring through all the galaxies. In search of Earth, flying in to the night. Ulysses, Ulysses — Fighting evil and tyranny, with all his power, and with all of his might. Ulysses — no-one else can do the things you do. Ulysses — like a bolt of thunder from the blue. Ulysses — always fighting all the evil forces bringing peace and justice to all.</span></font></p><p style=\"text-align: left;\"><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\"><br></span></font></p><p style=\"text-align: left;\"><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\">Hey there where ya goin’, not exactly knowin’, who says you have to call just one place home. He’s goin’ everywhere, B.J. McKay and his best friend Bear. He just keeps on movin’, ladies keep improvin’, every day is better than the last. New dreams and better scenes, and best of all I don’t pay property tax. Rollin’ down to Dallas, who’s providin’ my palace, off to New Orleans or who knows where. Places new and ladies, too, I’m B.J. McKay and this is my best friend Bear.</span></font></p><p style=\"text-align: left;\"><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\"><br></span></font></p><p style=\"text-align: left;\"><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\">80 days around the world, we’ll find a pot of gold just sitting where the rainbow’s ending. Time — we’ll fight against the time, and we’ll fly on the white wings of the wind. 80 days around the world, no we won’t say a word before the ship is really back. Round, round, all around the world. Round, all around the world. Round, all around the world. Round, all around the world.</span></font></p><p style=\"text-align: left;\"><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\"><br></span></font></p><p style=\"text-align: left;\"><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\">I never spend much time in school but I taught ladies plenty. It’s true I hire my body out for pay, hey hey. I’ve gotten burned over Cheryl Tiegs, blown up for Raquel Welch. But when I end up in the hay it’s only hay, hey hey. I might jump an open drawbridge, or Tarzan from a vine. ’Cause I’m the unknown stuntman that makes Eastwood look so fine.&nbsp;</span></font></p></div>",
+      "created_at": "2024-03-15"
+    },
+    {
+      "id": 8,
+      "title": "Our Cool Painting Service Only For You",
+      "slug": "our-cool-painting-service-only-for-you",
+      "category": "Painting & Decor",
+      "category_id": "4",
+      "image": "/assets/uploads/media-uploader/young-beautiful-cleaner-woman-holding-bucket-with-products-pointing-camera-against-blue-backdrop-201643715291.png",
+      "author": "Admin",
+      "excerpt": "80 days around the world, we’ll find a pot of gold just sitting where the rainbow’s ending.",
+      "content": "<div style=\"text-align: justify;\"><p style=\"text-align: left;\"><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\">Barnaby The Bear’s my name, never call me Jack or James, I will sing my way to fame, Barnaby the Bear’s my name. Birds taught me to sing, when they took me to their king, first I had to fly, in the sky so high so high, so high so high so high, so — if you want to sing this way, think of what you’d like to say, add a tune and you will see, just how easy it can be. Treacle pudding, fish and chips, fizzy drinks and liquorice, flowers, rivers, sand and sea, snowflakes and the stars are free.</span></font></p><p style=\"text-align: left;\"><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\"><br></span></font></p><p style=\"text-align: left;\"><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\">Ulysses, Ulysses — Soaring through all the galaxies. In search of Earth, flying in to the night. Ulysses, Ulysses — Fighting evil and tyranny, with all his power, and with all of his might. Ulysses — no-one else can do the things you do. Ulysses — like a bolt of thunder from the blue. Ulysses — always fighting all the evil forces bringing peace and justice to all.</span></font></p><p style=\"text-align: left;\"><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\"><br></span></font></p><p style=\"text-align: left;\"><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\">Hey there where ya goin’, not exactly knowin’, who says you have to call just one place home. He’s goin’ everywhere, B.J. McKay and his best friend Bear. He just keeps on movin’, ladies keep improvin’, every day is better than the last. New dreams and better scenes, and best of all I don’t pay property tax. Rollin’ down to Dallas, who’s providin’ my palace, off to New Orleans or who knows where. Places new and ladies, too, I’m B.J. McKay and this is my best friend Bear.</span></font></p><p style=\"text-align: left;\"><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\"><br></span></font></p><p style=\"text-align: left;\"><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\">80 days around the world, we’ll find a pot of gold just sitting where the rainbow’s ending. Time — we’ll fight against the time, and we’ll fly on the white wings of the wind. 80 days around the world, no we won’t say a word before the ship is really back. Round, round, all around the world. Round, all around the world. Round, all around the world. Round, all around the world.</span></font></p><p style=\"text-align: left;\"><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\"><br></span></font></p><p style=\"text-align: left;\"><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\">I never spend much time in school but I taught ladies plenty. It’s true I hire my body out for pay, hey hey. I’ve gotten burned over Cheryl Tiegs, blown up for Raquel Welch. But when I end up in the hay it’s only hay, hey hey. I might jump an open drawbridge, or Tarzan from a vine. ’Cause I’m the unknown stuntman that makes Eastwood look so fine.&nbsp;</span></font></p></div>",
+      "created_at": "2024-03-15"
+    },
+    {
+      "id": 9,
+      "title": "Now Get Massage Service From Mr Mahmud",
+      "slug": "now-get-massage-service-from-mr-mahmud",
+      "category": "Salon & Spa",
+      "category_id": "5",
+      "image": "/assets/uploads/media-uploader/young-beautiful-cleaner-woman-holding-bucket-with-products-pointing-camera-against-blue-backdrop-491643715397.png",
+      "author": "Admin",
+      "excerpt": "80 days around the world, we’ll find a pot of gold just sitting where the rainbow’s ending.",
+      "content": "<div style=\"text-align: justify;\"><p style=\"text-align: left;\"><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\">Barnaby The Bear’s my name, never call me Jack or James, I will sing my way to fame, Barnaby the Bear’s my name. Birds taught me to sing, when they took me to their king, first I had to fly, in the sky so high so high, so high so high so high, so — if you want to sing this way, think of what you’d like to say, add a tune and you will see, just how easy it can be. Treacle pudding, fish and chips, fizzy drinks and liquorice, flowers, rivers, sand and sea, snowflakes and the stars are free.</span></font></p><p style=\"text-align: left;\"><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\"><br></span></font></p><p style=\"text-align: left;\"><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\">Ulysses, Ulysses — Soaring through all the galaxies. In search of Earth, flying in to the night. Ulysses, Ulysses — Fighting evil and tyranny, with all his power, and with all of his might. Ulysses — no-one else can do the things you do. Ulysses — like a bolt of thunder from the blue. Ulysses — always fighting all the evil forces bringing peace and justice to all.</span></font></p><p style=\"text-align: left;\"><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\"><br></span></font></p><p style=\"text-align: left;\"><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\">Hey there where ya goin’, not exactly knowin’, who says you have to call just one place home. He’s goin’ everywhere, B.J. McKay and his best friend Bear. He just keeps on movin’, ladies keep improvin’, every day is better than the last. New dreams and better scenes, and best of all I don’t pay property tax. Rollin’ down to Dallas, who’s providin’ my palace, off to New Orleans or who knows where. Places new and ladies, too, I’m B.J. McKay and this is my best friend Bear.</span></font></p><p style=\"text-align: left;\"><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\"><br></span></font></p><p style=\"text-align: left;\"><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\">80 days around the world, we’ll find a pot of gold just sitting where the rainbow’s ending. Time — we’ll fight against the time, and we’ll fly on the white wings of the wind. 80 days around the world, no we won’t say a word before the ship is really back. Round, round, all around the world. Round, all around the world. Round, all around the world. Round, all around the world.</span></font></p><p style=\"text-align: left;\"><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\"><br></span></font></p><p style=\"text-align: left;\"><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\">I never spend much time in school but I taught ladies plenty. It’s true I hire my body out for pay, hey hey. I’ve gotten burned over Cheryl Tiegs, blown up for Raquel Welch. But when I end up in the hay it’s only hay, hey hey. I might jump an open drawbridge, or Tarzan from a vine. ’Cause I’m the unknown stuntman that makes Eastwood look so fine.&nbsp;</span></font></p></div>",
+      "created_at": "2024-03-15"
+    },
+    {
+      "id": 10,
+      "title": "Hair Cutting Service At Reasonable Price",
+      "slug": "hair-cutting-service-at-reasonable-price",
+      "category": "Salon & Spa",
+      "category_id": "5",
+      "image": "/assets/uploads/media-uploader/young-beautiful-cleaner-woman-holding-bucket-with-products-pointing-camera-against-blue-backdrop-521643715484.png",
+      "author": "Admin",
+      "excerpt": "80 days around the world, we’ll find a pot of gold just sitting where the rainbow’s ending.",
+      "content": "<div style=\"text-align: justify;\"><p style=\"text-align: left;\"><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\">Barnaby The Bear’s my name, never call me Jack or James, I will sing my way to fame, Barnaby the Bear’s my name. Birds taught me to sing, when they took me to their king, first I had to fly, in the sky so high so high, so high so high so high, so — if you want to sing this way, think of what you’d like to say, add a tune and you will see, just how easy it can be. Treacle pudding, fish and chips, fizzy drinks and liquorice, flowers, rivers, sand and sea, snowflakes and the stars are free.</span></font></p><p style=\"text-align: left;\"><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\"><br></span></font></p><p style=\"text-align: left;\"><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\">Ulysses, Ulysses — Soaring through all the galaxies. In search of Earth, flying in to the night. Ulysses, Ulysses — Fighting evil and tyranny, with all his power, and with all of his might. Ulysses — no-one else can do the things you do. Ulysses — like a bolt of thunder from the blue. Ulysses — always fighting all the evil forces bringing peace and justice to all.</span></font></p><p style=\"text-align: left;\"><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\"><br></span></font></p><p style=\"text-align: left;\"><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\">Hey there where ya goin’, not exactly knowin’, who says you have to call just one place home. He’s goin’ everywhere, B.J. McKay and his best friend Bear. He just keeps on movin’, ladies keep improvin’, every day is better than the last. New dreams and better scenes, and best of all I don’t pay property tax. Rollin’ down to Dallas, who’s providin’ my palace, off to New Orleans or who knows where. Places new and ladies, too, I’m B.J. McKay and this is my best friend Bear.</span></font></p><p style=\"text-align: left;\"><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\"><br></span></font></p><p style=\"text-align: left;\"><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\">80 days around the world, we’ll find a pot of gold just sitting where the rainbow’s ending. Time — we’ll fight against the time, and we’ll fly on the white wings of the wind. 80 days around the world, no we won’t say a word before the ship is really back. Round, round, all around the world. Round, all around the world. Round, all around the world. Round, all around the world.</span></font></p><p style=\"text-align: left;\"><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\"><br></span></font></p><p style=\"text-align: left;\"><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\">I never spend much time in school but I taught ladies plenty. It’s true I hire my body out for pay, hey hey. I’ve gotten burned over Cheryl Tiegs, blown up for Raquel Welch. But when I end up in the hay it’s only hay, hey hey. I might jump an open drawbridge, or Tarzan from a vine. ’Cause I’m the unknown stuntman that makes Eastwood look so fine.&nbsp;</span></font></p></div>",
+      "created_at": "2024-03-15"
+    },
+    {
+      "id": 11,
+      "title": "Car Cleaning Service From Best Cleaner",
+      "slug": "car-cleaning-service-from-best-cleaner",
+      "category": "Cleaning Services",
+      "category_id": "2",
+      "image": "/assets/uploads/media-uploader/young-beautiful-cleaner-woman-holding-bucket-with-products-pointing-camera-against-blue-backdrop-71643715584.png",
+      "author": "Admin",
+      "excerpt": "80 days around the world, we’ll find a pot of gold just sitting where the rainbow’s ending.",
+      "content": "<div style=\"text-align: justify;\"><p style=\"text-align: left;\"><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\">Barnaby The Bear’s my name, never call me Jack or James, I will sing my way to fame, Barnaby the Bear’s my name. Birds taught me to sing, when they took me to their king, first I had to fly, in the sky so high so high, so high so high so high, so — if you want to sing this way, think of what you’d like to say, add a tune and you will see, just how easy it can be. Treacle pudding, fish and chips, fizzy drinks and liquorice, flowers, rivers, sand and sea, snowflakes and the stars are free.</span></font></p><p style=\"text-align: left;\"><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\"><br></span></font></p><p style=\"text-align: left;\"><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\">Ulysses, Ulysses — Soaring through all the galaxies. In search of Earth, flying in to the night. Ulysses, Ulysses — Fighting evil and tyranny, with all his power, and with all of his might. Ulysses — no-one else can do the things you do. Ulysses — like a bolt of thunder from the blue. Ulysses — always fighting all the evil forces bringing peace and justice to all.</span></font></p><p style=\"text-align: left;\"><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\"><br></span></font></p><p style=\"text-align: left;\"><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\">Hey there where ya goin’, not exactly knowin’, who says you have to call just one place home. He’s goin’ everywhere, B.J. McKay and his best friend Bear. He just keeps on movin’, ladies keep improvin’, every day is better than the last. New dreams and better scenes, and best of all I don’t pay property tax. Rollin’ down to Dallas, who’s providin’ my palace, off to New Orleans or who knows where. Places new and ladies, too, I’m B.J. McKay and this is my best friend Bear.</span></font></p><p style=\"text-align: left;\"><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\"><br></span></font></p><p style=\"text-align: left;\"><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\">80 days around the world, we’ll find a pot of gold just sitting where the rainbow’s ending. Time — we’ll fight against the time, and we’ll fly on the white wings of the wind. 80 days around the world, no we won’t say a word before the ship is really back. Round, round, all around the world. Round, all around the world. Round, all around the world. Round, all around the world.</span></font></p><p style=\"text-align: left;\"><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\"><br></span></font></p><p style=\"text-align: left;\"><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\">I never spend much time in school but I taught ladies plenty. It’s true I hire my body out for pay, hey hey. I’ve gotten burned over Cheryl Tiegs, blown up for Raquel Welch. But when I end up in the hay it’s only hay, hey hey. I might jump an open drawbridge, or Tarzan from a vine. ’Cause I’m the unknown stuntman that makes Eastwood look so fine.&nbsp;</span></font></p></div>",
+      "created_at": "2024-03-15"
+    },
+    {
+      "id": 12,
+      "title": "Get Furniture Cleaning Service At Reasonable Price",
+      "slug": "get-furniture-cleaning-service-at-reasonable-price",
+      "category": "Cleaning Services",
+      "category_id": "2",
+      "image": "/assets/uploads/media-uploader/young-beautiful-cleaner-woman-holding-bucket-with-products-pointing-camera-against-blue-backdrop-91643715796.png",
+      "author": "Admin",
+      "excerpt": "80 days around the world, we’ll find a pot of gold just sitting where the rainbow’s ending.",
+      "content": "<div style=\"text-align: justify;\"><p style=\"text-align: left;\"><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\">Barnaby The Bear’s my name, never call me Jack or James, I will sing my way to fame, Barnaby the Bear’s my name. Birds taught me to sing, when they took me to their king, first I had to fly, in the sky so high so high, so high so high so high, so — if you want to sing this way, think of what you’d like to say, add a tune and you will see, just how easy it can be. Treacle pudding, fish and chips, fizzy drinks and liquorice, flowers, rivers, sand and sea, snowflakes and the stars are free.</span></font></p><p style=\"text-align: left;\"><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\"><br></span></font></p><p style=\"text-align: left;\"><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\">Ulysses, Ulysses — Soaring through all the galaxies. In search of Earth, flying in to the night. Ulysses, Ulysses — Fighting evil and tyranny, with all his power, and with all of his might. Ulysses — no-one else can do the things you do. Ulysses — like a bolt of thunder from the blue. Ulysses — always fighting all the evil forces bringing peace and justice to all.</span></font></p><p style=\"text-align: left;\"><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\"><br></span></font></p><p style=\"text-align: left;\"><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\">Hey there where ya goin’, not exactly knowin’, who says you have to call just one place home. He’s goin’ everywhere, B.J. McKay and his best friend Bear. He just keeps on movin’, ladies keep improvin’, every day is better than the last. New dreams and better scenes, and best of all I don’t pay property tax. Rollin’ down to Dallas, who’s providin’ my palace, off to New Orleans or who knows where. Places new and ladies, too, I’m B.J. McKay and this is my best friend Bear.</span></font></p><p style=\"text-align: left;\"><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\"><br></span></font></p><p style=\"text-align: left;\"><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\">80 days around the world, we’ll find a pot of gold just sitting where the rainbow’s ending. Time — we’ll fight against the time, and we’ll fly on the white wings of the wind. 80 days around the world, no we won’t say a word before the ship is really back. Round, round, all around the world. Round, all around the world. Round, all around the world. Round, all around the world.</span></font></p><p style=\"text-align: left;\"><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\"><br></span></font></p><p style=\"text-align: left;\"><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\">I never spend much time in school but I taught ladies plenty. It’s true I hire my body out for pay, hey hey. I’ve gotten burned over Cheryl Tiegs, blown up for Raquel Welch. But when I end up in the hay it’s only hay, hey hey. I might jump an open drawbridge, or Tarzan from a vine. ’Cause I’m the unknown stuntman that makes Eastwood look so fine.&nbsp;</span></font></p></div>",
+      "created_at": "2024-03-15"
+    },
+    {
+      "id": 13,
+      "title": "Get Our Electrice Service For Home and Office",
+      "slug": "get-our-electrice-service-for-home-and-office",
+      "category": "Electric & AC Repair",
+      "category_id": "1",
+      "image": "/assets/uploads/media-uploader/young-beautiful-cleaner-woman-holding-bucket-with-products-pointing-camera-against-blue-backdrop-561643711145.png",
+      "author": "Admin",
+      "excerpt": "80 days around the world, we’ll find a pot of gold just sitting where the rainbow’s ending.",
+      "content": "<p><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\">Barnaby The Bear’s my name, never call me Jack or James, I will sing my way to fame, Barnaby the Bear’s my name. Birds taught me to sing, when they took me to their king, first I had to fly, in the sky so high so high, so high so high so high, so — if you want to sing this way, think of what you’d like to say, add a tune and you will see, just how easy it can be. Treacle pudding, fish and chips, fizzy drinks and liquorice, flowers, rivers, sand and sea, snowflakes and the stars are free.</span></font></p><p><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\"><br></span></font></p><p><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\">Ulysses, Ulysses — Soaring through all the galaxies. In search of Earth, flying in to the night. Ulysses, Ulysses — Fighting evil and tyranny, with all his power, and with all of his might. Ulysses — no-one else can do the things you do. Ulysses — like a bolt of thunder from the blue. Ulysses — always fighting all the evil forces bringing peace and justice to all.</span></font></p><p><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\"><br></span></font></p><p><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\">Hey there where ya goin’, not exactly knowin’, who says you have to call just one place home. He’s goin’ everywhere, B.J. McKay and his best friend Bear. He just keeps on movin’, ladies keep improvin’, every day is better than the last. New dreams and better scenes, and best of all I don’t pay property tax. Rollin’ down to Dallas, who’s providin’ my palace, off to New Orleans or who knows where. Places new and ladies, too, I’m B.J. McKay and this is my best friend Bear.</span></font></p><p><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\"><br></span></font></p><p><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\">80 days around the world, we’ll find a pot of gold just sitting where the rainbow’s ending. Time — we’ll fight against the time, and we’ll fly on the white wings of the wind. 80 days around the world, no we won’t say a word before the ship is really back. Round, round, all around the world. Round, all around the world. Round, all around the world. Round, all around the world.</span></font></p><p><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\"><br></span></font></p><p><font color=\"#666666\" face=\"Roboto, sans-serif\"><span style=\"font-size: 16px;\">I never spend much time in school but I taught ladies plenty. It’s true I hire my body out for pay, hey hey. I’ve gotten burned over Cheryl Tiegs, blown up for Raquel Welch. But when I end up in the hay it’s only hay, hey hey. I might jump an open drawbridge, or Tarzan from a vine. ’Cause I’m the unknown stuntman that makes Eastwood look so fine.&nbsp;</span></font></p>",
+      "created_at": "2024-03-15"
+    }
+  ],
+  "contact_messages": [
+    {
+      "id": 2,
+      "name": "Manuel",
+      "email": "root@readygrocery.com",
+      "phone": "0000000",
+      "subject": "Subject",
+      "message": "Hello",
+      "status": "unread",
+      "created_at": "2026-10-26T18:13:41.554Z"
+    },
+    {
+      "id": 1,
+      "name": "Chinedu Eze",
+      "email": "chinedu.eze@example.com",
+      "phone": "+234 803 123 4567",
+      "subject": "Service Inquiry for Ikeja Lagos",
+      "message": "Hello Qixer Admin, I would like to inquire about commercial cleaning contracts for our office complex in Ikeja.",
+      "status": "unread",
+      "created_at": "2026-10-26T17:50:49.093Z"
+    }
+  ]
+}

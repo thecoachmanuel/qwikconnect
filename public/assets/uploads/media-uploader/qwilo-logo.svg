@@ -1,0 +1,22 @@
+
+  <svg xmlns="http://www.w3.org/2000/svg" width="270" height="44" viewBox="0 0 270 44">
+    <defs>
+      <mask id="cut-light-270-44">
+        <rect width="100%" height="100%" fill="white" />
+        <rect x="42" y="19.5" width="270" height="1.7" fill="black" />
+        <rect x="42" y="23.5" width="270" height="1.7" fill="black" />
+      </mask>
+    </defs>
+    <image href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACkAAAApCAYAAACoYAD2AAAACXBIWXMAAAsSAAALEgHS3X78AAAC6UlEQVRYhc2Z7W3bMBCGPYJ/GhAJeIRskG5Qb9BuUPmY/E42aDZwNqgn0GWDZoNmA2WDBHckJSqWxCNFGSVAJDAs6uF7x/ugN5vMUeH9jULzS6H5o9CgRvMxnPCPPlcID6o53m6uNbZYb+mlBHAJZSITWo1w2mG9XxuuTYczF5PULwqr0RzylDMCWHgoAAi/14DTQ1WRLJULeFobUPegf5NBrwmoc0AVmqdrA+oAVAB49y158ca8azTPCuGRDhmtQf/TZlUDrxmgT5OAJHXKKVYNvBBQbOM7rPe0iTTQiXWdEiLlKoSf4eYqND8oEtgMQ9kHTpSNwljIGUqo7KjZnYqtDPD+JnimC1GqgVc2MZvaTo1wpulhOSnIXeCQrmIASH+DTT3Hsgcp700oBSWLDBaR+KI3cQdoD8xwtzMjDC/sp/b52Xd2m7cvjR8S/yIP6FXNHUpgvQqhdpBQS09bEEPFCk4N3nBETS8Omfoc88VuUeeDm0JDC0ITf5FoI19kKPLJgZ+UgTzEINmX46aGR96MyyClAKUZjl1NGq9shplJWZmjCGR3aBjSqvofQkJv7sKQlST8EWQs+nsTU6gqDakEPsnxOHa6fbL31UxZSBOtXcWR34cdiqklIXUkHXfBXFjosoIEG5ZpS0bl4q7E1eyOBMne52raVHZ3l1hgD+oDSXrK6ugWNHqqMW+Dh9yh+LgGqOKbkAvf6wpmriVs9V+P7e4sBc3J31tr4i8K9lX72PcvPpSq6RZvSRGpqpXtgQY+6GOufW/fH9lbupkGT9yMBbCsTnP8Hl7v2abreGt7oLEDYkOZjSxTvRWcpkHjpdviucN67xScbf4mM1xiR5c8lSv3ZDcl0E6quSao8gWL0GKz/rkWqCoJud4FFpxTQp443PElVDFVoRW3Dr7ASBl8E7Hg9KvGvFEm8fF1Nh035n1R0+eqoVoCrFxvNHWZwLH5S4FDzxT/lcL+OkH3kv1MveHwz43BfQKAEc1Vx9igZgAAAABJRU5ErkJggg==" x="0" y="1" width="42" height="42" />
+    <g mask="url(#cut-light-270-44)">
+      <text x="46" y="32.5"
+            font-family="Arial, Helvetica, sans-serif"
+            font-size="28"
+            font-weight="900"
+            font-style="italic"
+            letter-spacing="0.35px">
+        <tspan fill="#110b27">QWIK</tspan><tspan fill="#1dbf73">CONNECT</tspan>
+      </text>
+    </g>
+  </svg>
+  

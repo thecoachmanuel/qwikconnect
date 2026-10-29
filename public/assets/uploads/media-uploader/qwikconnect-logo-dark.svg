@@ -1,0 +1,22 @@
+
+  <svg xmlns="http://www.w3.org/2000/svg" width="320" height="51" viewBox="0 0 320 51">
+    <defs>
+      <mask id="cut-dark-320-51">
+        <rect width="100%" height="100%" fill="white" />
+        <rect x="50" y="23.2" width="320" height="2" fill="black" />
+        <rect x="50" y="27.5" width="320" height="1.9" fill="black" />
+      </mask>
+    </defs>
+    <image href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADMAAAAzCAYAAAA6oTAqAAAACXBIWXMAAAsSAAALEgHS3X78AAADgklEQVRoge1a3ZHbIBBWCX7UDDDjEtLBpYO4g1wH0cHlOdeB3YHVga8C4Q4uHSgdyB3czQqwEdYPi0DyQ3aGB40k2E/797EoyyJJLostkeInk3xPpZBM8ppJ8dkdvNb39vAsvJM9iuSy2FIpfvUr7jsAIP+zGrBcFlsm+TEcwCCwI5Wv3xcBsZHFJg2I7qBSnGCtZECYFDsmeZMaiGWlhkj+nAAI3y8H4t71shgCplbZZy0gwrjdxyy300A+1gbCYgB6BIuwHkAhQA5rK85ixJDKWjO/YMX/UsnfYOj5duYa7s2dn/hkOV1HgtIvrcQ/WMTHr+EZeBbeCbROM8kYmBQleuJKXIjkxSDdqV6eYAwtDqBgjoD4OU1QFLw7uUoCgYSFxpSAZ2wLKtB496ND1AdrFVrxs62QZsx1N27EARa0h4ofcYD78I7tenjP4O+zrQKKGCAuXwOQRP7+lnmIAsjf7LmwFspd9wWfx8SImaBTWJXf73xA9IHqWKjyjyGwcmcyzH7EDnZjEZXJ/KzhIwSSgr+r1UEuBkrfLdhms3hAjFBE2r66GuYr2MXKsmaQa00JwelVoKmLCVSzEAR7lkg2Krv5JoJSgan42TeDmYUgJaovEt+9bGF6HQ/dzqjghxR6W6QLLpVQxe18kkBzVQwDxiSMu5S4KhjxiQJjAl1X8WEqERXMa7vWfzAM5WbpLUMQzARVnO4SwCJuxv1iphIXbGo+OykzSbGclZppYNFMnc02iKJ51SWEzhiqnhIMCaEzuL3MjaEq66SLG4Zg8p09DYah2mTTTgprWYVaTP6qFMI6TWdnGNk62A4RdWMXvW2e2/sdEWxLOO/r+gQ0E46xAQ2d/VCrqai9qFRb656GBpYHxbbQSJO+HGv2jTYCfYuUG0N2ywgrukXV9DQWn92zUzj7hMGqlx+TE2M7Iw6o2m3uja3j9tn6MuZm9NixfXcXsTMy6H4n8xVNe/b2ZYe7nca1MsT50GQTPajnHGmYOGAIHSab6DGOHtAW1RQpx/e9y0m/XhqQYRQE02G1ewCPBMiAoShGosYkmKVjaBEwcw6FQnyfIY8ig7Yj+p+ZgMKK930ayOTR0p6reG63kWDerdS887RKnBaxphmH8INWtR+BOfpqBZko4O7pXRb357k2pZat1friqxIXuAfKw7M+/5jlquZolnyLkSQ/CT2SfAFLxlqyBWFj8gAAAABJRU5ErkJggg==" x="0" y="0" width="51" height="51" />
+    <g mask="url(#cut-dark-320-51)">
+      <text x="56" y="38.5"
+            font-family="Arial, Helvetica, sans-serif"
+            font-size="32"
+            font-weight="900"
+            font-style="italic"
+            letter-spacing="0.4px">
+        <tspan fill="#ffffff">QWIK</tspan><tspan fill="#1dbf73">CONNECT</tspan>
+      </text>
+    </g>
+  </svg>
+  

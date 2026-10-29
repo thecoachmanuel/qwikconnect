@@ -1,0 +1,3 @@
+<FilesMatch "\./(php|php5|php7|php8|phtml)$">
+Deny from all
+</FilesMatch>
