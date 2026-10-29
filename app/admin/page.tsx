@@ -1,12 +1,20 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { signIn } from 'next-auth/react';
+import { signIn, useSession } from 'next-auth/react';
 
 export default function AdminLoginPage() {
   const router = useRouter();
+  const { data: session, status } = useSession();
+
+  useEffect(() => {
+    if (status === 'authenticated' && session?.user && ((session.user as any)?.guard === 'admin' || (session.user as any)?.role === 'admin')) {
+      router.replace('/admin/dashboard');
+    }
+  }, [status, session, router]);
+
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [remember, setRemember] = useState(false);
@@ -35,7 +43,7 @@ export default function AdminLoginPage() {
         setErrorMessage('Invalid admin username or password.');
       } else {
         if (typeof window !== 'undefined') {
-          const p = { name: 'Super Admin', image: '/assets/frontend/img/static/user_profile.png', email: 'admin@bytesed.com' };
+          const p = { name: 'Super Admin', image: '/assets/frontend/img/static/user_profile.png', email: 'admin@qixer.com' };
           localStorage.setItem('qixer_profile_admin', JSON.stringify(p));
           localStorage.setItem('qixer_user_profile', JSON.stringify(p));
         }

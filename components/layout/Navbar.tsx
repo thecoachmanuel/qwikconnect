@@ -245,6 +245,16 @@ export default function Navbar({ sessionUser, siteLogo, siteTitle, settings }: N
     return () => clearInterval(interval);
   }, [isLoggedIn, effectiveRole, effectiveUserId]);
 
+  const handleLogout = async () => {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('qixer_user_profile');
+      localStorage.removeItem('qixer_profile_seller');
+      localStorage.removeItem('qixer_profile_buyer');
+      localStorage.removeItem('qixer_profile_admin');
+    }
+    await signOut({ callbackUrl: '/' });
+  };
+
   // Mark all notifications as read
   const handleMarkAllRead = async () => {
     setUnreadCount(0);
@@ -887,7 +897,7 @@ export default function Navbar({ sessionUser, siteLogo, siteTitle, settings }: N
                         </li>
                         <li className="list" style={{ padding: '8px 18px', borderTop: '1px solid #f1f5f9', marginTop: 4 }}>
                           <button
-                            onClick={() => signOut({ callbackUrl: '/' })}
+                            onClick={handleLogout}
                             style={{
                               background: 'none',
                               border: 'none',

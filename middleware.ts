@@ -4,10 +4,34 @@ import { getToken } from 'next-auth/jwt';
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const token = await getToken({
+  const secret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET || 'OScbwvMKfIsShLSGqiTvSvXIHixsCCHo';
+
+  const isSecure =
+    request.nextUrl.protocol === 'https:' ||
+    request.headers.get('x-forwarded-proto') === 'https';
+
+  // Resilient token retrieval for Vercel deployment (supports both secure HTTPS and HTTP proxy cookies)
+  let token = await getToken({
     req: request,
-    secret: process.env.NEXTAUTH_SECRET,
+    secret,
+    secureCookie: isSecure,
   });
+
+  if (!token) {
+    token = await getToken({
+      req: request,
+      secret,
+      secureCookie: !isSecure,
+    });
+  }
+
+  if (!token) {
+    token = await getToken({
+      req: request,
+      secret,
+      cookieName: isSecure ? '__Secure-authjs.session-token' : 'authjs.session-token',
+    });
+  }
 
   // Guard for logged-in users visiting login & register pages
   if (
@@ -16,10 +40,10 @@ export async function middleware(request: NextRequest) {
     pathname === '/seller/register'
   ) {
     if (token) {
-      if (token.guard === 'admin') {
+      if (token.guard === 'admin' || token.role === 'admin') {
         return NextResponse.redirect(new URL('/admin/dashboard', request.url));
       }
-      if (token.user_type === 2 || token.user_type === 0) {
+      if (token.user_type === 2 || token.user_type === 0 || token.role === 'seller') {
         return NextResponse.redirect(new URL('/seller/dashboard', request.url));
       }
       return NextResponse.redirect(new URL('/buyer/dashboard', request.url));
@@ -38,7 +62,7 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(loginUrl);
     }
 
-    if (token.user_type !== 2 && token.user_type !== 0) {
+    if (token.user_type !== 2 && token.user_type !== 0 && token.role !== 'seller') {
       // Buyer trying to access seller routes
       return NextResponse.redirect(new URL('/buyer/dashboard', request.url));
     }
@@ -52,7 +76,7 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(loginUrl);
     }
 
-    if (token.user_type !== 1) {
+    if (token.user_type !== 1 && token.role !== 'buyer') {
       // Seller trying to access buyer routes
       return NextResponse.redirect(new URL('/seller/dashboard', request.url));
     }
@@ -60,7 +84,7 @@ export async function middleware(request: NextRequest) {
 
   // Guard for /admin routes (except login pages)
   if (pathname.startsWith('/admin') && pathname !== '/admin' && pathname !== '/admin/login') {
-    if (!token || token.guard !== 'admin') {
+    if (!token || (token.guard !== 'admin' && token.role !== 'admin')) {
       return NextResponse.redirect(new URL('/admin', request.url));
     }
   }

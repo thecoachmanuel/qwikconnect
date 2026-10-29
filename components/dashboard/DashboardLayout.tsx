@@ -237,6 +237,17 @@ export default function DashboardLayout({
     return () => { document.body.style.overflow = ''; };
   }, [isMobileOpen]);
 
+  const handleLogout = async () => {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('qixer_user_profile');
+      localStorage.removeItem('qixer_profile_seller');
+      localStorage.removeItem('qixer_profile_buyer');
+      localStorage.removeItem('qixer_profile_admin');
+    }
+    const redirectUrl = activeRole === 'admin' ? '/admin' : '/user/login';
+    await signOut({ callbackUrl: redirectUrl });
+  };
+
   const sellerNav = [
     { label: 'Dashboard', href: '/seller/dashboard', icon: 'las la-chart-bar' },
     { label: 'My Profile', href: '/seller/profile', icon: 'las la-user-alt' },
@@ -441,7 +452,7 @@ export default function DashboardLayout({
             })}
           </ul>
 
-          <button className="db-logout-btn" onClick={() => signOut({ callbackUrl: '/' })}>
+          <button className="db-logout-btn" onClick={handleLogout}>
             <i className="las la-sign-out-alt" />
             <span>Logout</span>
           </button>
@@ -580,7 +591,7 @@ export default function DashboardLayout({
                       <i className="las la-chart-bar" style={{ fontSize: '16px' }} /> Dashboard
                     </Link>
                     <div className="db-dd-divider" />
-                    <button className="db-dd-item db-danger" onClick={() => signOut({ callbackUrl: '/' })}>
+                    <button className="db-dd-item db-danger" onClick={handleLogout}>
                       <i className="las la-sign-out-alt" style={{ fontSize: '16px' }} /> Logout
                     </button>
                   </div>
