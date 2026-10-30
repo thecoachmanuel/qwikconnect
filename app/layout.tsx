@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import './globals.css';
 
 import AuthProvider from '@/components/providers/AuthProvider';
@@ -6,6 +6,13 @@ import AuthProvider from '@/components/providers/AuthProvider';
 export const metadata: Metadata = {
   title: 'QwikConnect - On Demand Service Marketplace and Service Finder',
   description: 'Find top rated local services and hire professionals with QwikConnect.',
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 export default function RootLayout({

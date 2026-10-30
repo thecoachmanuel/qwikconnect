@@ -90,7 +90,7 @@ export default function Navbar({ sessionUser, siteLogo, siteTitle, settings }: N
           });
         }
       }
-    } catch (e) {}
+    } catch (e) { }
   }, [sessionUser]);
 
   // Sync if session arrives or updates
@@ -120,27 +120,27 @@ export default function Navbar({ sessionUser, siteLogo, siteTitle, settings }: N
     userObj?.guard === 'admin' || userObj?.role === 'admin'
       ? 'admin'
       : (userObj?.user_type === 2 || userObj?.user_type === 0)
-      ? 'seller'
-      : 'buyer';
+        ? 'seller'
+        : 'buyer';
 
   const effectiveUserId = userObj?.id
     ? parseInt(userObj.id, 10)
     : effectiveRole === 'seller'
-    ? 2
-    : effectiveRole === 'buyer'
-    ? 4
-    : undefined;
+      ? 2
+      : effectiveRole === 'buyer'
+        ? 4
+        : undefined;
 
   const currentDisplayName =
     profile.name && !isGenericName(profile.name)
       ? profile.name
       : activeUser?.name && !isGenericName(activeUser.name)
-      ? activeUser.name
-      : effectiveRole === 'admin'
-      ? 'Super Admin'
-      : effectiveRole === 'seller'
-      ? 'Chioma Adebayo'
-      : 'Emma Watson';
+        ? activeUser.name
+        : effectiveRole === 'admin'
+          ? 'Super Admin'
+          : effectiveRole === 'seller'
+            ? 'Chioma Adebayo'
+            : 'Emma Watson';
 
   const currentDisplayImage =
     (profile.image && !isGenericImage(profile.image) ? profile.image : null) ||
@@ -175,12 +175,12 @@ export default function Navbar({ sessionUser, siteLogo, siteTitle, settings }: N
                 } else {
                   localStorage.setItem('qixer_profile_buyer', JSON.stringify(next));
                 }
-              } catch (e) {}
+              } catch (e) { }
               return next;
             });
           }
         }
-      } catch (e) {}
+      } catch (e) { }
     };
 
     if (mounted && isLoggedIn) {
@@ -204,7 +204,7 @@ export default function Navbar({ sessionUser, siteLogo, siteTitle, settings }: N
             }));
           }
         }
-      } catch (e) {}
+      } catch (e) { }
       fetchLiveProfile();
     };
 
@@ -239,7 +239,7 @@ export default function Navbar({ sessionUser, siteLogo, siteTitle, settings }: N
           setUnreadCount(data.unread_count || 0);
         }
       }
-    } catch (e) {}
+    } catch (e) { }
   };
 
   useEffect(() => {
@@ -283,7 +283,7 @@ export default function Navbar({ sessionUser, siteLogo, siteTitle, settings }: N
           user_id: effectiveRole === 'admin' ? undefined : effectiveUserId,
         }),
       });
-    } catch (e) {}
+    } catch (e) { }
   };
 
   // Mark single notification as read and close dropdown
@@ -303,7 +303,7 @@ export default function Navbar({ sessionUser, siteLogo, siteTitle, settings }: N
         keepalive: true,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'mark_read', id: notif.id, role: effectiveRole }),
-      }).catch(() => {});
+      }).catch(() => { });
     }
   };
 
@@ -393,41 +393,41 @@ export default function Navbar({ sessionUser, siteLogo, siteTitle, settings }: N
         style={
           isMobile
             ? {
-                position: 'fixed',
-                top: '70px',
-                left: '12px',
-                right: '12px',
-                width: 'auto',
-                maxWidth: '420px',
-                margin: '0 auto',
-                transform: 'none',
-                background: '#ffffff',
-                borderRadius: '14px',
-                boxShadow: '0 15px 45px rgba(0,0,0,0.25)',
-                border: '1px solid #e2e8f0',
-                zIndex: 999999,
-                overflow: 'hidden',
-                animation: 'navDdFade .15s ease',
-                display: 'flex',
-                flexDirection: 'column',
-                maxHeight: 'calc(100vh - 90px)',
-              }
+              position: 'fixed',
+              top: '70px',
+              left: '12px',
+              right: '12px',
+              width: 'auto',
+              maxWidth: '420px',
+              margin: '0 auto',
+              transform: 'none',
+              background: '#ffffff',
+              borderRadius: '14px',
+              boxShadow: '0 15px 45px rgba(0,0,0,0.25)',
+              border: '1px solid #e2e8f0',
+              zIndex: 999999,
+              overflow: 'hidden',
+              animation: 'navDdFade .15s ease',
+              display: 'flex',
+              flexDirection: 'column',
+              maxHeight: 'calc(100vh - 90px)',
+            }
             : {
-                position: 'absolute',
-                top: 'calc(100% + 10px)',
-                right: 0,
-                width: '340px',
-                maxWidth: 'calc(100vw - 32px)',
-                background: '#ffffff',
-                borderRadius: '12px',
-                boxShadow: '0 12px 35px rgba(0,0,0,0.15)',
-                border: '1px solid #e2e8f0',
-                zIndex: 99999,
-                overflow: 'hidden',
-                animation: 'navDdFade .15s ease',
-                display: 'flex',
-                flexDirection: 'column',
-              }
+              position: 'absolute',
+              top: 'calc(100% + 10px)',
+              right: 0,
+              width: '340px',
+              maxWidth: 'calc(100vw - 32px)',
+              background: '#ffffff',
+              borderRadius: '12px',
+              boxShadow: '0 12px 35px rgba(0,0,0,0.15)',
+              border: '1px solid #e2e8f0',
+              zIndex: 99999,
+              overflow: 'hidden',
+              animation: 'navDdFade .15s ease',
+              display: 'flex',
+              flexDirection: 'column',
+            }
         }
       >
         {/* Header matching PHP notification-title */}
@@ -553,18 +553,18 @@ export default function Navbar({ sessionUser, siteLogo, siteTitle, settings }: N
                         notif.type === 'order'
                           ? '#dcfce7'
                           : notif.type === 'ticket'
-                          ? '#e0e7ff'
-                          : notif.type === 'dispute'
-                          ? '#fee2e2'
-                          : '#f1f5f9',
+                            ? '#e0e7ff'
+                            : notif.type === 'dispute'
+                              ? '#fee2e2'
+                              : '#f1f5f9',
                       color:
                         notif.type === 'order'
                           ? '#16a34a'
                           : notif.type === 'ticket'
-                          ? '#4f46e5'
-                          : notif.type === 'dispute'
-                          ? '#dc2626'
-                          : '#64748b',
+                            ? '#4f46e5'
+                            : notif.type === 'dispute'
+                              ? '#dc2626'
+                              : '#64748b',
                     }}
                   >
                     <i className={notif.icon || (notif.type === 'order' ? 'las la-check-circle' : 'las la-info-circle')} />
@@ -663,37 +663,37 @@ export default function Navbar({ sessionUser, siteLogo, siteTitle, settings }: N
         style={
           isMobile
             ? {
-                position: 'fixed',
-                top: '68px',
-                right: '12px',
-                width: 'calc(100vw - 24px)',
-                maxWidth: '300px',
-                background: '#ffffff',
-                borderRadius: '14px',
-                boxShadow: '0 15px 45px rgba(0,0,0,0.25)',
-                border: '1px solid #e2e8f0',
-                zIndex: 999999,
-                overflow: 'hidden',
-                animation: 'navDdFade .15s ease',
-                display: 'flex',
-                flexDirection: 'column',
-              }
+              position: 'fixed',
+              top: '68px',
+              right: '12px',
+              width: 'calc(100vw - 24px)',
+              maxWidth: '300px',
+              background: '#ffffff',
+              borderRadius: '14px',
+              boxShadow: '0 15px 45px rgba(0,0,0,0.25)',
+              border: '1px solid #e2e8f0',
+              zIndex: 999999,
+              overflow: 'hidden',
+              animation: 'navDdFade .15s ease',
+              display: 'flex',
+              flexDirection: 'column',
+            }
             : {
-                display: 'block',
-                position: 'absolute',
-                top: 'calc(100% + 8px)',
-                right: 0,
-                backgroundColor: '#fff',
-                boxShadow: '0 8px 25px rgba(0,0,0,0.12)',
-                borderRadius: '8px',
-                padding: '8px 0',
-                minWidth: '185px',
-                zIndex: 99999,
-                listStyle: 'none',
-                margin: 0,
-                border: '1px solid #f1f5f9',
-                animation: 'navDdFade .15s ease',
-              }
+              display: 'block',
+              position: 'absolute',
+              top: 'calc(100% + 8px)',
+              right: 0,
+              backgroundColor: '#fff',
+              boxShadow: '0 8px 25px rgba(0,0,0,0.12)',
+              borderRadius: '8px',
+              padding: '8px 0',
+              minWidth: '185px',
+              zIndex: 99999,
+              listStyle: 'none',
+              margin: 0,
+              border: '1px solid #f1f5f9',
+              animation: 'navDdFade .15s ease',
+            }
         }
       >
         {isLoggedIn ? (
@@ -960,15 +960,16 @@ export default function Navbar({ sessionUser, siteLogo, siteTitle, settings }: N
         >
           {/* Mobile Header Brand & Controls */}
           <div className="responsive-mobile-menu">
-            <div className="logo-wrapper">
-              <Link href="/" className="logo" style={{ display: 'inline-flex', alignItems: 'center' }}>
+            <div className="logo-wrapper" style={{ flex: '1 1 auto', minWidth: 0, overflow: 'hidden' }}>
+              <Link href="/" className="logo" style={{ display: 'inline-flex', alignItems: 'center', minWidth: 0, maxWidth: '100%' }}>
                 {siteLogo ? (
                   <img
                     src={siteLogo}
                     alt={siteTitle || "QwikConnect Logo"}
+                    className="navbar-brand-logo-img"
                     style={{
-                      maxHeight: isScrolled ? '46px' : '52px',
-                      maxWidth: '280px',
+                      maxHeight: isScrolled ? '42px' : '48px',
+                      maxWidth: '100%',
                       width: 'auto',
                       height: 'auto',
                       transition: 'max-height 0.25s ease',
@@ -979,9 +980,10 @@ export default function Navbar({ sessionUser, siteLogo, siteTitle, settings }: N
                   <img
                     src="/assets/uploads/media-uploader/logo-footer1642310896.png"
                     alt={siteTitle || "QwikConnect Logo"}
+                    className="navbar-brand-logo-img"
                     style={{
-                      maxHeight: isScrolled ? '46px' : '52px',
-                      maxWidth: '280px',
+                      maxHeight: isScrolled ? '42px' : '48px',
+                      maxWidth: '100%',
                       width: 'auto',
                       height: 'auto',
                       transition: 'max-height 0.25s ease',
@@ -993,10 +995,10 @@ export default function Navbar({ sessionUser, siteLogo, siteTitle, settings }: N
             </div>
 
             {/* Mobile Account & Notification Controls */}
-            <div className="onlymobile-device-account-navbar navtwo">
-              <div className="onlymobile-device-account-navbar-flex" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div className="onlymobile-device-account-navbar navtwo" style={{ flexShrink: 0 }}>
+              <div className="onlymobile-device-account-navbar-flex" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
                 {isLoggedIn && (
-                  <div ref={mobileNotifRef} className="notification-icon icon" style={{ position: 'relative' }}>
+                  <div ref={mobileNotifRef} className="notification-icon icon" style={{ position: 'relative', margin: 0, flexShrink: 0 }}>
                     <button
                       type="button"
                       onClick={(e) => {
@@ -1017,6 +1019,7 @@ export default function Navbar({ sessionUser, siteLogo, siteTitle, settings }: N
                         justifyContent: 'center',
                         lineHeight: 1,
                         borderRadius: '8px',
+                        flexShrink: 0,
                       }}
                       aria-label="View notifications"
                     >
@@ -1049,8 +1052,8 @@ export default function Navbar({ sessionUser, siteLogo, siteTitle, settings }: N
                 )}
 
                 {/* Mobile User Avatar & Account Trigger */}
-                <div ref={mobileAccountRef} className="navbar-right-inner" style={{ position: 'relative' }}>
-                  <div className="login-account">
+                <div ref={mobileAccountRef} className="navbar-right-inner" style={{ position: 'relative', flexShrink: 0 }}>
+                  <div className="login-account" style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
                     {isLoggedIn ? (
                       <div
                         className="info-bar-item-two"
@@ -1066,10 +1069,11 @@ export default function Navbar({ sessionUser, siteLogo, siteTitle, settings }: N
                         tabIndex={0}
                         aria-label="User account menu"
                       >
-                        <div className="author-thumb">
+                        <div className="author-thumb" style={{ width: '34px', height: '34px', borderRadius: '50%', overflow: 'hidden', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                           <img
                             src={currentDisplayImage}
                             alt={currentDisplayName}
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                           />
                         </div>
                         <a className="accounts loggedin" href="javascript:void(0)" onClick={(e) => e.preventDefault()}>
@@ -1077,9 +1081,23 @@ export default function Navbar({ sessionUser, siteLogo, siteTitle, settings }: N
                         </a>
                       </div>
                     ) : (
-                      <Link href="/user/login" className="accounts">
-                        <span className="account">Sign In</span>
-                        <i className="las la-user"></i>
+                      <Link
+                        href="/user/login"
+                        className="accounts"
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          width: '34px',
+                          height: '34px',
+                          borderRadius: '50%',
+                          backgroundColor: 'var(--main-color-one, #1DBF73)',
+                          color: '#ffffff',
+                          textDecoration: 'none',
+                        }}
+                        aria-label="Sign In"
+                      >
+                        <i className="las la-user" style={{ fontSize: '18px', color: '#ffffff' }}></i>
                       </Link>
                     )}
                   </div>

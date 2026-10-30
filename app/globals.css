@@ -25,7 +25,12 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   font-family: var(--heading-font);
   color: var(--heading-color);
 }
@@ -41,12 +46,17 @@ a:hover {
 }
 
 /* Form and contrast rules: ensure high legibility and correct colors on light containers */
-input, select, textarea, .form-control, .form--control {
+input,
+select,
+textarea,
+.form-control,
+.form--control {
   color: #1e293b;
   background-color: #ffffff;
 }
 
-input::placeholder, textarea::placeholder {
+input::placeholder,
+textarea::placeholder {
   color: #94a3b8;
 }
 
@@ -61,6 +71,7 @@ label {
   text-decoration: none;
   transition: color 0.2s ease;
 }
+
 .footer-link-item:hover {
   color: var(--main-color-one) !important;
 }
@@ -77,8 +88,9 @@ label {
   color: #475569 !important;
   transition: all 0.3s ease;
   text-decoration: none;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.04);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.04);
 }
+
 .footer-social-btn:hover {
   background-color: var(--main-color-one) !important;
   border-color: var(--main-color-one) !important;
@@ -92,6 +104,7 @@ label {
   text-decoration: none;
   transition: color 0.2s ease;
 }
+
 .footer-bottom-link:hover {
   color: var(--main-color-one) !important;
 }
@@ -101,6 +114,7 @@ label {
   text-decoration: none;
   transition: color 0.2s ease;
 }
+
 .blog-card-title-link:hover {
   color: var(--main-color-one) !important;
 }
@@ -110,6 +124,7 @@ label {
   text-decoration: none;
   transition: color 0.2s ease;
 }
+
 .contact-info-link:hover {
   color: var(--main-color-one) !important;
 }
@@ -139,6 +154,7 @@ label {
   position: relative;
   transition: background-color 0.3s ease;
 }
+
 .navbar-toggler-icon::before,
 .navbar-toggler-icon::after {
   content: '';
@@ -149,16 +165,24 @@ label {
   left: 0;
   transition: all 0.3s ease;
 }
-.navbar-toggler-icon::before { top: -7px; }
-.navbar-toggler-icon::after  { top:  7px; }
+
+.navbar-toggler-icon::before {
+  top: -7px;
+}
+
+.navbar-toggler-icon::after {
+  top: 7px;
+}
 
 .navbar-toggler-icon.active {
   background-color: transparent;
 }
+
 .navbar-toggler-icon.active::before {
   transform: rotate(45deg);
   top: 0;
 }
+
 .navbar-toggler-icon.active::after {
   transform: rotate(-45deg);
   top: 0;
@@ -173,13 +197,16 @@ label {
     max-height: calc(100vh - 80px);
     overflow-y: auto;
   }
+
   .navbar-collapse.show .navbar-nav {
     flex-direction: column;
   }
+
   .navbar-collapse.show .navbar-nav .menu-item {
     border-bottom: 1px solid #f1f5f9;
     padding: 0;
   }
+
   .navbar-collapse.show .navbar-nav .menu-item a {
     display: block;
     padding: 12px 0;
@@ -187,13 +214,15 @@ label {
     font-size: 15px;
     font-weight: 500;
   }
-  .navbar-collapse.show .navbar-nav .menu-item.current-menu-item > a {
+
+  .navbar-collapse.show .navbar-nav .menu-item.current-menu-item>a {
     color: var(--main-color-one);
   }
 }
 
 /* Ensure sticky positioning is not disabled by overflow */
-html, body {
+html,
+body {
   overflow-x: clip !important;
 }
 
@@ -228,28 +257,211 @@ html, body {
 /* =========================================================
    Responsive Mobile Layout & Anti-Overflow Protections
    ========================================================= */
-html, body {
+html,
+body {
   overflow-x: clip !important;
   max-width: 100vw !important;
   width: 100% !important;
 }
 
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
 @media (max-width: 767px) {
-  .container, .container-fluid, .nav-container {
+
+  .container,
+  .container-fluid,
+  .nav-container {
     padding-left: 12px !important;
     padding-right: 12px !important;
     max-width: 100% !important;
   }
 
   /* Ensure media cannot cause viewport overflow on mobile */
-  img, video, iframe {
+  img,
+  video,
+  iframe {
     max-width: 100%;
   }
 }
 
+/* =========================================================
+   Mobile Navbar Responsive Layout & Overlap Prevention
+   ========================================================= */
+@media (min-width: 992px) {
+  .onlymobile-device-account-navbar {
+    display: none !important;
+  }
 
+  .navbar-area .nav-container .responsive-mobile-menu .navbar-toggler {
+    display: none !important;
+  }
 
+  .navbar-brand-logo-img {
+    max-height: 48px;
+    max-width: 240px;
+  }
+}
+
+@media (max-width: 991px) {
+
+  /* Enforce clean horizontal flex row across the mobile navbar header */
+  .navbar-area .nav-container .responsive-mobile-menu {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    position: relative !important;
+    gap: 8px !important;
+  }
+
+  /* Logo container takes available space and keeps logo scaled without colliding */
+  .navbar-area .nav-container .responsive-mobile-menu .logo-wrapper {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    overflow: hidden !important;
+    padding-right: 4px !important;
+  }
+
+  .navbar-area .nav-container .responsive-mobile-menu .logo-wrapper .logo {
+    display: inline-flex !important;
+    align-items: center !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+
+  /* Responsive logo sizing: never exceeds available space, never collides with bell */
+  .navbar-area .nav-container .responsive-mobile-menu .logo-wrapper .logo img,
+  .navbar-brand-logo-img {
+    max-height: 38px !important;
+    max-width: 100% !important;
+    width: auto !important;
+    height: auto !important;
+    object-fit: contain !important;
+    display: block !important;
+  }
+
+  /* Mobile controls (bell + avatar) sit next to toggler without absolute positioning */
+  .navbar-area .nav-container .responsive-mobile-menu .onlymobile-device-account-navbar {
+    display: flex !important;
+    align-items: center !important;
+    flex-shrink: 0 !important;
+    margin-left: auto !important;
+  }
+
+  .navbar-area .nav-container .responsive-mobile-menu .onlymobile-device-account-navbar-flex {
+    position: static !important;
+    transform: none !important;
+    top: auto !important;
+    right: auto !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    flex-shrink: 0 !important;
+  }
+
+  /* Reset legacy margins that could cause misalignment */
+  .navbar-area .nav-container .onlymobile-device-account-navbar .notification-icon {
+    margin: 0 !important;
+    flex-shrink: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .navbar-area .nav-container .onlymobile-device-account-navbar .login-account {
+    margin: 0 !important;
+    flex-shrink: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+  }
+
+  .onlymobile-device-account-navbar .login-account .author-thumb {
+    width: 34px !important;
+    height: 34px !important;
+    border-radius: 50% !important;
+    overflow: hidden !important;
+    flex-shrink: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .onlymobile-device-account-navbar .login-account .author-thumb img {
+    width: 34px !important;
+    height: 34px !important;
+    border-radius: 50% !important;
+    object-fit: cover !important;
+  }
+
+  /* Mobile toggler sits cleanly at the far right end */
+  .navbar-area .nav-container .responsive-mobile-menu .navbar-toggler {
+    position: static !important;
+    transform: none !important;
+    top: auto !important;
+    right: auto !important;
+    flex-shrink: 0 !important;
+    margin-left: 4px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 6px 8px !important;
+  }
+}
+
+@media (max-width: 380px) {
+
+  .navbar-area .nav-container .responsive-mobile-menu .logo-wrapper .logo img,
+  .navbar-brand-logo-img {
+    max-height: 32px !important;
+  }
+
+  .navbar-area .nav-container .responsive-mobile-menu {
+    gap: 6px !important;
+  }
+
+  .navbar-area .nav-container .responsive-mobile-menu .onlymobile-device-account-navbar-flex {
+    gap: 6px !important;
+  }
+}
+
+/* =========================================================
+   Prevent Mobile Auto-Zoom When Typing in Input Fields
+   ========================================================= */
+/* iOS Safari and mobile browsers automatically zoom in when focusing any input
+   with font-size < 16px. Enforcing 16px font-size on mobile viewports completely
+   eliminates unwanted page magnification while typing. */
+@media screen and (max-width: 768px) {
+
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="button"]):not([type="submit"]),
+  select,
+  textarea,
+  .form-control,
+  .form--control,
+  .single-input input,
+  .search-wrapper input,
+  .banner-bottom-search input,
+  .banner-bottom-search select {
+    font-size: 16px !important;
+  }
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* Eliminate tap delay and prevent double-tap to zoom on interactive controls */
+input,
+select,
+textarea,
+button,
+a {
+  touch-action: manipulation;
+}
