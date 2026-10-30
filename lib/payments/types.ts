@@ -15,4 +15,8 @@ export interface PaymentInitResult {
   gatewayOrderId?: string;
   clientSecret?: string;
   isDirectSuccess?: boolean;
+  /** Paystack inline popup fields */
+  publicKey?: string;
+  reference?: string;
+  paystackInline?: boolean;
 }

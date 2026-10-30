@@ -168,7 +168,7 @@ export default function MobileAppShell({ children }: { children?: React.ReactNod
     const deltaX = touch.clientX - touchStartRef.current.x;
 
     // Pull to refresh only when at top of page and dragging downwards
-    if (touchStartRef.current.scrollY <= 5 && deltaY > 0 && Math.abs(deltaY) > Math.abs(deltaX)) {
+    if (touchStartRef.current.scrollY <= 2 && deltaY > 0 && Math.abs(deltaY) > Math.abs(deltaX)) {
       const distance = Math.min(deltaY * 0.45, 80);
       setPullY(distance);
     }

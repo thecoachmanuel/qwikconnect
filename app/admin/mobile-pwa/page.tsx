@@ -133,19 +133,17 @@ export default function AdminMobilePwaPage() {
       setUploadingImage(null);
     }
   };
-  setTimeout(() => setMessage(null), 4000);
-};
 
-// Toggle Module Permission
-const handleTogglePermission = (module: string) => {
-  setSettings((prev: any) => ({
-    ...prev,
-    module_permissions: {
-      ...prev.module_permissions,
-      [module]: !prev.module_permissions?.[module],
-    },
-  }));
-};
+  // Toggle Module Permission
+  const handleTogglePermission = (module: string) => {
+    setSettings((prev: any) => ({
+      ...prev,
+      module_permissions: {
+        ...prev.module_permissions,
+        [module]: !prev.module_permissions?.[module],
+      },
+    }));
+  };
 
   // Save Settings
   const handleSaveSettings = async () => {
@@ -168,51 +166,27 @@ const handleTogglePermission = (module: string) => {
     } finally {
       setSaving(false);
     }
-  } catch (err: any) {
-    showToast(err.message, 'danger');
-  } finally {
-    setSaving(false);
-  }
-};
+  };
 
-// Create Banner
-const handleCreateBanner = async (e: React.FormEvent) => {
-  e.preventDefault();
-  if (!newBanner.title) {
-    alert('Please enter a banner title');
-    return;
-  }
-  setSaving(true);
-  try {
-    const res = await fetch('/api/admin/mobile-pwa', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'create_banner', banner: newBanner }),
-    });
-    const data = await res.json();
-    if (res.ok && data.success) {
-      showToast('New promo banner added!');
-      setShowAddBanner(false);
-      setNewBanner({
-        title: '',
-        subtitle: '',
-        image: '/assets/uploads/media-uploader/banner11638279446.png',
-        link: '',
-        service_id: '',
-        active: true,
+  // Create Banner
+  const handleCreateBanner = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newBanner.title) {
+      alert('Please enter a banner title');
+      return;
+    }
+    setSaving(true);
+    try {
+      const res = await fetch('/api/admin/mobile-pwa', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'create_banner', banner: newBanner }),
       });
       const data = await res.json();
       if (res.ok && data.success) {
         showToast('New promo banner added!');
         setShowAddBanner(false);
-        setNewBanner({
-          title: '',
-          subtitle: '',
-          image: '/assets/uploads/media-uploader/banner11638279446.png',
-          link: '',
-          service_id: '',
-          active: true,
-        });
+        setNewBanner({ title: '', subtitle: '', image: '/assets/uploads/media-uploader/banner11638279446.png', link: '', service_id: '', active: true });
         loadData();
         broadcastPwaChange();
       } else {
@@ -223,36 +197,14 @@ const handleCreateBanner = async (e: React.FormEvent) => {
     } finally {
       setSaving(false);
     }
-  } catch (err: any) {
-    showToast(err.message, 'danger');
-  } finally {
-    setSaving(false);
-  }
-};
+  };
 
-// Update Banner
-const handleUpdateBanner = async (e: React.FormEvent) => {
-  e.preventDefault();
-  if (!editingBanner || !editingBanner.title) {
-    alert('Please enter a banner title');
-    return;
-  }
-  setSaving(true);
-  try {
-    const res = await fetch('/api/admin/mobile-pwa', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'update_banner', banner: editingBanner }),
-    });
-    const data = await res.json();
-    if (res.ok && data.success) {
-      showToast('Mobile banner updated successfully!');
-      setBanners((prev) =>
-        prev.map((b) => (b.id === editingBanner.id ? { ...b, ...editingBanner } : b))
-      );
-      setEditingBanner(null);
-    } else {
-      showToast(data.message || 'Failed to update banner', 'danger');
+  // Update Banner
+  const handleUpdateBanner = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingBanner || !editingBanner.title) {
+      alert('Please enter a banner title');
+      return;
     }
     setSaving(true);
     try {
@@ -264,9 +216,7 @@ const handleUpdateBanner = async (e: React.FormEvent) => {
       const data = await res.json();
       if (res.ok && data.success) {
         showToast('Mobile banner updated successfully!');
-        setBanners((prev) =>
-          prev.map((b) => (b.id === editingBanner.id ? { ...b, ...editingBanner } : b))
-        );
+        setBanners((prev) => prev.map((b) => (b.id === editingBanner.id ? { ...b, ...editingBanner } : b)));
         setEditingBanner(null);
         broadcastPwaChange();
       } else {
@@ -299,10 +249,7 @@ const handleUpdateBanner = async (e: React.FormEvent) => {
     } catch (err: any) {
       showToast(err.message, 'danger');
     }
-  } catch (err: any) {
-    showToast(err.message, 'danger');
-  }
-};
+  };
 
   // Update Slides
   const handleSaveSlides = async () => {
@@ -325,45 +272,40 @@ const handleUpdateBanner = async (e: React.FormEvent) => {
     } finally {
       setSaving(false);
     }
-  } catch (err: any) {
-    showToast(err.message, 'danger');
-  } finally {
-    setSaving(false);
-  }
-};
+  };
 
-// Broadcast Push
-const handleBroadcastPush = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setSendingPush(true);
-  try {
-    const res = await fetch('/api/admin/mobile-pwa', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        action: 'send_push',
-        title: pushForm.title,
-        body: pushForm.body,
-        url: pushForm.url,
-      }),
-    });
-    const data = await res.json();
-    if (res.ok && data.success) {
-      showToast(data.message || 'Push alert sent to devices!');
-    } else {
-      showToast(data.message || 'Failed to send push', 'danger');
+  // Broadcast Push
+  const handleBroadcastPush = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSendingPush(true);
+    try {
+      const res = await fetch('/api/admin/mobile-pwa', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'send_push',
+          title: pushForm.title,
+          body: pushForm.body,
+          url: pushForm.url,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        showToast(data.message || 'Push alert sent to devices!');
+      } else {
+        showToast(data.message || 'Failed to send push', 'danger');
+      }
+    } catch (err: any) {
+      showToast(err.message, 'danger');
+    } finally {
+      setSendingPush(false);
     }
-  } catch (err: any) {
-    showToast(err.message, 'danger');
-  } finally {
-    setSendingPush(false);
-  }
-};
+  };
 
-const enabledModulesCount = Object.values(settings.module_permissions || {}).filter(Boolean).length;
+  const enabledModulesCount = Object.values(settings.module_permissions || {}).filter(Boolean).length;
 
-return (
-  <DashboardLayout userRole="admin" title="Mobile PWA App Control">
+  return (
+    <DashboardLayout userRole="admin" title="Mobile PWA App Control">
     {/* Page Header */}
     <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
       <div>
@@ -1222,20 +1164,9 @@ return (
           </div>
         </div>
       )}
-      onClick={handleSaveSlides}
-      disabled={saving}
-      className="btn btn-success px-4 py-2 fw-semibold d-inline-flex align-items-center gap-2"
-      style={{ backgroundColor: 'var(--main-color-one, #1DBF73)' }}
-              >
-      {saving ? 'Saving...' : <><i className="las la-save fs-5"></i> Save Walkthrough Slides</>}
-    </button>
-  </div>
-          </div >
-        )}
 
-{/* Tab 4: Push Notifications & PWA Branding */ }
-{
-  activeTab === 'branding' && (
+{/* Tab 4: Push Notifications & PWA Branding */}
+      {activeTab === 'branding' && (
     <div className="card-body p-4">
       <div className="row g-4">
         {/* Broadcast Web Push */}
@@ -1392,10 +1323,9 @@ return (
         </div>
       </div>
     </div>
-  )
-}
-      </div >
-    </DashboardLayout >
+      )}
+    </div>
+    </DashboardLayout>
   );
 }
 

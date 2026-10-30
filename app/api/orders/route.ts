@@ -3,17 +3,23 @@ import { auth } from '@/lib/auth';
 import { getOrders, getServices, getUsers } from '@/lib/mongodb';
 
 export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export async function GET(request: Request) {
   try {
     const session = await auth();
-    if (!session?.user) {
+    const { searchParams } = new URL(request.url);
+    const queryEmail = searchParams.get('email')?.toLowerCase().trim();
+
+    const userId = session?.user?.id ? Number(session.user.id) : null;
+    const sessionEmail = session?.user?.email ? session.user.email.toLowerCase().trim() : '';
+    const userEmail = sessionEmail || queryEmail || '';
+    const userRole = (session?.user as any)?.role;
+    const userType = Number((session?.user as any)?.user_type);
+
+    if (!userId && !userEmail) {
       return NextResponse.json({ success: true, orders: [] });
     }
-
-    const userId = session.user.id ? Number(session.user.id) : null;
-    const userEmail = session.user.email ? session.user.email.toLowerCase().trim() : '';
-    const userRole = (session?.user as any)?.role || (session?.user as any)?.user_type;
 
     const [allOrders, allServices, allUsers] = await Promise.all([
       getOrders(),
@@ -21,25 +27,28 @@ export async function GET(request: Request) {
       getUsers(),
     ]);
 
-    // Role-based filtering strictly for authenticated user:
-    // If admin: all orders
-    // If seller: orders where seller_id === userId or seller_email === userEmail
-    // If buyer: orders where buyer_id === userId or email === userEmail
+    const isAdmin = userRole === 'admin' || userType === 0;
+    const isSeller = userRole === 'seller' || userType === 2;
+
     let userOrders: any[] = [];
-    if (userRole === 'admin') {
+    if (isAdmin) {
+      // Admin views all orders
       userOrders = allOrders as any[];
-    } else if (userRole === 'seller' || userRole === '1' || userRole === 1 || userRole === '2' || userRole === 2) {
-      userOrders = (allOrders as any[]).filter(
-        (o: any) => (userId && Number(o.seller_id) === userId) || (userEmail && o.seller_email && o.seller_email.toLowerCase().trim() === userEmail)
-      );
-    } else {
+    } else if (isSeller) {
+      // Seller views orders assigned to them
       userOrders = (allOrders as any[]).filter(
         (o: any) =>
-          (userId && Number(o.buyer_id) === userId) ||
-          (userEmail && (
-            (o.email && o.email.toLowerCase().trim() === userEmail) ||
-            (o.buyer_email && o.buyer_email.toLowerCase().trim() === userEmail)
-          ))
+          (userId && Number(o.seller_id) === userId) ||
+          (userEmail && o.seller_email && o.seller_email.toLowerCase().trim() === userEmail)
+      );
+    } else {
+      // Buyer (user_type === 1 or role === 'buyer' or guest customer by email)
+      userOrders = (allOrders as any[]).filter(
+        (o: any) =>
+          (userId && (Number(o.buyer_id) === userId || Number(o.user_id) === userId)) ||
+          (userEmail &&
+            ((o.email && o.email.toLowerCase().trim() === userEmail) ||
+              (o.buyer_email && o.buyer_email.toLowerCase().trim() === userEmail)))
       );
     }
 
@@ -65,4 +74,3 @@ export async function GET(request: Request) {
     return NextResponse.json({ success: false, orders: [] }, { status: 500 });
   }
 }
-

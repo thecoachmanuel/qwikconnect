@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
+import { openPaystackPopup } from './PaystackInlineHandler';
 
 interface MobileBookingModalProps {
   service: any;
@@ -290,6 +291,44 @@ export default function MobileBookingModal({
             setIsSubmitting(false);
             return;
           }
+
+          // ── Paystack inline popup (PWA-safe — no page redirect) ──
+          if (payData.paystackInline && payData.publicKey && payData.reference) {
+            try {
+              await openPaystackPopup({
+                publicKey: payData.publicKey,
+                reference: payData.reference,
+                email: email || 'buyer@qwikconnect.ng',
+                amountNaira: grandTotal,
+                metadata: { order_id: orderIdNum },
+                onSuccess: (ref) => {
+                  if (typeof window !== 'undefined') {
+                    window.dispatchEvent(new CustomEvent('qixer-orders-changed'));
+                    window.dispatchEvent(new CustomEvent('qixer-wallet-changed'));
+                  }
+                  setCreatedOrder(data.order || { id: orderIdNum, invoice: data.invoice, total: grandTotal });
+                  onOrderSuccess(orderIdNum);
+                  setCurrentStep(5);
+                },
+                onCancel: () => {
+                  // User closed popup — order is placed but payment pending
+                  alert('Payment cancelled. Your order is saved. You can pay later from your orders.');
+                  setIsSubmitting(false);
+                },
+              });
+            } catch (popupErr: any) {
+              // Paystack JS failed to load — fall back to opening in new tab
+              if (payData.redirectUrl) {
+                window.open(payData.redirectUrl, '_blank', 'noopener');
+              } else {
+                alert(popupErr.message || 'Could not open Paystack popup. Check your internet connection.');
+              }
+              setIsSubmitting(false);
+            }
+            return; // onSuccess / onCancel handles next steps
+          }
+
+          // ── Other gateways: redirect (Stripe, PayPal, etc.) ──
           if (payData.redirectUrl && !payData.isDirectSuccess) {
             window.location.href = payData.redirectUrl;
             return;

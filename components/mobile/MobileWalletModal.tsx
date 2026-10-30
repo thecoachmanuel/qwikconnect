@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { openPaystackPopup } from './PaystackInlineHandler';
 
 interface MobileWalletModalProps {
   onClose: () => void;
@@ -83,8 +84,57 @@ export default function MobileWalletModal({ onClose }: MobileWalletModalProps) {
 
       const data = await res.json();
       if (res.ok && data.success) {
-        if (data.paystack && data.authorization_url) {
-          window.location.href = data.authorization_url;
+        if (data.paystack && (data.authorization_url || (data.public_key && data.reference))) {
+          // Use Paystack inline popup — keep user inside the PWA
+          const userEmail = data.email || 'buyer@qwikconnect.ng';
+          try {
+            await openPaystackPopup({
+              publicKey: data.public_key,
+              reference: data.reference,
+              email: userEmail,
+              amountNaira: num,
+              metadata: { type: 'wallet_deposit', amount: num },
+              onSuccess: async (ref) => {
+                // Confirm deposit server-side
+                const verifyRes = await fetch('/api/buyer/wallet/deposit', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    amount: num,
+                    gateway,
+                    confirmed: true,
+                    payment_reference: ref,
+                  }),
+                });
+                const verifyData = await verifyRes.json();
+                if (verifyData.success) {
+                  setBalance(verifyData.balance || verifyData.newBalance || 0);
+                  if (typeof window !== 'undefined') {
+                    window.dispatchEvent(
+                      new CustomEvent('qixer-wallet-changed', { detail: { balance: verifyData.balance } })
+                    );
+                  }
+                  alert(`✅ ₦${num.toLocaleString()} successfully added to your wallet!`);
+                  setShowDepositSheet(false);
+                  loadWallet();
+                } else {
+                  alert(verifyData.message || 'Payment received but deposit confirmation failed. Contact support.');
+                }
+              },
+              onCancel: () => {
+                // User closed the Paystack popup — no action needed
+                setDepositing(false);
+              },
+            });
+          } catch (popupErr: any) {
+            // Paystack JS failed to load or popup error
+            if (data.authorization_url) {
+              // Fallback: open in new tab so PWA is not replaced
+              window.open(data.authorization_url, '_blank', 'noopener');
+            } else {
+              alert(popupErr.message || 'Could not open payment popup. Please check your connection.');
+            }
+          }
           return;
         }
         setBalance(data.balance);

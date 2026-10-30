@@ -70,8 +70,9 @@ export async function POST(request: Request) {
           success: true,
           paystack: true,
           authorization_url: pstkData.data.authorization_url,
-          reference: transactionId,
+          reference: pstkData.data.reference || transactionId,
           public_key: publicKey,
+          email: userEmail,
         });
       }
 

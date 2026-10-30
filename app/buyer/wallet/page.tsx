@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { useSession } from 'next-auth/react';
+import { openPaystackPopup } from '@/components/mobile/PaystackInlineHandler';
 
 export default function BuyerWalletPage() {
   const { data: session } = useSession();
@@ -90,8 +91,42 @@ export default function BuyerWalletPage() {
 
       const data = await res.json();
       if (res.ok && data.success) {
-        if (data.paystack && data.authorization_url) {
-          window.location.href = data.authorization_url;
+        if (data.paystack && (data.authorization_url || (data.public_key && data.reference))) {
+          // Use Paystack inline popup — keeps user on the page
+          try {
+            await openPaystackPopup({
+              publicKey: data.public_key,
+              reference: data.reference,
+              email: data.email || session?.user?.email || 'buyer@qwikconnect.ng',
+              amountNaira: num,
+              metadata: { type: 'wallet_deposit', amount: num },
+              onSuccess: async (ref) => {
+                const verifyRes = await fetch('/api/buyer/wallet/deposit', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ amount: num, gateway, confirmed: true, payment_reference: ref }),
+                });
+                const vd = await verifyRes.json();
+                if (vd.success) {
+                  setBalance(vd.balance || vd.newBalance || 0);
+                  showToast(`✅ ₦${num.toLocaleString()} successfully added to your wallet!`);
+                  setShowDepositModal(false);
+                  loadWalletData();
+                } else {
+                  showToast(vd.message || 'Payment received but confirmation failed. Contact support.', 'danger');
+                }
+              },
+              onCancel: () => {
+                setDepositing(false);
+              },
+            });
+          } catch (popupErr: any) {
+            if (data.authorization_url) {
+              window.location.href = data.authorization_url;
+            } else {
+              showToast(popupErr.message || 'Could not open Paystack popup. Try again.', 'danger');
+            }
+          }
           return;
         }
         setBalance(data.balance);

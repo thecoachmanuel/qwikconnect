@@ -498,6 +498,28 @@ export default function AdminPaymentSettingsPage() {
                         </div>
                       )}
 
+                      {/* ⚠️ Live-mode key mismatch warning for Paystack */}
+                      {isPaystack && !gw.sandbox && gw.enabled && gw.fields && (
+                        (() => {
+                          const pk = String(gw.fields.public_key || '');
+                          const sk = String(gw.fields.secret_key || '');
+                          const needsLive = (!pk.startsWith('pk_live_') || !sk.startsWith('sk_live_'));
+                          return needsLive ? (
+                            <div className="alert alert-warning d-flex align-items-start gap-2 mb-3 py-2" style={{ fontSize: '13px', borderRadius: '8px' }}>
+                              <i className="las la-exclamation-triangle fs-5 mt-1 text-warning" />
+                              <div>
+                                <strong>⚠️ Live Mode Key Mismatch</strong>
+                                <p className="mb-0 mt-1">
+                                  You have <strong>Live Mode</strong> enabled but your Paystack keys appear to be <strong>test keys</strong> (they should start with <code>pk_live_</code> and <code>sk_live_</code>).
+                                  Payments will fail with an <em>"Invalid key"</em> error until you enter your real live keys from your{' '}
+                                  <a href="https://dashboard.paystack.com/#/settings/developer" target="_blank" rel="noopener noreferrer">Paystack Dashboard → Settings → API Keys &amp; Webhooks</a>.
+                                </p>
+                              </div>
+                            </div>
+                          ) : null;
+                        })()
+                      )}
+
                       <div className="row g-3">
                         {Object.entries(gw.fields || {}).map(([key, val]) => (
                           <div key={key} className={isPaystack && key !== 'instructions' ? "col-md-6" : "col-12"}>

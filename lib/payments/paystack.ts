@@ -69,9 +69,14 @@ export async function initializePaystack(options: PaymentIntentOptions): Promise
       };
     }
 
+    const ref = data.data?.reference || `order_${options.orderId}_${Date.now()}`;
     return {
       redirectUrl: data.data?.authorization_url || options.successUrl,
-      gatewayOrderId: data.data?.reference,
+      gatewayOrderId: ref,
+      // Inline popup fields for PWA — client uses these with PaystackPop.setup()
+      publicKey,
+      reference: ref,
+      paystackInline: true,
     };
   } catch (error: any) {
     if (isLive) {

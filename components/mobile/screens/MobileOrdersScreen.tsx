@@ -153,7 +153,8 @@ export default function MobileOrdersScreen({
             No {filter !== 'all' ? filter : ''} orders found
           </p>
           <Link
-            href="/"
+            href="#"
+            onClick={(e) => { e.preventDefault(); onExploreServices?.(); }}
             className="btn btn-sm text-white px-3 py-2 fw-semibold"
             style={{ backgroundColor: 'var(--main-color-one, #1DBF73)', borderRadius: '6px' }}
           >
