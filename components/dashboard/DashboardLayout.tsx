@@ -175,7 +175,7 @@ export default function DashboardLayout({
   useEffect(() => { setIsMobileOpen(false); }, [pathname]);
 
   // Load real-time user-specific notifications
-  useEffect(() => {
+  const loadNotifications = () => {
     const userId = session?.user?.id ? parseInt(session.user.id, 10) : undefined;
     const url = userId
       ? `/api/notifications?role=${activeRole}&user_id=${userId}`
@@ -190,6 +190,15 @@ export default function DashboardLayout({
         }
       })
       .catch(() => {});
+  };
+
+  useEffect(() => {
+    loadNotifications();
+    const handleNotifUpdate = () => {
+      loadNotifications();
+    };
+    window.addEventListener('qixer-notifications-updated', handleNotifUpdate);
+    return () => window.removeEventListener('qixer-notifications-updated', handleNotifUpdate);
   }, [activeRole, session?.user?.id]);
 
   useEffect(() => {
@@ -208,27 +217,36 @@ export default function DashboardLayout({
   const handleMarkAllRead = async () => {
     setUnreadCount(0);
     setNotifications((prev) => prev.map((n) => ({ ...n, status: 1, read: true })));
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('qixer-notifications-updated'));
+    }
     try {
       await fetch('/api/notifications', {
         method: 'POST',
+        keepalive: true,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'mark_all_read', role: activeRole }),
       });
     } catch (e) {}
   };
 
-  const handleNotificationClick = async (notif: any) => {
+  const handleNotificationClick = (notif: any) => {
     setIsNotificationsOpen(false);
+    // Optimistically mark as read immediately
     if (Number(notif.status) === 0 || !notif.read) {
-      try {
-        await fetch('/api/notifications', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'mark_read', id: notif.id, role: activeRole }),
-        });
-        setNotifications((prev) => prev.map((n) => (n.id === notif.id ? { ...n, status: 1, read: true } : n)));
-        setUnreadCount((c) => Math.max(0, c - 1));
-      } catch (e) {}
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === notif.id ? { ...n, status: 1, read: true } : n))
+      );
+      setUnreadCount((c) => Math.max(0, c - 1));
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('qixer-notifications-updated', { detail: { id: notif.id } }));
+      }
+      fetch('/api/notifications', {
+        method: 'POST',
+        keepalive: true,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'mark_read', id: notif.id, role: activeRole }),
+      }).catch(() => {});
     }
   };
 

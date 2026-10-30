@@ -4,6 +4,7 @@ import {
   getNotifications,
   createNotification,
   markNotificationAsRead,
+  markNotificationsBatchAsRead,
   markAllNotificationsAsRead,
   deleteNotification,
   clearAllNotifications,
@@ -95,6 +96,11 @@ export async function POST(request: NextRequest) {
     if (action === 'mark_read' && id) {
       await markNotificationAsRead(id);
       return NextResponse.json({ success: true, message: 'Notification marked as read' });
+    }
+
+    if (action === 'mark_batch_read' && Array.isArray(body.ids)) {
+      await markNotificationsBatchAsRead(body.ids);
+      return NextResponse.json({ success: true, message: 'Notifications marked as read' });
     }
 
     if (action === 'mark_all_read') {

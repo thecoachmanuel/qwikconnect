@@ -926,6 +926,83 @@ const SEED_DATA = {
       created_at: new Date('2026-10-21').toISOString(),
     },
   ],
+  notifications: [
+    {
+      id: 1,
+      role: 'seller',
+      user_id: 2,
+      order_id: 1,
+      title: 'New Service Booking Received',
+      message: 'Babatunde Raji booked your Full Home Deep Cleaning service. Scheduled for tomorrow.',
+      link: '/seller/orders',
+      icon: 'las la-calendar-check',
+      type: 'order',
+      status: 0,
+      created_at: new Date(Date.now() - 3600000 * 2).toISOString(),
+    },
+    {
+      id: 2,
+      role: 'seller',
+      user_id: 2,
+      title: 'Payment Credited to Wallet',
+      message: '₦45,000 net proceeds for Order #1 was released to your pending balance.',
+      link: '/seller/payouts',
+      icon: 'las la-wallet',
+      type: 'payout',
+      status: 0,
+      created_at: new Date(Date.now() - 3600000 * 5).toISOString(),
+    },
+    {
+      id: 3,
+      role: 'buyer',
+      user_id: 4,
+      order_id: 1,
+      title: 'Order Confirmed & Scheduled',
+      message: 'Your service booking #1 has been confirmed by Chioma Adebayo. Provider will arrive at the scheduled time.',
+      link: '/buyer/orders',
+      icon: 'las la-check-circle',
+      type: 'order',
+      status: 0,
+      created_at: new Date(Date.now() - 3600000 * 3).toISOString(),
+    },
+    {
+      id: 4,
+      role: 'buyer',
+      user_id: 4,
+      title: 'Special Promo Discount',
+      message: 'Enjoy 10% off your next professional plumbing or AC repair service with coupon QWIKCONNECT10.',
+      link: '/service-list',
+      icon: 'las la-tag',
+      type: 'general',
+      status: 0,
+      created_at: new Date(Date.now() - 3600000 * 12).toISOString(),
+    },
+    {
+      id: 5,
+      role: 'admin',
+      user_id: 1,
+      order_id: 1,
+      title: 'New Platform Order #1',
+      message: 'New order #1 of ₦50,000 processed via Paystack. Platform commission recorded.',
+      link: '/admin/orders',
+      icon: 'las la-receipt',
+      type: 'order',
+      status: 0,
+      created_at: new Date(Date.now() - 3600000 * 4).toISOString(),
+    },
+    {
+      id: 6,
+      role: 'admin',
+      user_id: 1,
+      title: 'Provider Verification Request',
+      message: 'Emeka Okafor submitted National ID and business certificates for identity verification.',
+      link: '/admin/seller-verify',
+      icon: 'las la-user-check',
+      type: 'general',
+      status: 0,
+      created_at: new Date(Date.now() - 3600000 * 8).toISOString(),
+    },
+  ],
 };
 
 function ensureDataFile() {
@@ -1011,6 +1088,10 @@ function readDataFile(): MongoStoreData {
     if (!parsed.seller_verifies) { parsed.seller_verifies = []; dirty = true; }
     if (!parsed.todos) { parsed.todos = SEED_DATA.todos; dirty = true; }
     if (!parsed.favorites) { parsed.favorites = SEED_DATA.favorites; dirty = true; }
+    if (!parsed.notifications || !Array.isArray(parsed.notifications) || parsed.notifications.length === 0) {
+      parsed.notifications = SEED_DATA.notifications;
+      dirty = true;
+    }
     if (!parsed.blogs || !Array.isArray(parsed.blogs) || parsed.blogs.length === 0) {
       parsed.blogs = seedBlogs;
       dirty = true;
@@ -1095,6 +1176,9 @@ export async function getMongoDb(): Promise<Db | null> {
     }
     if (!colNames.includes('favorites') || (await cachedDb.collection('favorites').countDocuments()) === 0) {
       await cachedDb.collection('favorites').insertMany(SEED_DATA.favorites);
+    }
+    if (!colNames.includes('notifications') || (await cachedDb.collection('notifications').countDocuments()) === 0) {
+      await cachedDb.collection('notifications').insertMany(SEED_DATA.notifications);
     }
     if (!colNames.includes('settings') || (await cachedDb.collection('settings').countDocuments({ type: 'payment_gateways' })) === 0) {
       await cachedDb.collection('settings').insertOne({
@@ -3475,21 +3559,39 @@ export async function getNotifications(
     status?: number;
   } = {}
 ) {
-  const data = readDataFile();
-  let list: NotificationData[] = data.notifications || [];
+  let list: NotificationData[] = [];
+  const db = await getMongoDb();
+  if (db) {
+    try {
+      const q: any = {};
+      if (filter.role) q.role = filter.role;
+      if (filter.user_id !== undefined && filter.user_id !== null) {
+        q.$or = [{ user_id: Number(filter.user_id) }, { user_id: String(filter.user_id) }, { user_id: null }, { user_id: { $exists: false } }];
+      }
+      if (filter.status !== undefined) q.status = Number(filter.status);
 
-  if (filter.role) {
-    list = list.filter((n) => n.role === filter.role);
-  }
-  if (filter.user_id !== undefined && filter.user_id !== null) {
-    list = list.filter((n) => n.user_id === undefined || n.user_id === null || Number(n.user_id) === Number(filter.user_id));
-  }
-  if (filter.status !== undefined) {
-    list = list.filter((n) => Number(n.status) === Number(filter.status));
+      const docs = await db.collection('notifications').find(q).sort({ created_at: -1, id: -1 }).toArray();
+      if (docs && docs.length > 0) {
+        list = docs.map(({ _id, ...rest }) => rest as NotificationData);
+      }
+    } catch (e) {}
   }
 
-  // Sort newest first
-  list.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  if (list.length === 0) {
+    const data = readDataFile();
+    list = data.notifications || [];
+
+    if (filter.role) {
+      list = list.filter((n) => n.role === filter.role);
+    }
+    if (filter.user_id !== undefined && filter.user_id !== null) {
+      list = list.filter((n) => n.user_id === undefined || n.user_id === null || Number(n.user_id) === Number(filter.user_id));
+    }
+    if (filter.status !== undefined) {
+      list = list.filter((n) => Number(n.status) === Number(filter.status));
+    }
+    list.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  }
 
   const unreadCount = list.filter((n) => Number(n.status) === 0).length;
 
@@ -3536,22 +3638,51 @@ export async function createNotification(item: Partial<NotificationData>) {
 }
 
 export async function markNotificationAsRead(id: number | string) {
+  const numId = Number(id);
   const data = readDataFile();
   if (!data.notifications) data.notifications = [];
-  const target = data.notifications.find((n: any) => String(n.id) === String(id));
+  const target = data.notifications.find((n: any) => String(n.id) === String(id) || (numId && n.id === numId));
   if (target) {
     target.status = 1;
     writeDataFile(data);
-
-    const db = await getMongoDb();
-    if (db) {
-      try {
-        await db.collection('notifications').updateOne({ id: Number(id) }, { $set: { status: 1 } });
-      } catch (e) {}
-    }
-    return target;
   }
-  return null;
+
+  const db = await getMongoDb();
+  if (db) {
+    try {
+      await db.collection('notifications').updateMany(
+        { $or: [{ id: numId }, { id: String(id) }] },
+        { $set: { status: 1 } }
+      );
+    } catch (e) {}
+  }
+  return target || { id, status: 1 };
+}
+
+export async function markNotificationsBatchAsRead(ids: (number | string)[]) {
+  if (!ids || ids.length === 0) return true;
+  const numIds = ids.map((id) => Number(id)).filter((n) => !isNaN(n));
+  const strIds = ids.map((id) => String(id));
+
+  const data = readDataFile();
+  if (!data.notifications) data.notifications = [];
+  data.notifications.forEach((n: any) => {
+    if (strIds.includes(String(n.id)) || (n.id && numIds.includes(Number(n.id)))) {
+      n.status = 1;
+    }
+  });
+  writeDataFile(data);
+
+  const db = await getMongoDb();
+  if (db) {
+    try {
+      await db.collection('notifications').updateMany(
+        { $or: [{ id: { $in: numIds } }, { id: { $in: strIds } }] },
+        { $set: { status: 1 } }
+      );
+    } catch (e) {}
+  }
+  return true;
 }
 
 export async function markAllNotificationsAsRead(filter: { role?: string; user_id?: number } = {}) {
@@ -3572,7 +3703,9 @@ export async function markAllNotificationsAsRead(filter: { role?: string; user_i
     try {
       const q: any = {};
       if (filter.role) q.role = filter.role;
-      if (filter.user_id !== undefined) q.user_id = filter.user_id;
+      if (filter.user_id !== undefined) {
+        q.$or = [{ user_id: Number(filter.user_id) }, { user_id: String(filter.user_id) }, { user_id: null }, { user_id: { $exists: false } }];
+      }
       await db.collection('notifications').updateMany(q, { $set: { status: 1 } });
     } catch (e) {}
   }
