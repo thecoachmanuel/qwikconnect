@@ -1093,6 +1093,9 @@ export async function getMongoDb(): Promise<Db | null> {
     if (!colNames.includes('messages') || (await cachedDb.collection('messages').countDocuments()) === 0) {
       await cachedDb.collection('messages').insertMany(SEED_DATA.messages);
     }
+    if (!colNames.includes('favorites') || (await cachedDb.collection('favorites').countDocuments()) === 0) {
+      await cachedDb.collection('favorites').insertMany(SEED_DATA.favorites);
+    }
     if (!colNames.includes('settings') || (await cachedDb.collection('settings').countDocuments({ type: 'payment_gateways' })) === 0) {
       await cachedDb.collection('settings').insertOne({
         type: 'payment_gateways',
@@ -2990,16 +2993,21 @@ export async function deleteReport(id: number) {
 // ==========================================
 // 19. BUYER FAVORITE SERVICES
 // ==========================================
+// 19. BUYER FAVORITE SERVICES
+// ==========================================
 export async function getFavorites(userId: number) {
-  let userFavs: any[] = [];
+  const numId = Number(userId);
   const db = await getMongoDb();
+  let userFavs: any[] = [];
+
   if (db) {
     try {
-      const favs = await db.collection('favorites').find({
-        $or: [{ user_id: Number(userId) }, { user_id: String(userId) }],
-      }).toArray();
-      if (favs && favs.length > 0) {
-        userFavs = favs.map(({ _id, ...rest }) => rest);
+      const docs = await db.collection('favorites').find({
+        $or: [{ user_id: numId }, { user_id: String(userId) }]
+      }).sort({ id: -1 }).toArray();
+
+      if (docs && docs.length > 0) {
+        userFavs = docs.map(({ _id, ...rest }) => rest);
       }
     } catch (e) {}
   }
@@ -3007,11 +3015,16 @@ export async function getFavorites(userId: number) {
   if (userFavs.length === 0) {
     const data = readDataFile();
     const allFavs = data.favorites || [];
-    userFavs = allFavs.filter((f: any) => Number(f.user_id) === Number(userId));
+    userFavs = allFavs.filter((f: any) => Number(f.user_id) === numId || String(f.user_id) === String(userId));
+  }
+
+  // Fallback demo favorites for buyers who haven't saved any yet
+  if (userFavs.length === 0) {
+    userFavs = (SEED_DATA.favorites || []).map((f) => ({ ...f, user_id: numId }));
   }
 
   const services = await getServices();
-  const serviceMap = new Map((services as any[]).map((s) => [s.id, s]));
+  const serviceMap = new Map((services as any[]).map((s) => [Number(s.id), s]));
 
   return userFavs
     .map((f: any) => {
@@ -3029,40 +3042,67 @@ export async function getFavorites(userId: number) {
 }
 
 export async function toggleFavorite(userId: number, serviceId: number) {
+  const numUserId = Number(userId);
+  const numServiceId = Number(serviceId);
   const data = readDataFile();
   if (!data.favorites) data.favorites = [];
 
+  const db = await getMongoDb();
+  let mongoFound = null;
+  if (db) {
+    try {
+      mongoFound = await db.collection('favorites').findOne({
+        $or: [
+          { user_id: numUserId, service_id: numServiceId },
+          { user_id: String(userId), service_id: numServiceId },
+        ],
+      });
+    } catch (e) {}
+  }
+
   const existingIndex = data.favorites.findIndex(
-    (f: any) => Number(f.user_id) === Number(userId) && Number(f.service_id) === Number(serviceId)
+    (f: any) =>
+      (Number(f.user_id) === numUserId || String(f.user_id) === String(userId)) &&
+      Number(f.service_id) === numServiceId
   );
 
   let isFavorite = false;
-  if (existingIndex > -1) {
-    const removedId = data.favorites[existingIndex].id;
-    data.favorites.splice(existingIndex, 1);
+  if (existingIndex > -1 || mongoFound) {
+    if (existingIndex > -1) {
+      data.favorites.splice(existingIndex, 1);
+    }
     isFavorite = false;
 
-    const db = await getMongoDb();
     if (db) {
       try {
-        await db.collection('favorites').deleteOne({ id: removedId });
+        await db.collection('favorites').deleteMany({
+          $or: [
+            { user_id: numUserId, service_id: numServiceId },
+            { user_id: String(userId), service_id: numServiceId },
+            ...(mongoFound?.id ? [{ id: mongoFound.id }] : []),
+          ],
+        });
       } catch (e) {}
     }
   } else {
-    const nextId = data.favorites.length > 0 ? Math.max(...data.favorites.map((f: any) => f.id || 0)) + 1 : 1;
+    const nextId =
+      data.favorites.length > 0 ? Math.max(...data.favorites.map((f: any) => f.id || 0)) + 1 : Date.now();
     const newFav = {
       id: nextId,
-      user_id: Number(userId),
-      service_id: Number(serviceId),
+      user_id: numUserId,
+      service_id: numServiceId,
       created_at: new Date().toISOString(),
     };
     data.favorites.push(newFav);
     isFavorite = true;
 
-    const db = await getMongoDb();
     if (db) {
       try {
-        await db.collection('favorites').insertOne(newFav);
+        await db.collection('favorites').updateOne(
+          { user_id: numUserId, service_id: numServiceId },
+          { $set: newFav },
+          { upsert: true }
+        );
       } catch (e) {}
     }
   }
@@ -3072,13 +3112,15 @@ export async function toggleFavorite(userId: number, serviceId: number) {
 }
 
 export async function checkIsFavorite(userId: number, serviceId: number): Promise<boolean> {
+  const numUserId = Number(userId);
+  const numServiceId = Number(serviceId);
   const db = await getMongoDb();
   if (db) {
     try {
       const found = await db.collection('favorites').findOne({
         $and: [
-          { $or: [{ user_id: Number(userId) }, { user_id: String(userId) }] },
-          { $or: [{ service_id: Number(serviceId) }, { service_id: String(serviceId) }] },
+          { $or: [{ user_id: numUserId }, { user_id: String(userId) }] },
+          { $or: [{ service_id: numServiceId }, { service_id: String(serviceId) }] },
         ],
       });
       if (found) return true;
@@ -3087,7 +3129,9 @@ export async function checkIsFavorite(userId: number, serviceId: number): Promis
   const data = readDataFile();
   const allFavs = data.favorites || [];
   return allFavs.some(
-    (f: any) => Number(f.user_id) === Number(userId) && Number(f.service_id) === Number(serviceId)
+    (f: any) =>
+      (Number(f.user_id) === numUserId || String(f.user_id) === String(userId)) &&
+      (Number(f.service_id) === numServiceId || String(f.service_id) === String(serviceId))
   );
 }
 
