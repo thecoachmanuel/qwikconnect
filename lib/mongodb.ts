@@ -1020,6 +1020,18 @@ const SEED_DATA = {
       created_at: new Date('2026-10-22').toISOString(),
     },
   ],
+  service_cities: [
+    { id: 1, service_city: 'Lagos', country: 'Nigeria', status: 1, created_at: new Date('2024-01-01').toISOString() },
+    { id: 2, service_city: 'Abuja', country: 'Nigeria', status: 1, created_at: new Date('2024-01-01').toISOString() },
+    { id: 3, service_city: 'Port Harcourt', country: 'Nigeria', status: 1, created_at: new Date('2024-01-01').toISOString() },
+    { id: 4, service_city: 'Ibadan', country: 'Nigeria', status: 1, created_at: new Date('2024-01-01').toISOString() },
+    { id: 5, service_city: 'Kano', country: 'Nigeria', status: 1, created_at: new Date('2024-01-01').toISOString() },
+    { id: 6, service_city: 'Benin City', country: 'Nigeria', status: 1, created_at: new Date('2024-01-01').toISOString() },
+    { id: 7, service_city: 'Enugu', country: 'Nigeria', status: 1, created_at: new Date('2024-01-01').toISOString() },
+    { id: 8, service_city: 'Abeokuta', country: 'Nigeria', status: 1, created_at: new Date('2024-01-01').toISOString() },
+    { id: 9, service_city: 'Kaduna', country: 'Nigeria', status: 1, created_at: new Date('2024-01-01').toISOString() },
+    { id: 10, service_city: 'Asaba', country: 'Nigeria', status: 1, created_at: new Date('2024-01-01').toISOString() },
+  ],
 };
 
 function ensureDataFile() {
@@ -1091,6 +1103,7 @@ export interface MongoStoreData {
   blogs?: any[];
   contact_messages?: any[];
   extra_services?: any[];
+  service_cities?: any[];
 }
 
 function readDataFile(): MongoStoreData {
@@ -1108,6 +1121,10 @@ function readDataFile(): MongoStoreData {
     if (!parsed.favorites) { parsed.favorites = SEED_DATA.favorites; dirty = true; }
     if (!parsed.extra_services || !Array.isArray(parsed.extra_services)) {
       parsed.extra_services = SEED_DATA.extra_services || [];
+      dirty = true;
+    }
+    if (!parsed.service_cities || !Array.isArray(parsed.service_cities) || parsed.service_cities.length === 0) {
+      parsed.service_cities = SEED_DATA.service_cities;
       dirty = true;
     }
     if (!parsed.notifications || !Array.isArray(parsed.notifications) || parsed.notifications.length === 0) {
@@ -4257,5 +4274,194 @@ export async function deleteExtraService(extraId: number | string): Promise<bool
   }
 
   return false;
+}
+
+// 18. SERVICE LOCATIONS (NIGERIA REGION RESTRICTED & DYNAMIC SERVICE COUNT)
+export interface ServiceCityData {
+  id: number;
+  service_city: string;
+  country: string;
+  status: number;
+  created_at?: string;
+  updated_at?: string;
+  service_count?: number;
+}
+
+export async function getServiceCities(filter?: {
+  status?: number;
+  onlyWithServices?: boolean;
+}): Promise<ServiceCityData[]> {
+  const data = readDataFile();
+  let cities: ServiceCityData[] = Array.isArray(data.service_cities) ? [...data.service_cities] : [];
+
+  // Sync from MongoDB if present
+  const db = await getMongoDb();
+  if (db) {
+    try {
+      const mongoCities = await db.collection('service_cities').find({}).toArray();
+      if (mongoCities && mongoCities.length > 0) {
+        cities = mongoCities.map(({ _id, ...rest }) => ({
+          ...rest,
+          id: Number(rest.id),
+          service_city: rest.service_city || '',
+          country: rest.country || 'Nigeria',
+          status: rest.status !== undefined ? Number(rest.status) : 1,
+        }));
+      }
+    } catch (e) {}
+  }
+
+  // Count active live services per location
+  const allServices = await getServices({ status: 1 });
+  const cityCountMap: Record<string, number> = {};
+  allServices.forEach((s: any) => {
+    const c = (s.city || s.service_city || '').trim();
+    if (c) {
+      const norm = c.toLowerCase();
+      cityCountMap[norm] = (cityCountMap[norm] || 0) + 1;
+    }
+  });
+
+  // Ensure any live service city is tracked in the list
+  Object.keys(cityCountMap).forEach((normCity) => {
+    const exists = cities.some((c) => c.service_city.trim().toLowerCase() === normCity);
+    if (!exists) {
+      const matched = allServices.find((s: any) => (s.city || s.service_city || '').trim().toLowerCase() === normCity);
+      const properName = matched?.city || matched?.service_city || normCity;
+      cities.push({
+        id: cities.length + 100,
+        service_city: properName,
+        country: 'Nigeria',
+        status: 1,
+        created_at: new Date().toISOString(),
+      });
+    }
+  });
+
+  // Enrich with live service count
+  let enriched = cities.map((c) => ({
+    ...c,
+    country: c.country || 'Nigeria',
+    status: c.status !== undefined ? Number(c.status) : 1,
+    service_count: cityCountMap[c.service_city.trim().toLowerCase()] || 0,
+  }));
+
+  // Filter by status if specified
+  if (filter?.status !== undefined) {
+    enriched = enriched.filter((c) => Number(c.status) === Number(filter.status));
+  }
+
+  // Filter to only locations with available services
+  if (filter?.onlyWithServices) {
+    enriched = enriched.filter((c) => (c.service_count || 0) > 0);
+  }
+
+  // Sort: locations with services first (descending), then alphabetical
+  enriched.sort((a, b) => {
+    if ((b.service_count || 0) !== (a.service_count || 0)) {
+      return (b.service_count || 0) - (a.service_count || 0);
+    }
+    return a.service_city.localeCompare(b.service_city);
+  });
+
+  return enriched;
+}
+
+export async function createServiceCity(input: {
+  service_city: string;
+  country?: string;
+  status?: number;
+}): Promise<ServiceCityData> {
+  const data = readDataFile();
+  if (!data.service_cities) data.service_cities = [];
+
+  const cityName = input.service_city.trim();
+  if (!cityName) {
+    throw new Error('City name is required');
+  }
+
+  const existing = data.service_cities.find(
+    (c: any) => c.service_city.trim().toLowerCase() === cityName.toLowerCase()
+  );
+  if (existing) {
+    throw new Error(`Location "${cityName}" already exists.`);
+  }
+
+  const maxId = data.service_cities.reduce((max: number, c: any) => Math.max(max, Number(c.id) || 0), 0);
+  const newCity: ServiceCityData = {
+    id: maxId + 1,
+    service_city: cityName,
+    country: 'Nigeria',
+    status: input.status !== undefined ? Number(input.status) : 1,
+    created_at: new Date().toISOString(),
+  };
+
+  data.service_cities.push(newCity);
+  writeDataFile(data);
+
+  const db = await getMongoDb();
+  if (db) {
+    try {
+      await db.collection('service_cities').insertOne({ ...newCity });
+    } catch (e) {}
+  }
+
+  return newCity;
+}
+
+export async function updateServiceCity(
+  id: number | string,
+  updateData: Partial<ServiceCityData>
+): Promise<ServiceCityData | null> {
+  const numId = Number(id);
+  const data = readDataFile();
+  if (!data.service_cities) data.service_cities = [];
+
+  const idx = data.service_cities.findIndex((c: any) => Number(c.id) === numId);
+  if (idx === -1) return null;
+
+  const target = { ...data.service_cities[idx] };
+  if (updateData.service_city !== undefined) target.service_city = updateData.service_city.trim();
+  if (updateData.country !== undefined) target.country = 'Nigeria';
+  if (updateData.status !== undefined) target.status = Number(updateData.status);
+  target.updated_at = new Date().toISOString();
+
+  data.service_cities[idx] = target;
+  writeDataFile(data);
+
+  const db = await getMongoDb();
+  if (db) {
+    try {
+      await db.collection('service_cities').updateOne(
+        { $or: [{ id: numId }, { id: String(numId) }] },
+        { $set: target }
+      );
+    } catch (e) {}
+  }
+
+  return target;
+}
+
+export async function deleteServiceCity(id: number | string): Promise<boolean> {
+  const numId = Number(id);
+  const data = readDataFile();
+  if (!data.service_cities) data.service_cities = [];
+
+  const idx = data.service_cities.findIndex((c: any) => Number(c.id) === numId);
+  if (idx === -1) return false;
+
+  data.service_cities.splice(idx, 1);
+  writeDataFile(data);
+
+  const db = await getMongoDb();
+  if (db) {
+    try {
+      await db.collection('service_cities').deleteOne({
+        $or: [{ id: numId }, { id: String(numId) }],
+      });
+    } catch (e) {}
+  }
+
+  return true;
 }
 

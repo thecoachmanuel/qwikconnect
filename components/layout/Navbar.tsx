@@ -26,6 +26,7 @@ export default function Navbar({ sessionUser, siteLogo, siteTitle, settings }: N
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isAccountOpen, setIsAccountOpen] = useState(false);
+  const [isMobileAccountOpen, setIsMobileAccountOpen] = useState(false);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [isMobileNotifOpen, setIsMobileNotifOpen] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
@@ -33,6 +34,7 @@ export default function Navbar({ sessionUser, siteLogo, siteTitle, settings }: N
   const [isScrolled, setIsScrolled] = useState(false);
 
   const accountRef = useRef<HTMLDivElement>(null);
+  const mobileAccountRef = useRef<HTMLDivElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
   const mobileNotifRef = useRef<HTMLDivElement>(null);
 
@@ -218,6 +220,7 @@ export default function Navbar({ sessionUser, siteLogo, siteTitle, settings }: N
   const dashboardHref = `/${effectiveRole}/dashboard`;
   const profileHref = `/${effectiveRole}/profile`;
   const notificationsHref = `/${effectiveRole}/notifications`;
+  const ordersHref = effectiveRole === 'seller' ? '/seller/orders' : effectiveRole === 'admin' ? '/admin/orders' : '/buyer/orders';
   const accentColor = effectiveRole === 'admin' ? '#6366f1' : effectiveRole === 'seller' ? '#1DBF73' : '#0284c7';
 
   // Load real-time user and role specific notifications
@@ -308,6 +311,7 @@ export default function Navbar({ sessionUser, siteLogo, siteTitle, settings }: N
   useEffect(() => {
     setIsMobileMenuOpen(false);
     setIsAccountOpen(false);
+    setIsMobileAccountOpen(false);
     setIsNotifOpen(false);
     setIsMobileNotifOpen(false);
   }, [pathname]);
@@ -327,6 +331,9 @@ export default function Navbar({ sessionUser, siteLogo, siteTitle, settings }: N
     function handleClickOutside(e: MouseEvent) {
       if (accountRef.current && !accountRef.current.contains(e.target as Node)) {
         setIsAccountOpen(false);
+      }
+      if (mobileAccountRef.current && !mobileAccountRef.current.contains(e.target as Node)) {
+        setIsMobileAccountOpen(false);
       }
       if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
         setIsNotifOpen(false);
@@ -618,6 +625,303 @@ export default function Navbar({ sessionUser, siteLogo, siteTitle, settings }: N
     </>
   );
 
+  // Helper to render account modal / dropdown with mobile tap support and profile navigation
+  const renderAccountModal = (isMobile = false) => (
+    <>
+      {isMobile && (
+        <div
+          onClick={() => setIsMobileAccountOpen(false)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.55)',
+            zIndex: 99998,
+            backdropFilter: 'blur(2px)',
+          }}
+          aria-hidden="true"
+        />
+      )}
+      <div
+        className={isMobile ? "qixer-mobile-account-modal" : "account-dropdown-menu"}
+        style={
+          isMobile
+            ? {
+                position: 'fixed',
+                top: '68px',
+                right: '12px',
+                width: 'calc(100vw - 24px)',
+                maxWidth: '300px',
+                background: '#ffffff',
+                borderRadius: '14px',
+                boxShadow: '0 15px 45px rgba(0,0,0,0.25)',
+                border: '1px solid #e2e8f0',
+                zIndex: 999999,
+                overflow: 'hidden',
+                animation: 'navDdFade .15s ease',
+                display: 'flex',
+                flexDirection: 'column',
+              }
+            : {
+                display: 'block',
+                position: 'absolute',
+                top: 'calc(100% + 8px)',
+                right: 0,
+                backgroundColor: '#fff',
+                boxShadow: '0 8px 25px rgba(0,0,0,0.12)',
+                borderRadius: '8px',
+                padding: '8px 0',
+                minWidth: '185px',
+                zIndex: 99999,
+                listStyle: 'none',
+                margin: 0,
+                border: '1px solid #f1f5f9',
+                animation: 'navDdFade .15s ease',
+              }
+        }
+      >
+        {isLoggedIn ? (
+          <div>
+            {/* User Profile Header */}
+            <div
+              style={{
+                padding: '12px 16px',
+                borderBottom: '1px solid #f1f5f9',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                backgroundColor: '#f8fafc',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
+                <div
+                  style={{
+                    width: '38px',
+                    height: '38px',
+                    borderRadius: '50%',
+                    overflow: 'hidden',
+                    flexShrink: 0,
+                    border: '2px solid var(--main-color-one)',
+                  }}
+                >
+                  <img
+                    src={currentDisplayImage}
+                    alt={currentDisplayName}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
+                </div>
+                <div style={{ minWidth: 0 }}>
+                  <div
+                    style={{
+                      fontWeight: 700,
+                      fontSize: '13.5px',
+                      color: '#1e293b',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                    }}
+                  >
+                    {currentDisplayName}
+                  </div>
+                  <span
+                    className="badge"
+                    style={{
+                      fontSize: '10px',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px',
+                      backgroundColor: 'rgba(29, 191, 115, 0.12)',
+                      color: 'var(--main-color-one)',
+                      padding: '2px 6px',
+                    }}
+                  >
+                    {effectiveRole}
+                  </span>
+                </div>
+              </div>
+              {isMobile && (
+                <button
+                  type="button"
+                  onClick={() => setIsMobileAccountOpen(false)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#64748b',
+                    fontSize: '18px',
+                    cursor: 'pointer',
+                    padding: '4px',
+                    lineHeight: 1,
+                  }}
+                  aria-label="Close"
+                >
+                  <i className="las la-times"></i>
+                </button>
+              )}
+            </div>
+
+            {/* Menu Links */}
+            <ul style={{ listStyle: 'none', padding: '6px 0', margin: 0 }}>
+              <li>
+                <Link
+                  href={dashboardHref}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    padding: '10px 18px',
+                    color: '#334155',
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    textDecoration: 'none',
+                  }}
+                  onClick={() => {
+                    setIsAccountOpen(false);
+                    setIsMobileAccountOpen(false);
+                  }}
+                >
+                  <i className="las la-tachometer-alt fs-5" style={{ color: 'var(--main-color-one)' }}></i>
+                  <span>Dashboard</span>
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href={profileHref}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    padding: '10px 18px',
+                    color: '#334155',
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    textDecoration: 'none',
+                  }}
+                  onClick={() => {
+                    setIsAccountOpen(false);
+                    setIsMobileAccountOpen(false);
+                  }}
+                >
+                  <i className="las la-user-circle fs-5" style={{ color: '#64748b' }}></i>
+                  <span>Profile Settings</span>
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href={ordersHref}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    padding: '10px 18px',
+                    color: '#334155',
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    textDecoration: 'none',
+                  }}
+                  onClick={() => {
+                    setIsAccountOpen(false);
+                    setIsMobileAccountOpen(false);
+                  }}
+                >
+                  <i className="las la-shopping-cart fs-5" style={{ color: '#64748b' }}></i>
+                  <span>My Orders</span>
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href={notificationsHref}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '10px 18px',
+                    color: '#334155',
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    textDecoration: 'none',
+                  }}
+                  onClick={() => {
+                    setIsAccountOpen(false);
+                    setIsMobileAccountOpen(false);
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <i className="las la-bell fs-5" style={{ color: '#64748b' }}></i>
+                    <span>Notifications</span>
+                  </div>
+                  {unreadCount > 0 && (
+                    <span
+                      style={{
+                        backgroundColor: '#ef4444',
+                        color: '#fff',
+                        fontSize: '10px',
+                        padding: '1px 6px',
+                        borderRadius: '10px',
+                        fontWeight: 700,
+                      }}
+                    >
+                      {unreadCount}
+                    </span>
+                  )}
+                </Link>
+              </li>
+              <li style={{ borderTop: '1px solid #f1f5f9', marginTop: '4px', paddingTop: '4px' }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsAccountOpen(false);
+                    setIsMobileAccountOpen(false);
+                    handleLogout();
+                  }}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    padding: '10px 18px',
+                    color: '#ef4444',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    width: '100%',
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    textAlign: 'left',
+                  }}
+                >
+                  <i className="las la-sign-out-alt fs-5"></i>
+                  <span>Sign Out</span>
+                </button>
+              </li>
+            </ul>
+          </div>
+        ) : (
+          <div style={{ padding: '16px' }}>
+            <Link
+              href="/user/login"
+              className="btn btn-sm btn-success w-100 mb-2 d-flex align-items-center justify-content-center gap-1"
+              style={{ backgroundColor: 'var(--main-color-one)', borderColor: 'var(--main-color-one)', fontWeight: 600 }}
+              onClick={() => {
+                setIsAccountOpen(false);
+                setIsMobileAccountOpen(false);
+              }}
+            >
+              <i className="las la-sign-in-alt"></i> Sign In
+            </Link>
+            <Link
+              href="/user/register"
+              className="btn btn-sm btn-outline-secondary w-100 d-flex align-items-center justify-content-center gap-1"
+              style={{ fontWeight: 600 }}
+              onClick={() => {
+                setIsAccountOpen(false);
+                setIsMobileAccountOpen(false);
+              }}
+            >
+              <i className="las la-user-plus"></i> Register
+            </Link>
+          </div>
+        )}
+      </div>
+    </>
+  );
+
   return (
     <header className="navbar-wrapper" style={{ position: 'sticky', top: 0, zIndex: 1000, width: '100%', backgroundColor: '#ffffff' }}>
       <nav
@@ -638,6 +942,49 @@ export default function Navbar({ sessionUser, siteLogo, siteTitle, settings }: N
           }}
         >
           {/* Mobile Header Brand & Controls */}
+          <style>{`
+            .qixer-site-logo {
+              max-height: 44px;
+              max-width: 200px;
+              width: auto;
+              height: auto;
+              object-fit: contain;
+              transition: max-height 0.25s ease, max-width 0.25s ease;
+            }
+            @media (max-width: 991px) {
+              .responsive-mobile-menu {
+                display: flex !important;
+                align-items: center !important;
+                justify-content: space-between !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                gap: 6px !important;
+                flex-wrap: nowrap !important;
+                overflow: hidden !important;
+              }
+              .responsive-mobile-menu .logo-wrapper {
+                flex: 0 1 auto !important;
+                min-width: 0 !important;
+                overflow: hidden !important;
+              }
+              .qixer-site-logo {
+                max-height: 32px !important;
+                max-width: 135px !important;
+              }
+            }
+            @media (max-width: 420px) {
+              .qixer-site-logo {
+                max-height: 28px !important;
+                max-width: 110px !important;
+              }
+            }
+            @media (max-width: 350px) {
+              .qixer-site-logo {
+                max-height: 25px !important;
+                max-width: 90px !important;
+              }
+            }
+          `}</style>
           <div className="responsive-mobile-menu">
             <div className="logo-wrapper">
               <Link href="/" className="logo" style={{ display: 'inline-flex', alignItems: 'center' }}>
@@ -645,27 +992,13 @@ export default function Navbar({ sessionUser, siteLogo, siteTitle, settings }: N
                   <img
                     src={siteLogo}
                     alt={siteTitle || "QwikConnect Logo"}
-                    style={{
-                      maxHeight: isScrolled ? '46px' : '52px',
-                      maxWidth: '280px',
-                      width: 'auto',
-                      height: 'auto',
-                      transition: 'max-height 0.25s ease',
-                      objectFit: 'contain',
-                    }}
+                    className="qixer-site-logo"
                   />
                 ) : (
                   <img
                     src="/assets/uploads/media-uploader/logo-footer1642310896.png"
                     alt={siteTitle || "QwikConnect Logo"}
-                    style={{
-                      maxHeight: isScrolled ? '46px' : '52px',
-                      maxWidth: '280px',
-                      width: 'auto',
-                      height: 'auto',
-                      transition: 'max-height 0.25s ease',
-                      objectFit: 'contain',
-                    }}
+                    className="qixer-site-logo"
                   />
                 )}
               </Link>
@@ -673,13 +1006,14 @@ export default function Navbar({ sessionUser, siteLogo, siteTitle, settings }: N
 
             {/* Mobile Account & Notification Controls */}
             <div className="onlymobile-device-account-navbar navtwo">
-              <div className="onlymobile-device-account-navbar-flex" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div className="onlymobile-device-account-navbar-flex" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                 {isLoggedIn && (
                   <div ref={mobileNotifRef} className="notification-icon icon" style={{ position: 'relative' }}>
                     <button
                       type="button"
                       onClick={() => {
                         setIsMobileNotifOpen(!isMobileNotifOpen);
+                        setIsMobileAccountOpen(false);
                         setIsNotifOpen(false);
                       }}
                       style={{
@@ -697,7 +1031,7 @@ export default function Navbar({ sessionUser, siteLogo, siteTitle, settings }: N
                       }}
                       aria-label="View notifications"
                     >
-                      <i className="las la-bell" style={{ fontSize: '24px', color: '#334155' }} />
+                      <i className="las la-bell" style={{ fontSize: '22px', color: '#334155' }} />
                       {unreadCount > 0 && (
                         <span
                           className="notification-number style-02"
@@ -722,33 +1056,75 @@ export default function Navbar({ sessionUser, siteLogo, siteTitle, settings }: N
                         </span>
                       )}
                     </button>
+                    {isMobileNotifOpen && renderNotificationModal(true)}
                   </div>
                 )}
 
-                <div className="navbar-right-inner">
+                {/* Mobile User Avatar with Dropdown/Modal */}
+                <div ref={mobileAccountRef} className="navbar-right-inner" style={{ position: 'relative' }}>
                   <div className="login-account">
                     {isLoggedIn ? (
-                      <div className="info-bar-item-two">
-                        <div className="author-thumb">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsMobileAccountOpen(!isMobileAccountOpen);
+                          setIsMobileNotifOpen(false);
+                          setIsAccountOpen(false);
+                        }}
+                        aria-label="User Account Menu"
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          padding: 0,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          outline: 'none',
+                        }}
+                      >
+                        <div
+                          className="author-thumb"
+                          style={{
+                            width: '34px',
+                            height: '34px',
+                            borderRadius: '50%',
+                            overflow: 'hidden',
+                            border: '2px solid var(--main-color-one)',
+                            boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}
+                        >
                           <img
                             src={currentDisplayImage}
                             alt={currentDisplayName}
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                           />
                         </div>
-                        <Link
-                          href={dashboardHref}
-                          className="accounts loggedin"
-                        >
-                          <span className="title">{currentDisplayName}</span>
-                        </Link>
-                      </div>
+                      </button>
                     ) : (
-                      <Link href="/user/login" className="accounts">
-                        <span className="account">Sign In</span>
-                        <i className="las la-user"></i>
+                      <Link
+                        href="/user/login"
+                        className="accounts"
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '3px',
+                          color: 'var(--main-color-one)',
+                          fontWeight: 600,
+                          fontSize: '13px',
+                          padding: '4px 6px',
+                          textDecoration: 'none',
+                        }}
+                        aria-label="Sign in"
+                      >
+                        <i className="las la-user-circle" style={{ fontSize: '24px' }}></i>
                       </Link>
                     )}
                   </div>
+
+                  {isMobileAccountOpen && renderAccountModal(true)}
                 </div>
               </div>
             </div>

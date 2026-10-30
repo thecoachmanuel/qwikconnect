@@ -300,6 +300,7 @@ export default function DashboardLayout({
     { label: 'Overview', href: '/admin/dashboard', icon: 'las la-tachometer-alt' },
     { label: 'All Services', href: '/admin/services', icon: 'las la-cogs' },
     { label: 'Categories', href: '/admin/categories', icon: 'las la-th-list' },
+    { label: 'Service Locations', href: '/admin/locations', icon: 'las la-map-marker-alt' },
     { label: 'All Orders', href: '/admin/orders', icon: 'las la-shopping-cart' },
     { label: 'All Reviews', href: '/admin/reviews', icon: 'lar la-star' },
     { label: 'Notifications', href: '/admin/notifications', icon: 'las la-bell' },

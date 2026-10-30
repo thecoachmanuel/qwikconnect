@@ -34,15 +34,34 @@ export default function CategorySidebar({
   query = '',
   location = '',
 }: CategorySidebarProps) {
-  // If a category is selected, start collapsed on mobile. Otherwise start open.
-  const [isOpen, setIsOpen] = useState(!categorySlug);
+  const isSearchActive = Boolean(categorySlug || query.trim() || (location && location !== 'all'));
 
-  // Automatically collapse on mobile whenever a category is selected or changed
+  // When a search is made, collapse categories by default on mobile unless expanded
+  const [isOpen, setIsOpen] = useState(!isSearchActive);
+  const [availableLocations, setAvailableLocations] = useState<string[]>(['Lagos', 'Abuja']);
+
+  // Automatically collapse categories on mobile whenever a new search or filter is applied
   useEffect(() => {
-    if (categorySlug) {
+    if (isSearchActive) {
       setIsOpen(false);
     }
-  }, [categorySlug]);
+  }, [categorySlug, query, location, isSearchActive]);
+
+  // Load only locations that currently have live services available
+  useEffect(() => {
+    let isMounted = true;
+    fetch('/api/locations?only_with_services=true')
+      .then((res) => res.json())
+      .then((data) => {
+        if (isMounted && data.locations && Array.isArray(data.locations) && data.locations.length > 0) {
+          setAvailableLocations(data.locations.map((l: any) => l.service_city));
+        }
+      })
+      .catch(() => {});
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const activeCategory = categories.find((c) => c.slug === categorySlug);
 
@@ -142,41 +161,68 @@ export default function CategorySidebar({
         </button>
       </div>
 
-      {/* Selected Category Pill on Mobile when collapsed */}
-      {!isOpen && activeCategory && (
+      {/* Selected Filters Pill on Mobile when collapsed */}
+      {!isOpen && isSearchActive && (
         <div
-          className="d-lg-none mt-2 pt-2 border-top d-flex align-items-center justify-content-between"
+          className="d-lg-none mt-2 pt-2 border-top d-flex align-items-center justify-content-between flex-wrap gap-2"
           style={{ fontSize: '13px' }}
         >
-          <div className="d-flex align-items-center gap-2 text-truncate">
-            <span style={{ color: '#64748b' }}>Selected:</span>
-            <span
-              className="badge"
-              style={{
-                backgroundColor: 'rgba(29, 191, 115, 0.12)',
-                color: 'var(--main-color-one)',
-                fontWeight: 600,
-                fontSize: '12px',
-                padding: '5px 9px',
-                borderRadius: '6px',
-              }}
-            >
-              {activeCategory.name}
-            </span>
+          <div className="d-flex align-items-center gap-1 flex-wrap">
+            <span style={{ color: '#64748b', fontSize: '12px' }}>Filtered by:</span>
+            {activeCategory && (
+              <span
+                className="badge"
+                style={{
+                  backgroundColor: 'rgba(29, 191, 115, 0.12)',
+                  color: 'var(--main-color-one)',
+                  fontWeight: 600,
+                  fontSize: '11.5px',
+                  padding: '4px 8px',
+                  borderRadius: '6px',
+                }}
+              >
+                {activeCategory.name}
+              </span>
+            )}
+            {location && location !== 'all' && (
+              <span
+                className="badge bg-light text-dark border"
+                style={{
+                  fontWeight: 600,
+                  fontSize: '11.5px',
+                  padding: '4px 8px',
+                  borderRadius: '6px',
+                }}
+              >
+                📍 {location}
+              </span>
+            )}
+            {query.trim() && (
+              <span
+                className="badge bg-light text-muted border"
+                style={{
+                  fontWeight: 500,
+                  fontSize: '11.5px',
+                  padding: '4px 8px',
+                  borderRadius: '6px',
+                }}
+              >
+                &ldquo;{query.trim()}&rdquo;
+              </span>
+            )}
           </div>
           <Link
-            href={`/service-list${query ? `?q=${query}` : ''}`}
+            href="/service-list"
             onClick={(e) => e.stopPropagation()}
             style={{
               fontSize: '11px',
               color: '#dc2626',
               fontWeight: 600,
               textDecoration: 'none',
-              marginLeft: '8px',
               whiteSpace: 'nowrap',
             }}
           >
-            Clear
+            Clear All
           </Link>
         </div>
       )}
@@ -303,7 +349,7 @@ export default function CategorySidebar({
                 {!location && <i className="las la-check" style={{ fontSize: '13px' }}></i>}
               </Link>
             </li>
-            {SIDEBAR_CITIES.map((city) => {
+            {availableLocations.map((city) => {
               const isCityActive = location?.toLowerCase() === city.toLowerCase();
               return (
                 <li key={city} style={{ marginBottom: '3px' }}>

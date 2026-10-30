@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 export const NIGERIAN_CITIES = [
@@ -41,8 +41,25 @@ export default function ServiceSearchFilterBar({
   const router = useRouter();
   const [query, setQuery] = useState(initialQuery);
   const [location, setLocation] = useState(initialLocation);
+  const [availableCities, setAvailableCities] = useState<string[]>(['Lagos', 'Abuja']);
   const [rating, setRating] = useState(initialRating);
   const [sortBy, setSortBy] = useState(initialSortBy);
+
+  // Dynamically load only available locations that have services
+  useEffect(() => {
+    let isMounted = true;
+    fetch('/api/locations?only_with_services=true')
+      .then((res) => res.json())
+      .then((data) => {
+        if (isMounted && data.locations && Array.isArray(data.locations) && data.locations.length > 0) {
+          setAvailableCities(data.locations.map((l: any) => l.service_city));
+        }
+      })
+      .catch(() => {});
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const applyFilters = (newFilters: {
     q?: string;
@@ -143,7 +160,7 @@ export default function ServiceSearchFilterBar({
                 style={{ height: '42px', fontSize: '13.5px', borderRadius: '6px' }}
               >
                 <option value="">All Locations in Nigeria</option>
-                {NIGERIAN_CITIES.map((city) => (
+                {availableCities.map((city) => (
                   <option key={city} value={city}>
                     {city}, Nigeria
                   </option>

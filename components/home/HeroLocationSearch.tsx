@@ -27,11 +27,28 @@ export const NIGERIAN_CITIES = [
 export default function HeroLocationSearch() {
   const router = useRouter();
   const [selectedCity, setSelectedCity] = useState('');
+  const [availableCities, setAvailableCities] = useState<string[]>(['Lagos', 'Abuja']);
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Load only locations that currently have live services available
+  useEffect(() => {
+    let isMounted = true;
+    fetch('/api/locations?only_with_services=true')
+      .then((res) => res.json())
+      .then((data) => {
+        if (isMounted && data.locations && Array.isArray(data.locations) && data.locations.length > 0) {
+          setAvailableCities(data.locations.map((l: any) => l.service_city));
+        }
+      })
+      .catch(() => {});
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Close live results when clicking outside
   useEffect(() => {
@@ -140,8 +157,8 @@ export default function HeroLocationSearch() {
               height: '46px',
             }}
           >
-            <option value="">All Cities</option>
-            {NIGERIAN_CITIES.map((city) => (
+            <option value="">All Locations</option>
+            {availableCities.map((city) => (
               <option key={city} value={city}>
                 {city}
               </option>
