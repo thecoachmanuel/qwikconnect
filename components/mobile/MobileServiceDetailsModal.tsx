@@ -108,7 +108,12 @@ export default function MobileServiceDetailsModal({
   return (
     <div
       className="position-fixed top-0 start-0 w-100 h-100 bg-white d-flex flex-column"
-      style={{ zIndex: 1060, overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}
+      style={{
+        zIndex: 1060,
+        overflowY: 'auto',
+        WebkitOverflowScrolling: 'touch',
+        paddingBottom: 'calc(80px + env(safe-area-inset-bottom, 0px))',
+      }}
     >
       {/* 1. Flutter ImageBig Header with Overlay Controls */}
       <div className="position-relative" style={{ width: '100%', height: '260px', backgroundColor: '#f1f5f9' }}>
@@ -125,13 +130,16 @@ export default function MobileServiceDetailsModal({
         <div
           className="position-absolute top-0 start-0 end-0"
           style={{
-            height: '75px',
-            background: 'linear-gradient(to bottom, rgba(0,0,0,0.55), rgba(0,0,0,0))',
+            height: 'calc(85px + env(safe-area-inset-top, 0px))',
+            background: 'linear-gradient(to bottom, rgba(0,0,0,0.6), rgba(0,0,0,0))',
           }}
         />
 
         {/* Top Floating Controls */}
-        <div className="position-absolute top-0 start-0 end-0 p-3 d-flex align-items-center justify-content-between">
+        <div
+          className="position-absolute top-0 start-0 end-0 px-3 d-flex align-items-center justify-content-between"
+          style={{ paddingTop: 'calc(14px + env(safe-area-inset-top, 0px))' }}
+        >
           <button
             type="button"
             onClick={onClose}
@@ -454,8 +462,12 @@ export default function MobileServiceDetailsModal({
 
       {/* 5. Sticky Bottom Action Bar (Flutter Parity) */}
       <div
-        className="position-fixed bottom-0 start-0 end-0 bg-white border-top px-4 py-3 d-flex align-items-center justify-content-between shadow"
-        style={{ zIndex: 1070 }}
+        className="position-fixed bottom-0 start-0 end-0 bg-white border-top px-4 d-flex align-items-center justify-content-between shadow"
+        style={{
+          zIndex: 1070,
+          paddingTop: '12px',
+          paddingBottom: 'calc(12px + env(safe-area-inset-bottom, 0px))',
+        }}
       >
         <div>
           <span className="text-muted small d-block" style={{ fontSize: '11.5px' }}>

@@ -181,13 +181,13 @@ export default function MobileSearchScreen({
 
       {/* 3. Category Chips Scroller */}
       <div
-        className="d-flex gap-2 overflow-x-auto pb-2 mb-3"
+        className="mobile-horizontal-reel d-flex gap-2 pb-2 mb-3"
         style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}
       >
         <button
           type="button"
           onClick={() => setSelectedCategory('')}
-          className="btn btn-sm px-3 py-1.5 flex-shrink-0"
+          className="mobile-horizontal-card btn btn-sm px-3 py-1.5"
           style={{
             borderRadius: '20px',
             border: `1px solid ${!selectedCategory ? 'var(--main-color-one, #1DBF73)' : '#EAECF0'}`,
@@ -206,7 +206,7 @@ export default function MobileSearchScreen({
               key={cat.id}
               type="button"
               onClick={() => setSelectedCategory(isSelected ? '' : cat.slug)}
-              className="btn btn-sm px-3 py-1.5 flex-shrink-0"
+              className="mobile-horizontal-card btn btn-sm px-3 py-1.5"
               style={{
                 borderRadius: '20px',
                 border: `1px solid ${isSelected ? 'var(--main-color-one, #1DBF73)' : '#EAECF0'}`,

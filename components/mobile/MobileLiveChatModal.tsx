@@ -104,7 +104,13 @@ export default function MobileLiveChatModal({
       style={{ zIndex: 1080 }}
     >
       {/* 1. Header (Flutter chat_message_page.dart parity) */}
-      <div className="d-flex align-items-center justify-content-between px-3 py-2.5 border-bottom bg-white shadow-sm">
+      <div
+        className="d-flex align-items-center justify-content-between px-3 border-bottom bg-white shadow-sm"
+        style={{
+          paddingTop: 'calc(12px + env(safe-area-inset-top, 0px))',
+          paddingBottom: '12px',
+        }}
+      >
         <div className="d-flex align-items-center gap-2.5">
           <button
             type="button"
@@ -220,8 +226,11 @@ export default function MobileLiveChatModal({
       {/* 3. Bottom Message Input Bar */}
       <form
         onSubmit={handleSendMessage}
-        className="p-2.5 bg-white border-top d-flex align-items-center gap-2"
-        style={{ boxShadow: '0 -2px 10px rgba(0,0,0,0.04)' }}
+        className="px-2.5 pt-2.5 bg-white border-top d-flex align-items-center gap-2"
+        style={{
+          boxShadow: '0 -2px 10px rgba(0,0,0,0.04)',
+          paddingBottom: 'calc(10px + env(safe-area-inset-bottom, 0px))',
+        }}
       >
         <button
           type="button"

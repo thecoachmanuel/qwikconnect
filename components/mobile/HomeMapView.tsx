@@ -73,12 +73,14 @@ export default function HomeMapView({ onClose }: { onClose: () => void }) {
     >
       {/* 1. App Bar Header (Flutter CommonHelper().appbarCommon) */}
       <div
-        className="d-flex align-items-center justify-content-between px-4 py-3 bg-white"
+        className="d-flex align-items-center justify-content-between px-4 bg-white"
         style={{
           borderBottom: '1px solid #EAECF0',
           position: 'sticky',
           top: 0,
           zIndex: 10,
+          paddingTop: 'calc(14px + env(safe-area-inset-top, 0px))',
+          paddingBottom: '14px',
         }}
       >
         <div className="d-flex align-items-center gap-3">
@@ -190,6 +192,7 @@ export default function HomeMapView({ onClose }: { onClose: () => void }) {
             zIndex: 1060,
             borderRadius: '20px 20px 0 0',
             borderTop: '1px solid #EAECF0',
+            paddingBottom: 'calc(14px + env(safe-area-inset-bottom, 0px))',
           }}
         >
           <div className="d-flex align-items-start gap-3">

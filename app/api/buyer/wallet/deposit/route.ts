@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { creditWallet, getPaymentGateways } from '@/lib/mongodb';
+import { getPaystackCredentials } from '@/lib/payments/keys';
 
 export async function POST(request: Request) {
   try {
@@ -32,18 +33,10 @@ export async function POST(request: Request) {
     // Initialize Paystack payment
     const gateways = await getPaymentGateways();
     const pstk = (gateways as any[]).find((g: any) => g.id === 'paystack');
-    const secretKey = pstk?.fields?.secret_key || process.env.PAYSTACK_SECRET_KEY || '';
-    const publicKey = pstk?.fields?.public_key || process.env.PAYSTACK_PUBLIC_KEY || '';
+    const { secretKey, publicKey, isConfigured } = getPaystackCredentials(pstk);
 
-    const isTestKey =
-      !secretKey ||
-      secretKey.includes('placeholder') ||
-      secretKey.includes('your_') ||
-      secretKey.includes('2a458001d806c878aba51955b962b3c8ed78f04b') ||
-      secretKey.startsWith('demo');
-
-    // If live/real Paystack key is set by admin
-    if (!isTestKey && secretKey.startsWith('sk_')) {
+    // If real Paystack key is available (either configured by admin or in environment variables)
+    if (isConfigured && secretKey.startsWith('sk_')) {
       try {
         const origin = request.headers.get('origin') || process.env.NEXTAUTH_URL || 'http://localhost:3000';
         const pstkRes = await fetch('https://api.paystack.co/transaction/initialize', {

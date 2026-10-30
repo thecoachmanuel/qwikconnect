@@ -1,32 +1,23 @@
 import { PaymentIntentOptions, PaymentInitResult } from './types';
 import { getPaymentGateways } from '@/lib/mongodb';
+import { getFlutterwaveCredentials } from './keys';
 
 export async function initializeFlutterwave(options: PaymentIntentOptions): Promise<PaymentInitResult> {
-  let secretKey = process.env.FLW_SECRET_KEY || '';
+  let flwConfig: any = null;
 
   try {
     const gateways = await getPaymentGateways();
-    const flw = (gateways as any[]).find((g: any) => g.id === 'flutterwave');
-    if (flw) {
-      if (flw.enabled === false) {
-        throw new Error('Flutterwave payment gateway is currently disabled by administrator.');
-      }
-      if (flw.fields?.secret_key) {
-        secretKey = flw.fields.secret_key;
-      }
+    flwConfig = (gateways as any[]).find((g: any) => g.id === 'flutterwave');
+    if (flwConfig && flwConfig.enabled === false) {
+      throw new Error('Flutterwave payment gateway is currently disabled by administrator.');
     }
   } catch (err: any) {
     if (err.message?.includes('disabled')) throw err;
   }
 
-  const isDemoKey =
-    !secretKey ||
-    secretKey.includes('placeholder') ||
-    secretKey.includes('your_') ||
-    secretKey.includes('test_your') ||
-    secretKey.startsWith('demo');
+  const { secretKey, isConfigured } = getFlutterwaveCredentials(flwConfig);
 
-  if (isDemoKey) {
+  if (!isConfigured) {
     return {
       redirectUrl: `${options.successUrl}&demo_paid=1&gateway=flutterwave`,
       isDirectSuccess: true,

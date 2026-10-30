@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { creditWallet, getPaymentGateways, getWalletHistory } from '@/lib/mongodb';
+import { getPaystackCredentials } from '@/lib/payments/keys';
 
 export async function GET(request: NextRequest) {
   try {
@@ -26,11 +27,11 @@ export async function GET(request: NextRequest) {
 
     const gateways = await getPaymentGateways();
     const pstk = (gateways as any[]).find((g: any) => g.id === 'paystack');
-    const secretKey = pstk?.fields?.secret_key || process.env.PAYSTACK_SECRET_KEY || '';
+    const { secretKey, isConfigured } = getPaystackCredentials(pstk);
 
     let verifiedAmount = 10000;
 
-    if (secretKey && secretKey.startsWith('sk_')) {
+    if (isConfigured && secretKey.startsWith('sk_')) {
       try {
         const verifyRes = await fetch(`https://api.paystack.co/transaction/verify/${encodeURIComponent(reference)}`, {
           headers: {
@@ -58,4 +59,3 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ success: false, message: error.message }, { status: 500 });
   }
 }
-

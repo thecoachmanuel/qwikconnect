@@ -141,10 +141,21 @@ export default function MobileTicketsModal({ onClose }: MobileTicketsModalProps)
   return (
     <div
       className="position-fixed top-0 start-0 w-100 h-100 bg-white d-flex flex-column"
-      style={{ zIndex: 1070, overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}
+      style={{
+        zIndex: 1070,
+        overflowY: 'auto',
+        WebkitOverflowScrolling: 'touch',
+        paddingBottom: 'calc(24px + env(safe-area-inset-bottom, 0px))',
+      }}
     >
       {/* 1. Header (Flutter my_tickets_page.dart parity) */}
-      <div className="d-flex align-items-center justify-content-between px-4 py-3 border-bottom bg-white sticky-top">
+      <div
+        className="d-flex align-items-center justify-content-between px-4 border-bottom bg-white sticky-top"
+        style={{
+          paddingTop: 'calc(14px + env(safe-area-inset-top, 0px))',
+          paddingBottom: '14px',
+        }}
+      >
         <div className="d-flex align-items-center gap-2">
           <button
             type="button"

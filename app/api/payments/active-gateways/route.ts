@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getPaymentGateways, getPlatformSettings } from '@/lib/mongodb';
+import { getPaystackCredentials, getFlutterwaveCredentials, getStripeCredentials } from '@/lib/payments/keys';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,15 +21,18 @@ export async function GET() {
         let badge = '';
         let currency = 'NGN';
         let isUsd = false;
+        let resolvedPublicKey = g.fields?.public_key || g.fields?.publishable_key || g.fields?.key_id || '';
 
         if (g.id === 'paystack') {
           description = 'Fast & secure payment via Debit Card, Bank Account, Transfer, or USSD (in NGN)';
           badge = 'Recommended';
           currency = 'NGN';
+          resolvedPublicKey = getPaystackCredentials(g).publicKey;
         } else if (g.id === 'flutterwave') {
           description = 'Pay with Cards, Bank Accounts, Transfers & Mobile Money (in NGN)';
           badge = 'Popular';
           currency = 'NGN';
+          resolvedPublicKey = getFlutterwaveCredentials(g).publicKey;
         } else if (g.id === 'wallet') {
           description = 'Pay instantly from your Naira wallet balance with zero transaction fees';
           badge = 'Instant';
@@ -40,6 +44,7 @@ export async function GET() {
           description = 'Pay securely with Visa, MasterCard, or American Express (billed in USD)';
           currency = 'USD';
           isUsd = true;
+          resolvedPublicKey = getStripeCredentials(g).publicKey;
         } else if (g.id === 'paypal') {
           description = 'Pay with your PayPal balance, linked bank account, or card (billed in USD)';
           currency = 'USD';
@@ -61,7 +66,7 @@ export async function GET() {
           currency,
           isUsd,
           sandbox: !!g.sandbox,
-          public_key: g.fields?.public_key || g.fields?.publishable_key || g.fields?.key_id || '',
+          public_key: resolvedPublicKey,
         };
       });
 

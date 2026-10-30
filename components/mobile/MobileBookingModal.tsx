@@ -277,10 +277,21 @@ export default function MobileBookingModal({
   return (
     <div
       className="position-fixed top-0 start-0 w-100 h-100 bg-white d-flex flex-column"
-      style={{ zIndex: 1080, overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}
+      style={{
+        zIndex: 1080,
+        overflowY: 'auto',
+        WebkitOverflowScrolling: 'touch',
+        paddingBottom: 'calc(90px + env(safe-area-inset-bottom, 0px))',
+      }}
     >
       {/* 1. Header with back button & Step Indicator */}
-      <div className="d-flex align-items-center justify-content-between px-4 py-3 border-bottom bg-white sticky-top">
+      <div
+        className="d-flex align-items-center justify-content-between px-4 border-bottom bg-white sticky-top"
+        style={{
+          paddingTop: 'calc(14px + env(safe-area-inset-top, 0px))',
+          paddingBottom: '14px',
+        }}
+      >
         <button
           type="button"
           onClick={() => {
@@ -852,8 +863,12 @@ export default function MobileBookingModal({
       {/* 4. Bottom Sticky Action Button (Steps 1-4) */}
       {currentStep < 5 && (
         <div
-          className="position-fixed bottom-0 start-0 end-0 bg-white border-top px-4 py-3 d-flex align-items-center justify-content-between shadow"
-          style={{ zIndex: 1090 }}
+          className="position-fixed bottom-0 start-0 end-0 bg-white border-top px-4 d-flex align-items-center justify-content-between shadow"
+          style={{
+            zIndex: 1090,
+            paddingTop: '12px',
+            paddingBottom: 'calc(12px + env(safe-area-inset-bottom, 0px))',
+          }}
         >
           <div>
             <span className="text-muted small d-block" style={{ fontSize: '11.5px' }}>

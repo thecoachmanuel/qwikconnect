@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 interface MobileOrderDetailsModalProps {
   order: any;
@@ -17,34 +17,60 @@ export default function MobileOrderDetailsModal({
   onWriteReview,
   onFileReport,
 }: MobileOrderDetailsModalProps) {
+  const [liveOrder, setLiveOrder] = useState<any>(order);
+  const [loading, setLoading] = useState(false);
   const [showRevisionModal, setShowRevisionModal] = useState(false);
   const [revisionNotes, setRevisionNotes] = useState('');
   const [isSubmittingRevision, setIsSubmittingRevision] = useState(false);
 
-  const orderId = order?.id || 1024;
-  const invoice = order?.invoice || `#INV-${orderId}`;
-  const statusStr = (order?.order_status || order?.status || 'pending').toString().toLowerCase();
+  const orderId = order?.id || liveOrder?.id || 1024;
+
+  useEffect(() => {
+    if (orderId) {
+      setLoading(true);
+      fetch(`/api/orders/${orderId}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data?.order) {
+            setLiveOrder((prev: any) => ({
+              ...prev,
+              ...data.order,
+              service: data.service || prev?.service,
+              seller: data.seller || prev?.seller,
+              buyer: data.buyer || prev?.buyer,
+              extra_services: data.extra_services || prev?.extra_services,
+            }));
+          }
+        })
+        .catch((e) => console.warn('Failed to load live order details:', e))
+        .finally(() => setLoading(false));
+    }
+  }, [orderId]);
+
+  const invoice = liveOrder?.invoice || `#INV-${orderId}`;
+  const statusStr = (liveOrder?.order_status || liveOrder?.status || 'pending').toString().toLowerCase();
 
   const isPending = statusStr === '0' || statusStr === 'pending';
   const isActive = statusStr === '1' || statusStr === 'active' || statusStr === 'in_progress';
   const isCompleted = statusStr === '2' || statusStr === 'completed';
   const isCancelled = statusStr === '3' || statusStr === 'cancelled';
 
-  const seller = order?.seller || {
-    id: order?.seller_id || 1,
-    name: order?.seller_name || 'Verified Artisan',
-    phone: order?.seller_phone || '+234 801 234 5678',
-    image: order?.seller_image || '/assets/flutter/images/avatar.png',
-    city: order?.city || 'Lagos',
+  const seller = liveOrder?.seller || {
+    id: liveOrder?.seller_id || 1,
+    name: liveOrder?.seller_name || 'Verified Artisan',
+    phone: liveOrder?.seller_phone || '+234 801 234 5678',
+    image: liveOrder?.seller_image || '/assets/flutter/images/avatar.png',
+    city: liveOrder?.city || 'Lagos',
   };
 
-  const serviceTitle = order?.service_title || order?.service?.title || 'Professional Service';
-  const scheduleDate = order?.date || order?.schedule_date || 'Today';
-  const scheduleTime = order?.schedule || '10:00 AM';
-  const totalAmount = Number(order?.total || order?.price || 0).toLocaleString();
-  const packageFee = Number(order?.package_fee || order?.price || 0).toLocaleString();
-  const extraFee = Number(order?.extra_service || 0).toLocaleString();
-  const couponDiscount = Number(order?.coupon_discount || 0).toLocaleString();
+  const serviceTitle = liveOrder?.service_title || liveOrder?.service?.title || 'Professional Service';
+  const scheduleDate = liveOrder?.date || liveOrder?.schedule_date || 'Today';
+  const scheduleTime = liveOrder?.schedule || '10:00 AM';
+  const totalAmount = Number(liveOrder?.total || liveOrder?.price || 0).toLocaleString();
+  const packageFee = Number(liveOrder?.package_fee || liveOrder?.price || 0).toLocaleString();
+  const extraFee = Number(liveOrder?.extra_service || 0).toLocaleString();
+  const couponDiscount = Number(liveOrder?.coupon_discount || 0).toLocaleString();
+  const escrowFee = Number(liveOrder?.escrow_fee || 0);
 
   const handleSendRevision = async () => {
     if (!revisionNotes.trim()) {
@@ -70,10 +96,20 @@ export default function MobileOrderDetailsModal({
   return (
     <div
       className="position-fixed top-0 start-0 w-100 h-100 bg-white d-flex flex-column"
-      style={{ zIndex: 1070, overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}
+      style={{
+        zIndex: 1070,
+        overflowY: 'auto',
+        WebkitOverflowScrolling: 'touch',
+        paddingBottom: 'calc(24px + env(safe-area-inset-bottom, 0px))',
+      }}
     >
-      {/* 1. Top Bar */}
-      <div className="d-flex align-items-center justify-content-between px-4 py-3 border-bottom bg-white sticky-top">
+      {/* 1. Top Bar with iOS status bar safe area */}
+      <div
+        className="d-flex align-items-center justify-content-between px-4 pb-3 border-bottom bg-white sticky-top"
+        style={{
+          paddingTop: 'calc(14px + env(safe-area-inset-top, 0px))',
+        }}
+      >
         <button
           type="button"
           onClick={onClose}
@@ -252,13 +288,20 @@ export default function MobileOrderDetailsModal({
 
       {/* 4. Scrollable Content Body */}
       <div className="px-4 py-3 flex-grow-1" style={{ paddingBottom: '90px' }}>
-        {/* Service Title */}
-        <div className="p-3 rounded-3 border mb-3" style={{ backgroundColor: '#FFFFFF' }}>
-          <span className="text-muted small d-block mb-1">Booked Service</span>
-          <strong className="text-dark d-block" style={{ fontSize: '16px', lineHeight: 1.3 }}>
-            {serviceTitle}
-          </strong>
-        </div>
+        {loading && !liveOrder?.service && !liveOrder?.total ? (
+          <div className="text-center py-5">
+            <div className="spinner-border text-success" role="status"></div>
+            <p className="text-muted small mt-2">Loading order details...</p>
+          </div>
+        ) : (
+          <>
+            {/* Service Title */}
+            <div className="p-3 rounded-3 border mb-3" style={{ backgroundColor: '#FFFFFF' }}>
+              <span className="text-muted small d-block mb-1">Booked Service</span>
+              <strong className="text-dark d-block" style={{ fontSize: '16px', lineHeight: 1.3 }}>
+                {serviceTitle}
+              </strong>
+            </div>
 
         {/* Seller Card (Flutter seller_details.dart parity) */}
         <div className="p-3.5 rounded-3 border mb-3" style={{ backgroundColor: '#F8FAFC' }}>
@@ -329,7 +372,7 @@ export default function MobileOrderDetailsModal({
           <div className="d-flex align-items-start gap-2 text-muted small">
             <i className="las la-map-marker-alt fs-5" style={{ color: 'var(--main-color-one, #1DBF73)' }}></i>
             <span className="text-dark">
-              {order?.address || 'Service address provided at booking'}, {order?.city || 'Lagos'}
+              {liveOrder?.address || 'Service address provided at booking'}, {liveOrder?.city || 'Lagos'}
             </span>
           </div>
         </div>
@@ -344,22 +387,36 @@ export default function MobileOrderDetailsModal({
               <span>Package Price</span>
               <span className="text-dark fw-medium">₦{packageFee}</span>
             </div>
-            {Number(order?.extra_service || 0) > 0 && (
+            {Number(liveOrder?.extra_service || 0) > 0 && (
               <div className="d-flex justify-content-between text-muted">
                 <span>Extra Services</span>
                 <span className="text-dark fw-medium">+₦{extraFee}</span>
               </div>
             )}
-            {Number(order?.coupon_discount || 0) > 0 && (
+            {Number(liveOrder?.coupon_discount || 0) > 0 && (
               <div className="d-flex justify-content-between text-success fw-medium">
                 <span>Coupon Discount</span>
                 <span>-₦{couponDiscount}</span>
               </div>
             )}
+            {escrowFee > 0 && (
+              <div className="d-flex justify-content-between text-muted">
+                <span className="d-flex align-items-center gap-1">
+                  <i className="las la-shield-alt text-success"></i> Escrow Fee
+                </span>
+                <span className="text-dark fw-medium">₦{escrowFee.toLocaleString()}</span>
+              </div>
+            )}
             <div className="d-flex justify-content-between text-muted">
               <span>Payment Method</span>
               <span className="text-capitalize text-dark fw-medium">
-                {(order?.payment_gateway || 'cash_on_delivery').replace('_', ' ')}
+                {(liveOrder?.payment_gateway || 'cash_on_delivery').replace('_', ' ')}
+              </span>
+            </div>
+            <div className="d-flex justify-content-between text-muted">
+              <span>Payment Status</span>
+              <span className={`fw-bold text-capitalize ${liveOrder?.payment_status === 'complete' ? 'text-success' : 'text-warning'}`}>
+                {liveOrder?.payment_status || 'pending'}
               </span>
             </div>
             <hr className="my-1.5" />
@@ -379,7 +436,7 @@ export default function MobileOrderDetailsModal({
           {/* Write a review (if completed) */}
           <button
             type="button"
-            onClick={() => onWriteReview(order?.service_id || order?.service?.id || 1)}
+            onClick={() => onWriteReview(liveOrder?.service_id || liveOrder?.service?.id || 1)}
             className="btn text-white w-100 py-2.5 fw-bold d-flex align-items-center justify-content-center gap-2"
             style={{
               backgroundColor: '#f59e0b',
@@ -410,7 +467,9 @@ export default function MobileOrderDetailsModal({
             File Dispute Report
           </button>
         </div>
-      </div>
+      </>
+    )}
+  </div>
 
       {/* Revision Modal Popup */}
       {showRevisionModal && (

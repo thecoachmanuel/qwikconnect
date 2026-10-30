@@ -124,7 +124,7 @@ export default function MobileAppShell({ children }: { children?: React.ReactNod
       style={{
         maxWidth: '100vw',
         overflowX: 'clip',
-        paddingBottom: '75px',
+        paddingBottom: 'calc(75px + env(safe-area-inset-bottom, 0px))',
         backgroundColor: '#FFFFFF',
       }}
     >

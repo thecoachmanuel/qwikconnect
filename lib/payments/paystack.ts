@@ -1,33 +1,23 @@
 import { PaymentIntentOptions, PaymentInitResult } from './types';
 import { getPaymentGateways } from '@/lib/mongodb';
+import { getPaystackCredentials } from './keys';
 
 export async function initializePaystack(options: PaymentIntentOptions): Promise<PaymentInitResult> {
-  let secretKey = process.env.PAYSTACK_SECRET_KEY || '';
+  let pstkConfig: any = null;
 
   try {
     const gateways = await getPaymentGateways();
-    const pstk = (gateways as any[]).find((g: any) => g.id === 'paystack');
-    if (pstk) {
-      if (pstk.enabled === false) {
-        throw new Error('Paystack payment gateway is currently disabled by administrator.');
-      }
-      if (pstk.fields?.secret_key) {
-        secretKey = pstk.fields.secret_key;
-      }
+    pstkConfig = (gateways as any[]).find((g: any) => g.id === 'paystack');
+    if (pstkConfig && pstkConfig.enabled === false) {
+      throw new Error('Paystack payment gateway is currently disabled by administrator.');
     }
   } catch (err: any) {
     if (err.message?.includes('disabled')) throw err;
   }
 
-  const isDemoKey =
-    !secretKey ||
-    secretKey.includes('placeholder') ||
-    secretKey.includes('your_') ||
-    secretKey.includes('test_your') ||
-    secretKey.includes('test_2a458001d806c878aba51955b962b3c8ed78f04b') ||
-    secretKey.startsWith('demo');
+  const { secretKey, isConfigured } = getPaystackCredentials(pstkConfig);
 
-  if (isDemoKey) {
+  if (!isConfigured) {
     return {
       redirectUrl: `${options.successUrl}&demo_paid=1&gateway=paystack`,
       isDirectSuccess: true,

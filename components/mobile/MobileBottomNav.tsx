@@ -27,7 +27,8 @@ export default function MobileBottomNav({
     <nav
       className="mobile-bottom-nav position-fixed bottom-0 start-0 end-0 bg-white d-flex align-items-center justify-content-around"
       style={{
-        height: '75px',
+        height: 'calc(68px + env(safe-area-inset-bottom, 0px))',
+        minHeight: 'calc(68px + env(safe-area-inset-bottom, 0px))',
         borderTop: '1px solid #EAECF0',
         paddingBottom: 'env(safe-area-inset-bottom, 0px)',
         zIndex: 1030,

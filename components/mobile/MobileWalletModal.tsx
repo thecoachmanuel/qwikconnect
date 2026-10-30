@@ -105,16 +105,20 @@ export default function MobileWalletModal({ onClose }: MobileWalletModalProps) {
         zIndex: 1050,
         backgroundColor: '#FAFAFA',
         overflowY: 'auto',
+        WebkitOverflowScrolling: 'touch',
+        paddingBottom: 'calc(24px + env(safe-area-inset-bottom, 0px))',
       }}
     >
       {/* 1. App Bar Header (Flutter CommonHelper().appbarCommon('Wallet')) */}
       <div
-        className="d-flex align-items-center justify-content-between px-4 py-3 bg-white"
+        className="d-flex align-items-center justify-content-between px-4 bg-white"
         style={{
           borderBottom: '1px solid #EAECF0',
           position: 'sticky',
           top: 0,
           zIndex: 10,
+          paddingTop: 'calc(14px + env(safe-area-inset-top, 0px))',
+          paddingBottom: '14px',
         }}
       >
         <div className="d-flex align-items-center gap-3">

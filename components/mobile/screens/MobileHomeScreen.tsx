@@ -94,6 +94,31 @@ export default function MobileHomeScreen({
   });
 
   const [activeBannerIdx, setActiveBannerIdx] = useState(0);
+  const [touchStartX, setTouchStartX] = useState<number | null>(null);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStartX(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX === null) return;
+    const touchEndX = e.changedTouches[0].clientX;
+    const diff = touchStartX - touchEndX;
+    if (diff > 40 && banners.length > 1) {
+      setActiveBannerIdx((prev) => (prev + 1) % banners.length);
+    } else if (diff < -40 && banners.length > 1) {
+      setActiveBannerIdx((prev) => (prev - 1 + banners.length) % banners.length);
+    }
+    setTouchStartX(null);
+  };
+
+  useEffect(() => {
+    if (banners.length <= 1) return;
+    const timer = setInterval(() => {
+      setActiveBannerIdx((prev) => (prev + 1) % banners.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [banners.length]);
   const [loading, setLoading] = useState(() => {
     if (typeof window !== 'undefined') {
       try {
@@ -274,10 +299,13 @@ export default function MobileHomeScreen({
         <div className="px-4 mb-4">
           <div
             className="position-relative overflow-hidden"
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
             style={{
               height: '175px',
               borderRadius: '10px',
               boxShadow: '0 4px 15px rgba(0, 0, 0, 0.04)',
+              touchAction: 'pan-y',
             }}
           >
             {banners.map((banner, idx) => (
@@ -379,14 +407,14 @@ export default function MobileHomeScreen({
 
         {/* Categories Horizontal Scroller (100px width, 104px height, 9px radius, #EAECF0 border) */}
         <div
-          className="d-flex gap-3 px-4 overflow-x-auto pb-1"
+          className="mobile-horizontal-reel d-flex gap-3 px-4 pb-1"
           style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}
         >
           {categories.slice(0, 10).map((cat, i) => (
             <div
               key={cat.id || i}
               onClick={() => onGoToSearch('', cat.slug)}
-              className="d-flex flex-column align-items-center justify-content-center cursor-pointer flex-shrink-0"
+              className="mobile-horizontal-card d-flex flex-column align-items-center justify-content-center cursor-pointer"
               style={{
                 width: '100px',
                 height: '104px',
@@ -454,7 +482,7 @@ export default function MobileHomeScreen({
 
         {/* Horizontal Service Cards Reel */}
         <div
-          className="d-flex gap-3 px-4 overflow-x-auto pb-2"
+          className="mobile-horizontal-reel d-flex gap-3 px-4 pb-2"
           style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}
         >
           {topRatedServices.map((service) => {
@@ -462,7 +490,7 @@ export default function MobileHomeScreen({
             return (
               <div
                 key={service.id}
-                className="bg-white flex-shrink-0"
+                className="mobile-horizontal-card bg-white"
                 style={{
                   width: 'calc(100vw - 85px)',
                   maxWidth: '310px',

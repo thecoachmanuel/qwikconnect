@@ -48,12 +48,14 @@ export default function MobileTopBar({
   return (
     <>
       <header
-        className="mobile-top-bar px-4 py-3 bg-white"
+        className="mobile-top-bar px-4 bg-white"
         style={{
           backgroundColor: '#FFFFFF',
           position: 'sticky',
           top: 0,
           zIndex: 1020,
+          paddingTop: 'calc(12px + env(safe-area-inset-top, 0px))',
+          paddingBottom: '12px',
         }}
       >
         {/* Flutter HomeAppBar parity: User Image, Welcome, Name & Notification Bell */}

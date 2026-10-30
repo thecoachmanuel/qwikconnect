@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
-    statusBarStyle: 'default',
+    statusBarStyle: 'black-translucent',
     title: 'QwikConnect',
   },
 };
@@ -19,6 +19,8 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
+  viewportFit: 'cover',
+  themeColor: '#1DBF73',
 };
 
 export default function RootLayout({
@@ -50,6 +52,10 @@ export default function RootLayout({
         <link rel="stylesheet" href="/assets/frontend/css/dynamic-style.css" />
         <link rel="stylesheet" href="/assets/frontend/theme-two/css/02_style.css" />
         <link rel="apple-touch-icon" href="/assets/frontend/img/static/mobile_app_icon_192.png" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="format-detection" content="telephone=no" />
+        <meta name="mobile-web-app-capable" content="yes" />
         <meta name="theme-color" content="#1DBF73" />
         <script
           dangerouslySetInnerHTML={{

@@ -1,27 +1,23 @@
 import { PaymentIntentOptions, PaymentInitResult } from './types';
 import { getPaymentGateways } from '@/lib/mongodb';
+import { getStripeCredentials } from './keys';
 
 export async function createStripeCheckoutSession(options: PaymentIntentOptions): Promise<PaymentInitResult> {
-  let secretKey = process.env.STRIPE_SECRET_KEY || '';
+  let stripeConfig: any = null;
 
   try {
     const gateways = await getPaymentGateways();
-    const st = (gateways as any[]).find((g: any) => g.id === 'stripe');
-    if (st) {
-      if (st.enabled === false) {
-        throw new Error('Stripe payment gateway is currently disabled by administrator.');
-      }
-      if (st.fields?.secret_key) {
-        secretKey = st.fields.secret_key;
-      }
+    stripeConfig = (gateways as any[]).find((g: any) => g.id === 'stripe');
+    if (stripeConfig && stripeConfig.enabled === false) {
+      throw new Error('Stripe payment gateway is currently disabled by administrator.');
     }
   } catch (err: any) {
     if (err.message?.includes('disabled')) throw err;
   }
 
-  const isDemoKey = !secretKey || secretKey.includes('placeholder') || secretKey.startsWith('demo');
+  const { secretKey, isConfigured } = getStripeCredentials(stripeConfig);
 
-  if (isDemoKey) {
+  if (!isConfigured) {
     return {
       redirectUrl: `${options.successUrl}&demo_paid=1&gateway=stripe`,
       isDirectSuccess: true,

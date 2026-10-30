@@ -65,7 +65,7 @@ export default function MobileOrdersScreen({
 
       {/* 2. Order Status Filter Pills */}
       <div
-        className="d-flex gap-2 overflow-x-auto pb-2 mb-3"
+        className="mobile-horizontal-reel d-flex gap-2 pb-2 mb-3"
         style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}
       >
         {(['all', 'pending', 'active', 'completed', 'cancelled'] as const).map((tab) => {
@@ -75,7 +75,7 @@ export default function MobileOrdersScreen({
               key={tab}
               type="button"
               onClick={() => setFilter(tab)}
-              className="btn btn-sm text-capitalize px-3 py-1.5 flex-shrink-0"
+              className="mobile-horizontal-card btn btn-sm text-capitalize px-3 py-1.5"
               style={{
                 borderRadius: '20px',
                 border: `1px solid ${isActive ? 'var(--main-color-one, #1DBF73)' : '#EAECF0'}`,
