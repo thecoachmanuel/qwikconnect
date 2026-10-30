@@ -39,8 +39,31 @@ export default function DashboardLayout({
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [unreadCount, setUnreadCount] = useState<number>(unreadNotificationsCount);
+  const [siteLogo, setSiteLogo] = useState<string>('');
   const profileRef = useRef<HTMLDivElement>(null);
   const bellRef = useRef<HTMLDivElement>(null);
+
+  // Sync site logo from platform settings
+  useEffect(() => {
+    const updateLogo = () => {
+      if (typeof window !== 'undefined') {
+        const cached = localStorage.getItem('qixer_settings');
+        if (cached) {
+          try {
+            const parsed = JSON.parse(cached);
+            if (parsed?.siteLogo) setSiteLogo(parsed.siteLogo);
+          } catch (e) {}
+        }
+      }
+    };
+    updateLogo();
+    window.addEventListener('settings-updated', updateLogo);
+    window.addEventListener('storage', updateLogo);
+    return () => {
+      window.removeEventListener('settings-updated', updateLogo);
+      window.removeEventListener('storage', updateLogo);
+    };
+  }, []);
 
   // Helper to test if a name is an uninformative generic placeholder
   const isGenericName = (val?: string | null) =>
@@ -436,7 +459,11 @@ export default function DashboardLayout({
         <aside className={`db-sidebar ${isMobileOpen ? 'db-open' : ''}`} role="navigation" aria-label="Dashboard navigation">
           <div className="db-sidebar-hdr">
             <Link href="/" style={{ display: 'flex', alignItems: 'center' }}>
-              <img src="/assets/uploads/media-uploader/logo-011637754681.png" alt="QwikConnect" style={{ maxHeight: '34px' }} />
+              <img
+                src={siteLogo || "/assets/uploads/media-uploader/logo-011637754681.png"}
+                alt="QwikConnect"
+                style={{ maxHeight: '34px', maxWidth: '160px', objectFit: 'contain' }}
+              />
             </Link>
             <button onClick={() => setIsMobileOpen(false)} className="db-close-btn" aria-label="Close menu">
               <i className="las la-times" />

@@ -3,6 +3,9 @@ import Link from 'next/link';
 import FrontendLayout from '@/components/layout/FrontendLayout';
 import ContactForm from './ContactForm';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export const metadata = {
   title: 'Contact Us - QwikConnect Service Marketplace',
   description: 'Get in touch with QwikConnect customer care, support, and administrative headquarters.',

@@ -33,8 +33,8 @@ export default function FrontendLayout({
         }
       }
 
-      // 2. Fetch latest settings from server
-      const res = await fetch('/api/settings', { cache: 'no-store' });
+      // 2. Fetch latest settings from server with cache busting
+      const res = await fetch(`/api/settings?t=${Date.now()}`, { cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
         if (data?.settings) {
@@ -67,6 +67,28 @@ export default function FrontendLayout({
   const activeLogo = settings?.siteLogo || siteLogo;
   const activeTitle = settings?.siteTitle || siteTitle;
   const activeCopyright = settings?.copyrightText || copyrightText;
+
+  // Dynamically update document title if site title was customized
+  useEffect(() => {
+    if (activeTitle && typeof document !== 'undefined') {
+      if (!document.title || document.title.includes('QwikConnect')) {
+        document.title = activeTitle;
+      }
+    }
+  }, [activeTitle]);
+
+  // Dynamically update favicon if provided in settings
+  useEffect(() => {
+    if (settings?.siteFavicon && typeof document !== 'undefined') {
+      let link: HTMLLinkElement | null = document.querySelector("link[rel*='icon']");
+      if (!link) {
+        link = document.createElement('link');
+        link.rel = 'shortcut icon';
+        document.head.appendChild(link);
+      }
+      link.href = settings.siteFavicon;
+    }
+  }, [settings?.siteFavicon]);
 
   return (
     <div className="site-wrapper">

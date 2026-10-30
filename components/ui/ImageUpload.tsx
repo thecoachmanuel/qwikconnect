@@ -22,6 +22,11 @@ export default function ImageUpload({
   const [preview, setPreview] = useState<string>(value || '');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Synchronize internal preview when value prop changes (e.g. from async settings fetch)
+  React.useEffect(() => {
+    setPreview(value || '');
+  }, [value]);
+
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;

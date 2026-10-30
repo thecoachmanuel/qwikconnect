@@ -1113,6 +1113,7 @@ function readDataFile(): MongoStoreData {
     const parsed = JSON.parse(raw);
     let dirty = false;
     if (!parsed.days) { parsed.days = SEED_DATA.days; dirty = true; }
+    if (!parsed.settings) { parsed.settings = SEED_DATA.settings; dirty = true; }
     if (!parsed.schedules) { parsed.schedules = SEED_DATA.schedules; dirty = true; }
     if (!parsed.subscriptions) { parsed.subscriptions = SEED_DATA.subscriptions; dirty = true; }
     if (!parsed.seller_subscriptions) { parsed.seller_subscriptions = SEED_DATA.seller_subscriptions; dirty = true; }
@@ -2004,18 +2005,20 @@ export async function sendMessage(fromUser: number, toUser: number, messageText:
 const DEFAULT_SETTINGS = {
   siteTitle: 'QwikConnect - Service Marketplace & Finder',
   siteTagline: 'Connect with top-rated local professionals in Nigeria',
-  contactEmail: 'admin@qixer.com',
+  siteLogo: '',
+  siteFavicon: '',
+  contactEmail: 'admin@qixer.ng',
   contactPhone: '+234 800 123 4567',
-  siteAddress: '15 Adeola Odeku Street, Victoria Island, Lagos, Nigeria',
+  siteAddress: '14 Broad Street, Lagos Island, Lagos, Nigeria',
   currencySymbol: '₦',
   currencyCode: 'NGN',
   usdExchangeRate: '1500',
   commissionType: 'percentage',
   commissionRate: '10',
-  autoApproveServices: true,
+  autoApproveServices: false,
   enableLiveChat: true,
   maintenanceMode: false,
-  copyrightText: '© 2026 QwikConnect. All Rights Reserved.',
+  copyrightText: '© 2026 QwikConnect Nigeria. All Rights Reserved.',
 };
 
 export async function getPlatformSettings() {

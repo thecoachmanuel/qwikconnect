@@ -33,7 +33,7 @@ export default function AdminSettingsPage() {
     async function loadSettings() {
       try {
         setLoading(true);
-        const res = await fetch('/api/admin/settings');
+        const res = await fetch(`/api/admin/settings?t=${Date.now()}`, { cache: 'no-store' });
         if (res.ok) {
           const data = await res.json();
           if (data.settings) {
@@ -70,9 +70,13 @@ export default function AdminSettingsPage() {
       if (!res.ok) {
         throw new Error(data.message || 'Failed to save settings');
       }
+      if (data.settings) {
+        setSettings(data.settings);
+      }
       if (typeof window !== 'undefined') {
-        localStorage.setItem('qixer_settings', JSON.stringify(data.settings));
+        localStorage.setItem('qixer_settings', JSON.stringify(data.settings || settings));
         window.dispatchEvent(new Event('settings-updated'));
+        window.dispatchEvent(new Event('storage'));
       }
       setSaved(true);
       setTimeout(() => setSaved(false), 4000);

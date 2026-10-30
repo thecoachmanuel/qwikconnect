@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/db';
-import { getMongoDb, getCategories, getUserById } from '@/lib/mongodb';
+import { getMongoDb, getCategories, getUserById, getPlatformSettings } from '@/lib/mongodb';
 import fs from 'fs';
 import path from 'path';
 import { z } from 'zod';
@@ -47,6 +47,11 @@ export async function POST(request: Request) {
     const categories = await getCategories();
     const cat = categories.find((c: any) => c.id === data.category_id);
 
+    // Determine initial approval status based on platform admin settings
+    const settings = await getPlatformSettings();
+    const autoApprove = settings?.autoApproveServices !== undefined ? Boolean(settings.autoApproveServices) : true;
+    const initialStatus = autoApprove ? 1 : 0;
+
     const newServiceObj = {
       id: serviceId,
       title: data.title,
@@ -69,7 +74,7 @@ export async function POST(request: Request) {
       image: data.image || '/assets/uploads/media-uploader/banner11638279446.png',
       city: sellerUser?.service_city || sellerUser?.city || 'Lagos',
       country: sellerUser?.country || 'Nigeria',
-      status: 1,
+      status: initialStatus,
       includes: data.includes || [],
       benefits: data.benefits || [],
       additionals: data.additionals?.map((a: any, idx: number) => ({
