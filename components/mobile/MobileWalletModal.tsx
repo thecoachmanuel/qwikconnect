@@ -39,6 +39,23 @@ export default function MobileWalletModal({ onClose }: MobileWalletModalProps) {
 
   useEffect(() => {
     loadWallet();
+
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const isVerify = params.get('verify_deposit') === '1';
+      const reference = params.get('reference') || params.get('trxref');
+      if (isVerify && reference) {
+        fetch(`/api/buyer/wallet/verify?reference=${encodeURIComponent(reference)}`)
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.success) {
+              alert(data.message || 'Wallet funded successfully!');
+              loadWallet();
+            }
+          })
+          .catch(() => {});
+      }
+    }
   }, []);
 
   const handleDepositSubmit = async (e: React.FormEvent) => {
@@ -57,12 +74,16 @@ export default function MobileWalletModal({ onClose }: MobileWalletModalProps) {
         body: JSON.stringify({
           amount: num,
           gateway,
-          transaction_id: `DEP_${Date.now()}_${Math.floor(Math.random() * 10000)}`,
+          transaction_id: `WAL_${Date.now()}_${Math.floor(1000 + Math.random() * 9000)}`,
         }),
       });
 
       const data = await res.json();
       if (res.ok && data.success) {
+        if (data.paystack && data.authorization_url) {
+          window.location.href = data.authorization_url;
+          return;
+        }
         setBalance(data.balance);
         alert(`Successfully deposited ₦${num.toLocaleString()} to your wallet!`);
         setShowDepositSheet(false);

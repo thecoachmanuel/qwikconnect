@@ -13,10 +13,10 @@ export async function createPaypalOrder(options: PaymentIntentOptions): Promise<
       if (pp.enabled === false) {
         throw new Error('PayPal payment gateway is currently disabled by administrator.');
       }
-      if (pp.fields?.client_id && !pp.fields.client_id.includes('demo_sandbox')) {
+      if (pp.fields?.client_id) {
         clientId = pp.fields.client_id;
       }
-      if (pp.fields?.secret && !pp.fields.secret.includes('demo_sandbox')) {
+      if (pp.fields?.secret) {
         secret = pp.fields.secret;
       }
       if (pp.sandbox !== undefined) {

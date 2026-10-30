@@ -114,6 +114,7 @@ function BookingContent({ params }: BookingPageProps) {
   const [activeGateways, setActiveGateways] = useState<any[]>([]);
   const [gatewaysLoading, setGatewaysLoading] = useState(true);
   const [usdExchangeRate, setUsdExchangeRate] = useState<number>(1500);
+  const [escrowConfig, setEscrowConfig] = useState<any>(null);
 
   useEffect(() => {
     async function loadActiveGateways() {
@@ -124,6 +125,9 @@ function BookingContent({ params }: BookingPageProps) {
           const data = await res.json();
           if (data.usdExchangeRate) {
             setUsdExchangeRate(Number(data.usdExchangeRate) || 1500);
+          }
+          if (data.escrow) {
+            setEscrowConfig(data.escrow);
           }
           if (Array.isArray(data.gateways)) {
             setActiveGateways(data.gateways);
@@ -212,7 +216,16 @@ function BookingContent({ params }: BookingPageProps) {
   const [couponError, setCouponError] = useState('');
 
   const subtotalWithoutCoupon = basePrice + extraServiceTotal;
-  const finalTotal = Math.max(0, subtotalWithoutCoupon - couponDiscountAmount);
+
+  // Dynamic Escrow Fee Calculation
+  let escrowFee = 0;
+  if (escrowConfig?.enabled && (escrowConfig.payer === 'buyer' || escrowConfig.payer === 'split')) {
+    const rate = Number(escrowConfig.rate || 5);
+    const rawFee = escrowConfig.type === 'fixed' ? rate : (subtotalWithoutCoupon * rate) / 100;
+    escrowFee = Math.round(escrowConfig.payer === 'split' ? rawFee / 2 : rawFee);
+  }
+
+  const finalTotal = Math.max(0, subtotalWithoutCoupon - couponDiscountAmount + escrowFee);
 
   // Dynamic currency conversion calculation for international gateways (Stripe & PayPal)
   const selectedGatewayObj = activeGateways.find(
@@ -997,6 +1010,15 @@ function BookingContent({ params }: BookingPageProps) {
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', fontSize: '14px', color: '#475569' }}>
                     <span>Estimated Tax:</span>
                     <strong>{isUsdSelected ? '$0.00' : '₦0.00'}</strong>
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', fontSize: '14px', color: '#475569' }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <i className="las la-shield-alt text-success" style={{ fontSize: '16px' }}></i> Escrow Protection Fee:
+                    </span>
+                    <strong style={{ color: escrowFee > 0 ? '#1e293b' : '#16a34a' }}>
+                      {escrowFee > 0 ? (isUsdSelected ? `+$${toUsd(escrowFee)}` : `+₦${escrowFee.toLocaleString()}`) : 'FREE'}
+                    </strong>
                   </div>
 
                   {/* Coupon Code Section */}

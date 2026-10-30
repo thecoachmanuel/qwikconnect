@@ -39,15 +39,24 @@ export default function MobileBookingModal({
   const [orderNote, setOrderNote] = useState('');
 
   // Step 4: Payment
-  const [paymentGateway, setPaymentGateway] = useState<'paystack' | 'flutterwave' | 'cash_on_delivery' | 'wallet'>('paystack');
+  const [paymentGateway, setPaymentGateway] = useState<string>('paystack');
   const [walletBalance, setWalletBalance] = useState(0);
+  const [activeGateways, setActiveGateways] = useState<any[]>([]);
+  const [gatewaysLoading, setGatewaysLoading] = useState(true);
+  const [escrowConfig, setEscrowConfig] = useState<any>({
+    enabled: true,
+    type: 'percentage',
+    rate: 5,
+    payer: 'buyer',
+    description: '100% Secure Escrow Protection. Funds held safely until service completion is approved.',
+  });
   const [couponCode, setCouponCode] = useState('');
   const [couponDiscount, setCouponDiscount] = useState(0);
   const [couponApplied, setCouponApplied] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [createdOrder, setCreatedOrder] = useState<any>(null);
 
-  // Populate user data from session or profile
+  // Populate user data from session or profile & fetch payment gateways
   useEffect(() => {
     if (session?.user) {
       const u = session.user as any;
@@ -65,6 +74,21 @@ export default function MobileBookingModal({
         }
       })
       .catch(() => {});
+
+    // Fetch active gateways & escrow settings dynamically from admin DB
+    fetch('/api/payments/active-gateways')
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data?.gateways) && data.gateways.length > 0) {
+          setActiveGateways(data.gateways);
+          setPaymentGateway(data.gateways[0].id);
+        }
+        if (data?.escrow) {
+          setEscrowConfig(data.escrow);
+        }
+      })
+      .catch((err) => console.warn('Failed to load active gateways for PWA booking:', err))
+      .finally(() => setGatewaysLoading(false));
   }, [session]);
 
   const basePrice = Number(service?.price || 0);
@@ -87,7 +111,16 @@ export default function MobileBookingModal({
   }, 0);
 
   const subTotal = packageTotal + extrasTotal;
-  const grandTotal = Math.max(0, subTotal - couponDiscount);
+
+  // Calculate dynamic Escrow Fee based on Admin settings
+  let escrowFee = 0;
+  if (escrowConfig?.enabled && (escrowConfig.payer === 'buyer' || escrowConfig.payer === 'split')) {
+    const rate = Number(escrowConfig.rate || 5);
+    const rawFee = escrowConfig.type === 'fixed' ? rate : (subTotal * rate) / 100;
+    escrowFee = Math.round(escrowConfig.payer === 'split' ? rawFee / 2 : rawFee);
+  }
+
+  const grandTotal = Math.max(0, subTotal - couponDiscount + escrowFee);
 
   const toggleExtra = (id: number) => {
     const updated = new Set(selectedExtras);
@@ -148,7 +181,7 @@ export default function MobileBookingModal({
     }
 
     if (paymentGateway === 'wallet' && walletBalance < grandTotal) {
-      alert(`Insufficient wallet balance (₦${walletBalance.toLocaleString()}). Please select Paystack or Cash on Delivery.`);
+      alert(`Insufficient wallet balance (₦${walletBalance.toLocaleString()}). Required: ₦${grandTotal.toLocaleString()}. Please fund your wallet via Paystack or choose another payment method.`);
       return;
     }
 
@@ -182,22 +215,37 @@ export default function MobileBookingModal({
       });
 
       const data = await res.json();
-      if (data?.success && data?.order) {
-        const orderId = Number(data.order.id || Date.now());
+      const resolvedOrderId = data?.orderId || data?.order?.id;
+      if (res.ok && resolvedOrderId) {
+        const orderIdNum = Number(resolvedOrderId);
 
-        // If paying with wallet, deduct immediately
-        if (paymentGateway === 'wallet') {
-          await fetch('/api/buyer/wallet/deduct', {
+        // Process online payment or wallet deduction via checkout API
+        if (paymentGateway && paymentGateway !== 'cash_on_delivery' && paymentGateway !== 'cod') {
+          const payRes = await fetch('/api/payments/checkout', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ amount: grandTotal, order_id: orderId }),
-          }).catch(() => {});
+            body: JSON.stringify({
+              orderId: orderIdNum,
+              gateway: paymentGateway,
+            }),
+          });
+          const payData = await payRes.json();
+          if (!payRes.ok) {
+            alert(payData.message || 'Payment initiation failed. Please try another payment method.');
+            setIsSubmitting(false);
+            return;
+          }
+          if (payData.redirectUrl && !payData.isDirectSuccess) {
+            window.location.href = payData.redirectUrl;
+            return;
+          }
         }
 
-        setCreatedOrder(data.order);
+        setCreatedOrder(data.order || { id: orderIdNum, invoice: data.invoice, total: grandTotal });
+        onOrderSuccess(orderIdNum);
         setCurrentStep(5); // Show success screen
       } else {
-        alert(data?.message || 'Could not place order. Please review your details.');
+        alert(data?.error || data?.message || 'Could not place order. Please review your details.');
       }
     } catch (e: any) {
       alert('Failed to connect to order service: ' + e.message);
@@ -558,108 +606,94 @@ export default function MobileBookingModal({
               Choose Payment Method
             </h6>
             <div className="d-flex flex-column gap-2.5 mb-4">
-              {/* Wallet Option */}
-              <div
-                onClick={() => setPaymentGateway('wallet')}
-                className="p-3 rounded-3 border d-flex align-items-center justify-content-between cursor-pointer"
-                style={{
-                  borderColor: paymentGateway === 'wallet' ? 'var(--main-color-one, #1DBF73)' : '#EAECF0',
-                  backgroundColor: paymentGateway === 'wallet' ? 'rgba(29, 191, 115, 0.05)' : '#FFFFFF',
-                  cursor: 'pointer',
-                }}
-              >
-                <div className="d-flex align-items-center gap-3">
-                  <div
-                    className="rounded-circle d-flex align-items-center justify-content-center"
-                    style={{
-                      width: '36px',
-                      height: '36px',
-                      backgroundColor: 'rgba(29, 191, 115, 0.1)',
-                      color: 'var(--main-color-one, #1DBF73)',
-                    }}
-                  >
-                    <i className="las la-wallet fs-4"></i>
-                  </div>
-                  <div>
-                    <strong className="d-block text-dark" style={{ fontSize: '14.5px' }}>
-                      QwikConnect Wallet
-                    </strong>
-                    <span className="text-muted small">
-                      Balance: <strong className="text-success">₦{walletBalance.toLocaleString()}</strong>
-                    </span>
-                  </div>
+              {gatewaysLoading ? (
+                <div className="p-3 text-center text-muted small border rounded-3 bg-white">
+                  <div className="spinner-border spinner-border-sm text-success me-2" role="status"></div>
+                  Loading active payment methods...
                 </div>
-                <input
-                  type="radio"
-                  name="payment"
-                  checked={paymentGateway === 'wallet'}
-                  onChange={() => setPaymentGateway('wallet')}
-                />
-              </div>
+              ) : activeGateways.length === 0 ? (
+                <div className="alert alert-warning small py-2 mb-0">
+                  No payment methods currently active. Please contact administrator.
+                </div>
+              ) : (
+                activeGateways.map((gw: any) => {
+                  const isSelected = paymentGateway === gw.id || (gw.id === 'cod' && paymentGateway === 'cash_on_delivery');
+                  const isWallet = gw.id === 'wallet';
+                  const isPaystack = gw.id === 'paystack';
+                  const isFlw = gw.id === 'flutterwave';
+                  const isCod = gw.id === 'cod' || gw.id === 'cash_on_delivery';
+                  const isInsufficient = isWallet && walletBalance < grandTotal;
 
-              {/* Paystack */}
-              <div
-                onClick={() => setPaymentGateway('paystack')}
-                className="p-3 rounded-3 border d-flex align-items-center justify-content-between cursor-pointer"
-                style={{
-                  borderColor: paymentGateway === 'paystack' ? 'var(--main-color-one, #1DBF73)' : '#EAECF0',
-                  backgroundColor: paymentGateway === 'paystack' ? 'rgba(29, 191, 115, 0.05)' : '#FFFFFF',
-                  cursor: 'pointer',
-                }}
-              >
-                <div className="d-flex align-items-center gap-3">
-                  <div
-                    className="rounded-circle d-flex align-items-center justify-content-center"
-                    style={{ width: '36px', height: '36px', backgroundColor: '#EFF6FF', color: '#2563EB' }}
-                  >
-                    <i className="las la-credit-card fs-4"></i>
-                  </div>
-                  <div>
-                    <strong className="d-block text-dark" style={{ fontSize: '14.5px' }}>
-                      Paystack
-                    </strong>
-                    <span className="text-muted small">Debit Cards, USSD, Bank Transfer</span>
-                  </div>
-                </div>
-                <input
-                  type="radio"
-                  name="payment"
-                  checked={paymentGateway === 'paystack'}
-                  onChange={() => setPaymentGateway('paystack')}
-                />
-              </div>
-
-              {/* Cash on Delivery */}
-              <div
-                onClick={() => setPaymentGateway('cash_on_delivery')}
-                className="p-3 rounded-3 border d-flex align-items-center justify-content-between cursor-pointer"
-                style={{
-                  borderColor: paymentGateway === 'cash_on_delivery' ? 'var(--main-color-one, #1DBF73)' : '#EAECF0',
-                  backgroundColor: paymentGateway === 'cash_on_delivery' ? 'rgba(29, 191, 115, 0.05)' : '#FFFFFF',
-                  cursor: 'pointer',
-                }}
-              >
-                <div className="d-flex align-items-center gap-3">
-                  <div
-                    className="rounded-circle d-flex align-items-center justify-content-center"
-                    style={{ width: '36px', height: '36px', backgroundColor: '#FEF3C7', color: '#D97706' }}
-                  >
-                    <i className="las la-money-bill-wave fs-4"></i>
-                  </div>
-                  <div>
-                    <strong className="d-block text-dark" style={{ fontSize: '14.5px' }}>
-                      Cash on Delivery
-                    </strong>
-                    <span className="text-muted small">Pay directly after service is done</span>
-                  </div>
-                </div>
-                <input
-                  type="radio"
-                  name="payment"
-                  checked={paymentGateway === 'cash_on_delivery'}
-                  onChange={() => setPaymentGateway('cash_on_delivery')}
-                />
-              </div>
+                  return (
+                    <div
+                      key={gw.id}
+                      onClick={() => setPaymentGateway(gw.id)}
+                      className="p-3 rounded-3 border d-flex align-items-center justify-content-between cursor-pointer"
+                      style={{
+                        borderColor: isSelected ? 'var(--main-color-one, #1DBF73)' : '#EAECF0',
+                        backgroundColor: isSelected ? 'rgba(29, 191, 115, 0.05)' : '#FFFFFF',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                      }}
+                    >
+                      <div className="d-flex align-items-center gap-3">
+                        <div
+                          className="rounded-circle d-flex align-items-center justify-content-center"
+                          style={{
+                            width: '38px',
+                            height: '38px',
+                            backgroundColor: isSelected ? 'rgba(29, 191, 115, 0.12)' : '#F1F5F9',
+                            color: isSelected ? 'var(--main-color-one, #1DBF73)' : '#64748B',
+                            fontSize: '20px',
+                            flexShrink: 0,
+                          }}
+                        >
+                          {isWallet ? (
+                            <i className="las la-wallet"></i>
+                          ) : isPaystack ? (
+                            <i className="las la-credit-card"></i>
+                          ) : isFlw ? (
+                            <i className="las la-wave-square"></i>
+                          ) : isCod ? (
+                            <i className="las la-hand-holding-usd"></i>
+                          ) : (
+                            <i className={gw.icon || 'las la-credit-card'}></i>
+                          )}
+                        </div>
+                        <div>
+                          <div className="d-flex align-items-center gap-2">
+                            <strong className="text-dark" style={{ fontSize: '14.5px' }}>
+                              {gw.name}
+                            </strong>
+                            {gw.badge && (
+                              <span className="badge" style={{ backgroundColor: '#1DBF73', color: '#fff', fontSize: '10px' }}>
+                                {gw.badge}
+                              </span>
+                            )}
+                          </div>
+                          {isWallet ? (
+                            <span className="text-muted small d-block">
+                              Balance: <strong className={isInsufficient ? "text-danger" : "text-success"}>₦{walletBalance.toLocaleString()}</strong>
+                              {isInsufficient && ' (Insufficient funds)'}
+                            </span>
+                          ) : (
+                            <span className="text-muted small d-block" style={{ fontSize: '12px' }}>
+                              {gw.description}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <input
+                        type="radio"
+                        name="payment"
+                        checked={isSelected}
+                        onChange={() => setPaymentGateway(gw.id)}
+                        style={{ accentColor: 'var(--main-color-one, #1DBF73)', width: '18px', height: '18px', cursor: 'pointer' }}
+                      />
+                    </div>
+                  );
+                })
+              )}
             </div>
 
             {/* Coupon Code Input */}
@@ -713,9 +747,22 @@ export default function MobileBookingModal({
                   </div>
                 )}
                 <div className="d-flex justify-content-between text-muted">
-                  <span>Platform Escrow Fee</span>
-                  <span className="text-success fw-medium">FREE</span>
+                  <span className="d-flex align-items-center gap-1">
+                    <i className="las la-shield-alt text-success"></i> Escrow Protection Fee
+                  </span>
+                  {escrowFee > 0 ? (
+                    <span className="text-dark fw-medium">+₦{escrowFee.toLocaleString()}</span>
+                  ) : (
+                    <span className="text-success fw-medium">FREE</span>
+                  )}
                 </div>
+
+                {escrowConfig?.description && (
+                  <div className="p-2.5 rounded-2 mt-1 mb-1" style={{ backgroundColor: '#F0FDF4', border: '1px solid #DCFCE7', fontSize: '12px', color: '#166534', lineHeight: 1.4 }}>
+                    <i className="las la-lock me-1"></i> {escrowConfig.description}
+                  </div>
+                )}
+
                 <hr className="my-1.5" />
                 <div className="d-flex justify-content-between">
                   <strong className="text-dark" style={{ fontSize: '16px' }}>

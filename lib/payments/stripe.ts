@@ -11,7 +11,7 @@ export async function createStripeCheckoutSession(options: PaymentIntentOptions)
       if (st.enabled === false) {
         throw new Error('Stripe payment gateway is currently disabled by administrator.');
       }
-      if (st.fields?.secret_key && !st.fields.secret_key.includes('sampleStripeSec')) {
+      if (st.fields?.secret_key) {
         secretKey = st.fields.secret_key;
       }
     }

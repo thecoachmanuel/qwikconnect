@@ -29,7 +29,11 @@ export async function GET() {
           description = 'Pay with Cards, Bank Accounts, Transfers & Mobile Money (in NGN)';
           badge = 'Popular';
           currency = 'NGN';
-        } else if (g.id === 'cod') {
+        } else if (g.id === 'wallet') {
+          description = 'Pay instantly from your Naira wallet balance with zero transaction fees';
+          badge = 'Instant';
+          currency = 'NGN';
+        } else if (g.id === 'cod' || g.id === 'cash_on_delivery') {
           description = 'Pay in cash directly upon completion of the service (in NGN)';
           currency = 'NGN';
         } else if (g.id === 'stripe') {
@@ -51,18 +55,26 @@ export async function GET() {
         return {
           id: g.id,
           name: g.name,
-          icon: g.icon || (g.id === 'paystack' ? 'paystack-custom-svg' : 'las la-credit-card'),
+          icon: g.icon || (g.id === 'paystack' ? 'paystack-custom-svg' : g.id === 'wallet' ? 'las la-wallet' : 'las la-credit-card'),
           description,
           badge,
           currency,
           isUsd,
           sandbox: !!g.sandbox,
+          public_key: g.fields?.public_key || g.fields?.publishable_key || g.fields?.key_id || '',
         };
       });
 
     return NextResponse.json({
       success: true,
       usdExchangeRate,
+      escrow: {
+        enabled: settings?.escrowEnabled !== false,
+        type: settings?.escrowType || 'percentage',
+        rate: Number(settings?.escrowRate || 5),
+        payer: settings?.escrowPayer || 'buyer',
+        description: settings?.escrowDescription || 'Safe Escrow Protection & Satisfaction Guarantee',
+      },
       gateways: active,
     });
   } catch (error: any) {

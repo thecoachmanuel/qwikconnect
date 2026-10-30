@@ -100,6 +100,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       success: true,
       message: 'Order created successfully!',
+      order: created,
       orderId: String(orderId),
       invoice: invoiceNumber,
     });

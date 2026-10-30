@@ -40,6 +40,27 @@ export default function BuyerWalletPage() {
 
   useEffect(() => {
     loadWalletData();
+
+    // Check for Paystack callback verification
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const isVerify = params.get('verify_deposit') === '1';
+      const reference = params.get('reference') || params.get('trxref');
+      if (isVerify && reference) {
+        fetch(`/api/buyer/wallet/verify?reference=${encodeURIComponent(reference)}`)
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.success) {
+              showToast(data.message || 'Wallet funded successfully!');
+              loadWalletData();
+            }
+          })
+          .catch(() => {})
+          .finally(() => {
+            window.history.replaceState({}, '', '/buyer/wallet');
+          });
+      }
+    }
   }, []);
 
   const showToast = (text: string, type: 'success' | 'danger' = 'success') => {
@@ -63,12 +84,16 @@ export default function BuyerWalletPage() {
         body: JSON.stringify({
           amount: num,
           gateway: gateway,
-          transaction_id: `DEP_${Date.now()}_${Math.floor(Math.random() * 10000)}`,
+          transaction_id: `WAL_${Date.now()}_${Math.floor(1000 + Math.random() * 9000)}`,
         }),
       });
 
       const data = await res.json();
       if (res.ok && data.success) {
+        if (data.paystack && data.authorization_url) {
+          window.location.href = data.authorization_url;
+          return;
+        }
         setBalance(data.balance);
         showToast(`Successfully deposited ₦${num.toLocaleString()} to your wallet!`);
         setShowDepositModal(false);

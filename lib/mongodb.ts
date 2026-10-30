@@ -1864,11 +1864,27 @@ export async function getOrderById(id: number | string) {
 }
 
 export async function createOrder(order: any) {
+  const settings = await getPlatformSettings();
+  let escrowFee = Number(order.escrow_fee || 0);
+  if (escrowFee === 0 && settings.escrowEnabled) {
+    const baseAmount = Number(order.sub_total || order.package_fee || order.total || 0);
+    if (settings.escrowType === 'fixed') {
+      escrowFee = Number(settings.escrowRate || 500);
+    } else {
+      escrowFee = Math.round((baseAmount * Number(settings.escrowRate || 5)) / 100);
+    }
+  }
+
+  const isWalletPayment = order.payment_gateway === 'wallet';
+  const isPaid = isWalletPayment || order.payment_status === 'complete';
+
   const newOrder = {
     id: Date.now(),
     created_at: new Date().toISOString(),
     status: 0,
-    payment_status: 'pending',
+    payment_status: isPaid ? 'complete' : 'pending',
+    escrow_fee: escrowFee,
+    escrow_status: isPaid ? 'held_in_escrow' : 'pending_payment',
     ...order,
   };
 
@@ -1883,13 +1899,36 @@ export async function createOrder(order: any) {
   data.orders.unshift(newOrder);
   writeDataFile(data);
 
+  // Notify seller of new order
+  if (newOrder.seller_id) {
+    try {
+      await createNotification({
+        role: 'seller',
+        user_id: newOrder.seller_id,
+        order_id: newOrder.id,
+        title: 'New Service Booking Received',
+        message: `New booking #${newOrder.id} placed by ${newOrder.name || 'Client'}. Amount: ₦${Number(newOrder.total || 0).toLocaleString()}`,
+        link: `/seller/orders/${newOrder.id}`,
+        icon: 'las la-clipboard-check',
+        type: 'order',
+        created_at: new Date().toISOString(),
+        status: 0,
+      });
+    } catch (e) {}
+  }
+
   return newOrder;
 }
 
 export async function updateOrderStatus(id: number | string, status?: number, extraFields: any = {}) {
   const numId = Number(id);
   const updateObj: any = { updated_at: new Date().toISOString(), ...extraFields };
-  if (status !== undefined) updateObj.status = status;
+  if (status !== undefined) {
+    updateObj.status = status;
+    if (status === 2) {
+      updateObj.escrow_status = 'released_to_seller';
+    }
+  }
 
   const db = await getMongoDb();
   if (db) {
@@ -2024,6 +2063,11 @@ const DEFAULT_SETTINGS = {
   usdExchangeRate: '1500',
   commissionType: 'percentage',
   commissionRate: '10',
+  escrowEnabled: true,
+  escrowType: 'percentage', // 'percentage' | 'fixed'
+  escrowRate: '5', // 5% platform escrow protection charge
+  escrowPayer: 'buyer', // 'buyer' adds on top, 'seller' deducted from payout
+  escrowDescription: '100% Secure Escrow Protection. Funds held safely until service completion is approved.',
   autoApproveServices: false,
   enableLiveChat: true,
   maintenanceMode: false,
@@ -2109,6 +2153,16 @@ const DEFAULT_PAYMENT_GATEWAYS = [
     },
   },
   {
+    id: 'wallet',
+    name: 'QwikConnect Wallet',
+    icon: 'las la-wallet',
+    enabled: true,
+    sandbox: false,
+    fields: {
+      instructions: 'Pay instantly from your Naira wallet balance with zero transaction fees.',
+    },
+  },
+  {
     id: 'cod',
     name: 'Cash On Delivery',
     icon: 'las la-hand-holding-usd',
@@ -2156,22 +2210,23 @@ export async function getPaymentGateways() {
     }
   }
 
-  // Ensure all gateways are present and merge fields with env defaults
+  // Ensure all gateways are present and admin configured keys overwrite env variables
   return DEFAULT_PAYMENT_GATEWAYS.map((def) => {
     const found = list.find((g: any) => g.id === def.id);
     if (!found) return def;
     const cleanFields: Record<string, any> = { ...def.fields };
-    if (found.fields) {
+    if (found.fields && typeof found.fields === 'object') {
       for (const [k, v] of Object.entries(found.fields)) {
-        if (v && typeof v === 'string' && !v.includes('...sample') && !v.includes('demo_sandbox')) {
-          cleanFields[k] = v;
+        if (typeof v === 'string' && v.trim().length > 0) {
+          cleanFields[k] = v.trim();
         }
       }
     }
     return {
       ...def,
       ...found,
-      enabled: found.enabled !== undefined ? found.enabled : def.enabled,
+      enabled: found.enabled !== undefined ? Boolean(found.enabled) : def.enabled,
+      sandbox: found.sandbox !== undefined ? Boolean(found.sandbox) : def.sandbox,
       fields: cleanFields,
     };
   });
@@ -4495,7 +4550,7 @@ export async function getWalletBalance(userId: number | string): Promise<number>
       if (doc && typeof doc.balance === 'number') return doc.balance;
     } catch (e) {}
   }
-  return wallet ? Number(wallet.balance || 0) : 150000;
+  return wallet ? Number(wallet.balance || 0) : 0;
 }
 
 export async function getWalletHistory(userId: number | string): Promise<any[]> {
@@ -4510,10 +4565,7 @@ export async function getWalletHistory(userId: number | string): Promise<any[]> 
       if (docs && docs.length > 0) return docs;
     } catch (e) {}
   }
-  return list.length > 0 ? list : [
-    { id: 1, user_id: numId, amount: 50000, type: 'deposit', gateway: 'paystack', transaction_id: 'DEP_PAY_192837', status: 'completed', created_at: '2026-10-28T10:30:00.000Z' },
-    { id: 2, user_id: numId, amount: 25000, type: 'deduction', order_id: 101, status: 'completed', created_at: '2026-10-29T14:15:00.000Z' },
-  ];
+  return list;
 }
 
 export async function creditWallet(
@@ -4530,7 +4582,7 @@ export async function creditWallet(
 
   let wallet = data.wallets.find((w: any) => Number(w.user_id) === numId);
   if (!wallet) {
-    wallet = { user_id: numId, balance: 150000, updated_at: new Date().toISOString() };
+    wallet = { user_id: numId, balance: 0, updated_at: new Date().toISOString() };
     data.wallets.push(wallet);
   }
   wallet.balance = Number(wallet.balance || 0) + addAmt;

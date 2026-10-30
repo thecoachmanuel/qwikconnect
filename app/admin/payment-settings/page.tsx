@@ -13,6 +13,22 @@ interface GatewayConfig {
   fields: { [key: string]: string };
 }
 
+interface EscrowConfig {
+  escrowEnabled: boolean;
+  escrowType: 'percentage' | 'fixed';
+  escrowRate: string;
+  escrowPayer: 'buyer' | 'seller' | 'split';
+  escrowDescription: string;
+}
+
+const DEFAULT_ESCROW: EscrowConfig = {
+  escrowEnabled: true,
+  escrowType: 'percentage',
+  escrowRate: '5',
+  escrowPayer: 'buyer',
+  escrowDescription: '100% Secure Escrow Protection. Funds held safely until service completion is approved.',
+};
+
 const DEFAULT_FALLBACK_GATEWAYS: GatewayConfig[] = [
   {
     id: 'paystack',
@@ -24,6 +40,16 @@ const DEFAULT_FALLBACK_GATEWAYS: GatewayConfig[] = [
       public_key: 'pk_test_a7e58f850adce9a73750e61668d4f492f67abcd9',
       secret_key: 'sk_test_2a458001d806c878aba51955b962b3c8ed78f04b',
       merchant_email: 'billing@qixer.ng',
+    },
+  },
+  {
+    id: 'wallet',
+    name: 'Buyer Digital Wallet',
+    icon: 'las la-wallet',
+    enabled: true,
+    sandbox: false,
+    fields: {
+      instructions: 'Allows buyers to pay instantly using their pre-funded in-app Naira wallet balance.',
     },
   },
   {
@@ -94,6 +120,7 @@ const DEFAULT_FALLBACK_GATEWAYS: GatewayConfig[] = [
 
 export default function AdminPaymentSettingsPage() {
   const [gateways, setGateways] = useState<GatewayConfig[]>(DEFAULT_FALLBACK_GATEWAYS);
+  const [escrow, setEscrow] = useState<EscrowConfig>(DEFAULT_ESCROW);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -108,6 +135,15 @@ export default function AdminPaymentSettingsPage() {
           const data = await res.json();
           if (Array.isArray(data.gateways) && data.gateways.length > 0) {
             setGateways(data.gateways);
+          }
+          if (data.escrow) {
+            setEscrow({
+              escrowEnabled: data.escrow.escrowEnabled !== false,
+              escrowType: data.escrow.escrowType || 'percentage',
+              escrowRate: String(data.escrow.escrowRate || '5'),
+              escrowPayer: data.escrow.escrowPayer || 'buyer',
+              escrowDescription: data.escrow.escrowDescription || DEFAULT_ESCROW.escrowDescription,
+            });
           }
         }
       } catch (err) {
@@ -149,7 +185,7 @@ export default function AdminPaymentSettingsPage() {
       const res = await fetch('/api/admin/payment-settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ gateways }),
+        body: JSON.stringify({ gateways, escrow }),
       });
       if (!res.ok) {
         throw new Error('Server returned an error while saving configurations');
@@ -209,6 +245,134 @@ export default function AdminPaymentSettingsPage() {
         </div>
       ) : (
         <form onSubmit={handleSave}>
+          {/* Escrow System Management Card */}
+          <div className="card border-0 shadow-sm rounded-3 bg-white mb-4" style={{ borderTop: `4px solid ${escrow.escrowEnabled ? '#1DBF73' : '#cbd5e1'}` }}>
+            <div className="card-header bg-transparent py-3 d-flex align-items-center justify-content-between border-bottom">
+              <div className="d-flex align-items-center gap-3">
+                <div
+                  style={{
+                    width: '44px',
+                    height: '44px',
+                    borderRadius: '10px',
+                    backgroundColor: escrow.escrowEnabled ? 'rgba(29, 191, 115, 0.12)' : '#f1f5f9',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: escrow.escrowEnabled ? '#1DBF73' : '#94a3b8',
+                    fontSize: '24px',
+                  }}
+                >
+                  <i className="las la-shield-alt"></i>
+                </div>
+                <div>
+                  <div className="d-flex align-items-center gap-2">
+                    <h5 className="fw-bold mb-0 text-dark">Platform Escrow & Trust Protection</h5>
+                    <span className="badge" style={{ backgroundColor: escrow.escrowEnabled ? '#1DBF73' : '#94a3b8', color: '#fff', fontSize: '11px' }}>
+                      {escrow.escrowEnabled ? 'Escrow Protection Active' : 'Escrow Disabled'}
+                    </span>
+                  </div>
+                  <small className="text-muted">
+                    When active, payment funds are securely held in escrow and released to the artisan only upon verified service completion.
+                  </small>
+                </div>
+              </div>
+
+              <div className="d-flex align-items-center gap-3">
+                <span className="small fw-semibold text-muted d-none d-sm-inline">
+                  {escrow.escrowEnabled ? 'Escrow Enabled' : 'Escrow Disabled'}
+                </span>
+                <div className="form-check form-switch m-0" style={{ transform: 'scale(1.2)' }}>
+                  <input
+                    type="checkbox"
+                    className="form-check-input"
+                    checked={escrow.escrowEnabled}
+                    onChange={(e) => setEscrow((prev) => ({ ...prev, escrowEnabled: e.target.checked }))}
+                    id="switch-escrow-enabled"
+                    style={{ cursor: 'pointer', accentColor: '#1DBF73' }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="card-body p-4">
+              <div className="row g-3">
+                <div className="col-md-4">
+                  <label className="form-label small fw-semibold text-muted mb-1">Fee Calculation Model</label>
+                  <select
+                    className="form-select"
+                    value={escrow.escrowType}
+                    onChange={(e) => setEscrow((prev) => ({ ...prev, escrowType: e.target.value as any }))}
+                    disabled={!escrow.escrowEnabled}
+                  >
+                    <option value="percentage">Percentage of Service Amount (%)</option>
+                    <option value="fixed">Fixed Escrow Fee Amount (₦)</option>
+                  </select>
+                  <span className="text-muted" style={{ fontSize: '11px' }}>
+                    {escrow.escrowType === 'percentage' ? 'Calculates dynamic % based on service price' : 'Applies fixed Naira amount per booking'}
+                  </span>
+                </div>
+
+                <div className="col-md-4">
+                  <label className="form-label small fw-semibold text-muted mb-1">
+                    Escrow Fee Rate {escrow.escrowType === 'percentage' ? '(%)' : '(₦)'}
+                  </label>
+                  <div className="input-group">
+                    <span className="input-group-text bg-light">{escrow.escrowType === 'percentage' ? '%' : '₦'}</span>
+                    <input
+                      type="number"
+                      step={escrow.escrowType === 'percentage' ? '0.1' : '100'}
+                      min="0"
+                      className="form-control"
+                      value={escrow.escrowRate}
+                      onChange={(e) => setEscrow((prev) => ({ ...prev, escrowRate: e.target.value }))}
+                      disabled={!escrow.escrowEnabled}
+                    />
+                  </div>
+                  <span className="text-muted" style={{ fontSize: '11px' }}>
+                    Current charge: {escrow.escrowType === 'percentage' ? `${escrow.escrowRate}% of subtotal` : `₦${Number(escrow.escrowRate || 0).toLocaleString()} flat`}
+                  </span>
+                </div>
+
+                <div className="col-md-4">
+                  <label className="form-label small fw-semibold text-muted mb-1">Fee Borne By (Payer)</label>
+                  <select
+                    className="form-select"
+                    value={escrow.escrowPayer}
+                    onChange={(e) => setEscrow((prev) => ({ ...prev, escrowPayer: e.target.value as any }))}
+                    disabled={!escrow.escrowEnabled}
+                  >
+                    <option value="buyer">Buyer (Added to Order Checkout Total)</option>
+                    <option value="seller">Artisan / Seller (Deducted from Earnings)</option>
+                    <option value="split">Split Evenly (50% Buyer / 50% Seller)</option>
+                  </select>
+                  <span className="text-muted" style={{ fontSize: '11px' }}>
+                    Controls whether the escrow fee is charged to the buyer at checkout or deducted from the provider
+                  </span>
+                </div>
+
+                <div className="col-12 mt-3">
+                  <label className="form-label small fw-semibold text-muted mb-1">Escrow Trust Notice Displayed to Buyer at Checkout</label>
+                  <textarea
+                    rows={2}
+                    className="form-control"
+                    value={escrow.escrowDescription}
+                    onChange={(e) => setEscrow((prev) => ({ ...prev, escrowDescription: e.target.value }))}
+                    disabled={!escrow.escrowEnabled}
+                    placeholder="Enter customer-facing escrow notice..."
+                  />
+                  <span className="text-muted" style={{ fontSize: '11px' }}>
+                    Displays as a security assurance badge on both web checkout and mobile PWA booking screens.
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="d-flex align-items-center justify-content-between mb-3 mt-4">
+            <h5 className="fw-bold mb-0 text-dark">Payment Gateways</h5>
+            <span className="text-muted small">Manage online payment integrations & credentials</span>
+          </div>
+
           <div className="row g-4">
             {gateways.map((gw) => {
               const isPaystack = gw.id === 'paystack';
@@ -244,6 +408,11 @@ export default function AdminPaymentSettingsPage() {
                             {isPaystack && (
                               <span className="badge" style={{ backgroundColor: '#1DBF73', color: '#fff', fontSize: '11px' }}>
                                 Primary (Nigeria / Africa)
+                              </span>
+                            )}
+                            {gw.id === 'wallet' && (
+                              <span className="badge bg-success-subtle text-success border border-success-subtle" style={{ fontSize: '11px' }}>
+                                <i className="las la-wallet"></i> In-App Digital Wallet
                               </span>
                             )}
                             {gw.id === 'flutterwave' && (
@@ -299,7 +468,7 @@ export default function AdminPaymentSettingsPage() {
                     </div>
 
                     <div className="card-body p-4">
-                      {gw.id !== 'cod' && (
+                      {gw.id !== 'cod' && gw.id !== 'wallet' && (
                         <div className="p-3 mb-3 rounded-2" style={{ backgroundColor: '#f8fafc', border: '1px solid #e2e8f0' }}>
                           <div className="d-flex justify-content-between align-items-center">
                             <div>

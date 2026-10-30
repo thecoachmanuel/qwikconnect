@@ -11,6 +11,39 @@ interface MobileHomeScreenProps {
   onBookService?: (service: any) => void;
 }
 
+const DEFAULT_BANNERS = [
+  {
+    id: 1,
+    title: 'Special 20% Off Home Cleaning',
+    subtitle: 'Valid across Lagos & Abuja this week',
+    image: '/assets/uploads/media-uploader/banner11638279446.png',
+    link: 'cleaning',
+  },
+  {
+    id: 2,
+    title: 'Certified Inverter & Solar Repairs',
+    subtitle: '24/7 Verified Nigerian Electricians',
+    image: '/assets/uploads/media-uploader/service_electrical_nigerian.jpg',
+    link: 'electrical-repair',
+  },
+  {
+    id: 3,
+    title: 'Emergency Plumbing Response',
+    subtitle: 'Quick pipe leakage & pump servicing',
+    image: '/assets/uploads/media-uploader/service_plumbing_nigerian.jpg',
+    link: 'plumbing-solutions',
+  },
+];
+
+const DEFAULT_CATEGORIES = [
+  { id: 1, name: 'Cleaning', slug: 'cleaning', icon: 'las la-broom' },
+  { id: 2, name: 'Electrician', slug: 'electrical-repair', icon: 'las la-bolt' },
+  { id: 3, name: 'Plumber', slug: 'plumbing-solutions', icon: 'las la-faucet' },
+  { id: 4, name: 'Painting', slug: 'painting', icon: 'las la-paint-roller' },
+  { id: 5, name: 'AC Repair', slug: 'ac-repair', icon: 'las la-snowflake' },
+  { id: 6, name: 'Carpentry', slug: 'carpentry', icon: 'las la-hammer' },
+];
+
 export default function MobileHomeScreen({
   onGoToSearch,
   onOpenMapView,
@@ -19,11 +52,57 @@ export default function MobileHomeScreen({
   onBookService,
 }: MobileHomeScreenProps) {
   const [searchInput, setSearchInput] = useState('');
-  const [categories, setCategories] = useState<any[]>([]);
-  const [services, setServices] = useState<any[]>([]);
-  const [banners, setBanners] = useState<any[]>([]);
+
+  // Synchronous cache hydration to completely eliminate screen flicker on frame-0
+  const [categories, setCategories] = useState<any[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem('qixer_cached_categories');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        }
+      } catch (e) {}
+    }
+    return DEFAULT_CATEGORIES;
+  });
+
+  const [banners, setBanners] = useState<any[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem('qixer_cached_banners');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        }
+      } catch (e) {}
+    }
+    return DEFAULT_BANNERS;
+  });
+
+  const [services, setServices] = useState<any[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem('qixer_cached_services');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        }
+      } catch (e) {}
+    }
+    return [];
+  });
+
   const [activeBannerIdx, setActiveBannerIdx] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem('qixer_cached_services');
+        if (cached && JSON.parse(cached).length > 0) return false;
+      } catch (e) {}
+    }
+    return true;
+  });
   const [savedServiceIds, setSavedServiceIds] = useState<Set<number>>(new Set());
 
   useEffect(() => {
@@ -31,8 +110,11 @@ export default function MobileHomeScreen({
     fetch('/api/categories')
       .then((res) => res.json())
       .then((data) => {
-        if (data && Array.isArray(data.categories)) {
+        if (data && Array.isArray(data.categories) && data.categories.length > 0) {
           setCategories(data.categories);
+          try {
+            localStorage.setItem('qixer_cached_categories', JSON.stringify(data.categories));
+          } catch (e) {}
         }
       })
       .catch(() => {});
@@ -43,42 +125,23 @@ export default function MobileHomeScreen({
       .then((data) => {
         if (data && Array.isArray(data.banners) && data.banners.length > 0) {
           setBanners(data.banners);
-        } else {
-          setBanners([
-            {
-              id: 1,
-              title: 'Special 20% Off Home Cleaning',
-              subtitle: 'Valid across Lagos & Abuja this week',
-              image: '/assets/uploads/media-uploader/banner11638279446.png',
-              link: 'cleaning',
-            },
-            {
-              id: 2,
-              title: 'Certified Inverter & Solar Repairs',
-              subtitle: '24/7 Verified Nigerian Electricians',
-              image: '/assets/uploads/media-uploader/service_electrical_nigerian.jpg',
-              link: 'electrical-repair',
-            },
-            {
-              id: 3,
-              title: 'Emergency Plumbing Response',
-              subtitle: 'Quick pipe leakage & pump servicing',
-              image: '/assets/uploads/media-uploader/service_plumbing_nigerian.jpg',
-              link: 'plumbing-solutions',
-            },
-          ]);
+          try {
+            localStorage.setItem('qixer_cached_banners', JSON.stringify(data.banners));
+          } catch (e) {}
         }
       })
       .catch(() => {});
 
-    // 3. Fetch services filtered by city
-    setLoading(true);
+    // 3. Fetch services filtered by city (silent background revalidation without flicker)
     const url = selectedCity ? `/api/services?city=${encodeURIComponent(selectedCity)}` : '/api/services';
     fetch(url)
       .then((res) => res.json())
       .then((data) => {
-        if (data && Array.isArray(data.services)) {
+        if (data && Array.isArray(data.services) && data.services.length > 0) {
           setServices(data.services);
+          try {
+            localStorage.setItem('qixer_cached_services', JSON.stringify(data.services));
+          } catch (e) {}
         }
       })
       .catch(() => {})

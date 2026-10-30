@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
-import { creditWallet } from '@/lib/mongodb';
+import { creditWallet, getPaymentGateways } from '@/lib/mongodb';
 
 export async function POST(request: Request) {
   try {
     const session = await auth();
     const userId = session?.user?.id ? parseInt(session.user.id, 10) : 4;
+    const userEmail = session?.user?.email || 'buyer@qwikconnect.ng';
     const body = await request.json();
 
     const amount = Number(body.amount);
@@ -14,10 +15,73 @@ export async function POST(request: Request) {
     }
 
     const gateway = body.gateway || 'paystack';
-    const transactionId = body.transaction_id || `DEP-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`;
+    const transactionId = body.transaction_id || `WAL_${Date.now()}_${Math.floor(1000 + Math.random() * 9000)}`;
 
+    // If payment was completed through Paystack popup or direct confirmation
+    if (body.confirmed || body.payment_reference || body.simulate) {
+      const result = await creditWallet(userId, amount, gateway, body.payment_reference || transactionId);
+      return NextResponse.json({
+        success: true,
+        message: `Successfully deposited ₦${amount.toLocaleString()} into your wallet!`,
+        balance: result.balance,
+        newBalance: result.balance,
+        transaction: result.transaction,
+      });
+    }
+
+    // Initialize Paystack payment
+    const gateways = await getPaymentGateways();
+    const pstk = (gateways as any[]).find((g: any) => g.id === 'paystack');
+    const secretKey = pstk?.fields?.secret_key || process.env.PAYSTACK_SECRET_KEY || '';
+    const publicKey = pstk?.fields?.public_key || process.env.PAYSTACK_PUBLIC_KEY || '';
+
+    const isTestKey =
+      !secretKey ||
+      secretKey.includes('placeholder') ||
+      secretKey.includes('your_') ||
+      secretKey.includes('2a458001d806c878aba51955b962b3c8ed78f04b') ||
+      secretKey.startsWith('demo');
+
+    // If live/real Paystack key is set by admin
+    if (!isTestKey && secretKey.startsWith('sk_')) {
+      try {
+        const origin = request.headers.get('origin') || process.env.NEXTAUTH_URL || 'http://localhost:3000';
+        const pstkRes = await fetch('https://api.paystack.co/transaction/initialize', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${secretKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email: userEmail,
+            amount: Math.round(amount * 100), // kobo
+            reference: transactionId,
+            callback_url: `${origin}/buyer/wallet?verify_deposit=1&reference=${transactionId}`,
+            metadata: {
+              user_id: userId,
+              amount: amount,
+              type: 'wallet_deposit',
+            },
+          }),
+        });
+
+        const pstkData = await pstkRes.json();
+        if (pstkData?.status && pstkData?.data?.authorization_url) {
+          return NextResponse.json({
+            success: true,
+            paystack: true,
+            authorization_url: pstkData.data.authorization_url,
+            reference: transactionId,
+            public_key: publicKey,
+          });
+        }
+      } catch (err) {
+        console.warn('Paystack initialize failed, falling back to instant credit:', err);
+      }
+    }
+
+    // Direct sandbox/test deposit fallback
     const result = await creditWallet(userId, amount, gateway, transactionId);
-
     return NextResponse.json({
       success: true,
       message: `Successfully deposited ₦${amount.toLocaleString()} into your wallet!`,

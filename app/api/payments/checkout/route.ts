@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getOrders, getServices, getPlatformSettings, updateOrderStatus } from '@/lib/mongodb';
+import { getOrders, getServices, getPlatformSettings, updateOrderStatus, deductWallet } from '@/lib/mongodb';
 import { createStripeCheckoutSession } from '@/lib/payments/stripe';
 import { createPaypalOrder } from '@/lib/payments/paypal';
 import { initializePaystack } from '@/lib/payments/paystack';
@@ -71,6 +71,28 @@ export async function POST(request: NextRequest) {
 
     let result;
     switch (selectedGateway) {
+      case 'wallet': {
+        const buyerId = order.buyer_id || order.user_id;
+        if (!buyerId) {
+          return NextResponse.json(
+            { message: 'A valid buyer account is required to pay using in-app wallet balance.' },
+            { status: 400 }
+          );
+        }
+        const deduction = await deductWallet(buyerId, Number(order.total), order.id);
+        if (!deduction.success) {
+          return NextResponse.json(
+            { message: deduction.message || 'Insufficient wallet balance. Please fund your wallet via Paystack to proceed.' },
+            { status: 400 }
+          );
+        }
+        result = {
+          redirectUrl: successUrl,
+          isDirectSuccess: true,
+          gatewayOrderId: `wallet_${Date.now()}`,
+        };
+        break;
+      }
       case 'paystack':
         result = await initializePaystack(paymentOptions);
         break;
