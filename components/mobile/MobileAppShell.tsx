@@ -28,6 +28,7 @@ import MobileOrdersScreen from './screens/MobileOrdersScreen';
 import MobileSavedScreen from './screens/MobileSavedScreen';
 import MobileSearchScreen from './screens/MobileSearchScreen';
 import MobileMenuScreen from './screens/MobileMenuScreen';
+import InstallPromptBanner from './InstallPromptBanner';
 
 export default function MobileAppShell({ children }: { children?: React.ReactNode }) {
   const { data: session } = useSession();
@@ -292,6 +293,8 @@ export default function MobileAppShell({ children }: { children?: React.ReactNod
           }}
         />
       )}
+      {/* Floating Install App Banner (shown when previewing on web mobile before installation) */}
+      <InstallPromptBanner />
     </div>
   );
 }

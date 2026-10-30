@@ -12,6 +12,7 @@ export interface MobilePwaPermissions {
 
 export function useMobilePWA() {
   const [isStandalone, setIsStandalone] = useState(false);
+  const [isInstalled, setIsInstalled] = useState(false);
   const [isMobileScreen, setIsMobileScreen] = useState(false);
   const [isPwaActive, setIsPwaActive] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
@@ -36,12 +37,20 @@ export function useMobilePWA() {
       return isStandaloneMedia || isIosStandalone || isPwaUrl;
     };
 
+    const checkTrulyInstalled = () => {
+      const isStandaloneMedia = window.matchMedia('(display-mode: standalone)').matches;
+      const isIosStandalone = (window.navigator as any).standalone === true;
+      return Boolean(isStandaloneMedia || isIosStandalone);
+    };
+
     // Check mobile viewport
     const checkMobile = () => window.innerWidth <= 768;
 
     const standalone = checkStandalone();
+    const installed = checkTrulyInstalled();
     const mobile = checkMobile();
     setIsStandalone(standalone);
+    setIsInstalled(installed);
     setIsMobileScreen(mobile);
     // PWA is strictly active ONLY when running as an installed standalone app, NEVER on standard mobile web browsers
     setIsPwaActive(standalone);
@@ -49,8 +58,10 @@ export function useMobilePWA() {
     const handleResize = () => {
       const mob = checkMobile();
       const stand = checkStandalone();
+      const inst = checkTrulyInstalled();
       setIsMobileScreen(mob);
       setIsStandalone(stand);
+      setIsInstalled(inst);
       setIsPwaActive(stand);
     };
 
@@ -92,6 +103,7 @@ export function useMobilePWA() {
 
   return {
     isStandalone,
+    isInstalled,
     isMobileScreen,
     isPwaActive,
     canInstall,

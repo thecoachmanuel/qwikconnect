@@ -1073,6 +1073,28 @@ export default function Navbar({ sessionUser, siteLogo, siteTitle, settings }: N
             {/* Mobile Account & Notification Controls */}
             <div className="onlymobile-device-account-navbar navtwo" style={{ flexShrink: 0 }}>
               <div className="onlymobile-device-account-navbar-flex" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+                {/* Mobile Header PWA Install Button */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (typeof window !== 'undefined') {
+                      window.dispatchEvent(new CustomEvent('qixer-open-install-prompt'));
+                    }
+                  }}
+                  className="btn btn-sm d-flex align-items-center gap-1 text-white fw-bold px-2 py-1 shadow-sm"
+                  style={{
+                    backgroundColor: 'var(--main-color-one, #1DBF73)',
+                    borderRadius: '6px',
+                    fontSize: '11px',
+                    border: 'none',
+                    lineHeight: 1.2,
+                  }}
+                  title="Install QwikConnect App"
+                >
+                  <i className="las la-download" style={{ fontSize: '13px' }}></i>
+                  <span>Install</span>
+                </button>
+
                 {isLoggedIn && (
                   <div ref={mobileNotifRef} className="notification-icon icon" style={{ position: 'relative', margin: 0, flexShrink: 0 }}>
                     <button

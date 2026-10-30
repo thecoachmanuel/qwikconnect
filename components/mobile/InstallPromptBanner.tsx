@@ -4,16 +4,16 @@ import React, { useState, useEffect } from 'react';
 import { useMobilePWA } from '@/hooks/useMobilePWA';
 
 export default function InstallPromptBanner() {
-  const { canInstall, promptInstall, isStandalone } = useMobilePWA();
+  const { canInstall, promptInstall, isInstalled } = useMobilePWA();
+  const [mounted, setMounted] = useState(false);
   const [dismissed, setDismissed] = useState(false);
   const [isIosSafari, setIsIosSafari] = useState(false);
   const [showIosGuide, setShowIosGuide] = useState(false);
   const [showGeneralGuide, setShowGeneralGuide] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     if (typeof window === 'undefined') return;
-    const isDismissed = sessionStorage.getItem('qixer_pwa_install_dismissed');
-    if (isDismissed) setDismissed(true);
 
     const ua = window.navigator.userAgent;
     const isIos = /iPad|iPhone|iPod/.test(ua);
@@ -21,16 +21,34 @@ export default function InstallPromptBanner() {
     if (isIos && isSafari && !(window.navigator as any).standalone) {
       setIsIosSafari(true);
     }
-  }, []);
 
-  // Never render inside the installed standalone PWA app shell
-  if (isStandalone) return null;
+    // Listen for custom open event triggered from mobile navbar or other controls
+    const handleOpenPrompt = () => {
+      setDismissed(false);
+      if (canInstall) {
+        promptInstall();
+      } else if (isIosSafari) {
+        setShowIosGuide(true);
+      } else {
+        setShowGeneralGuide(true);
+      }
+    };
 
-  const handleDismiss = () => {
+    window.addEventListener('qixer-open-install-prompt', handleOpenPrompt);
+    return () => {
+      window.removeEventListener('qixer-open-install-prompt', handleOpenPrompt);
+    };
+  }, [canInstall, isIosSafari, promptInstall]);
+
+  // Wait until client mounted to prevent hydration mismatches
+  if (!mounted) return null;
+
+  // Never render when running inside the actual installed standalone app instance
+  if (isInstalled) return null;
+
+  const handleDismiss = (e: React.MouseEvent) => {
+    e.stopPropagation();
     setDismissed(true);
-    try {
-      sessionStorage.setItem('qixer_pwa_install_dismissed', '1');
-    } catch (e) {}
   };
 
   const handleInstallClick = () => {
@@ -45,54 +63,40 @@ export default function InstallPromptBanner() {
 
   return (
     <>
-      {/* If dismissed, show a non-intrusive floating pill in bottom corner */}
-      {dismissed ? (
-        <button
-          type="button"
-          onClick={() => setDismissed(false)}
-          className="position-fixed shadow d-flex align-items-center gap-2 px-3 py-2 border-0"
-          style={{
-            bottom: '16px',
-            right: '16px',
-            zIndex: 1040,
-            backgroundColor: '#101828',
-            color: '#FFFFFF',
-            borderRadius: '24px',
-            fontSize: '13px',
-            fontWeight: 600,
-            cursor: 'pointer',
-            boxShadow: '0 4px 14px rgba(0,0,0,0.25)',
-          }}
-          title="Install QwikConnect App"
-        >
-          <i className="las la-mobile-alt" style={{ color: 'var(--main-color-one, #1DBF73)', fontSize: '18px' }}></i>
-          <span>Get App</span>
-        </button>
-      ) : (
-        /* Pinned at the bottom of the viewport (view height) on Web View */
+      {/* Floating Install App Banner on Mobile & Web */}
+      {!dismissed ? (
         <div
-          className="install-pwa-bottom-bar position-fixed start-0 end-0 py-2.5 px-3 px-md-4 shadow-lg"
+          className="install-pwa-floating-card position-fixed shadow-lg"
           style={{
-            bottom: 0,
-            zIndex: 1045,
-            backgroundColor: '#101828',
+            bottom: 'calc(18px + env(safe-area-inset-bottom, 0px))',
+            left: '12px',
+            right: '12px',
+            maxWidth: '440px',
+            margin: '0 auto',
+            zIndex: 99999,
+            backgroundColor: '#0f172a',
             color: '#FFFFFF',
-            borderTop: '2px solid var(--main-color-one, #1DBF73)',
-            boxShadow: '0 -4px 20px rgba(0, 0, 0, 0.28)',
-            backdropFilter: 'blur(8px)',
+            borderRadius: '16px',
+            border: '1.5px solid rgba(255, 255, 255, 0.12)',
+            borderTop: '3px solid var(--main-color-one, #1DBF73)',
+            boxShadow: '0 12px 35px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(29, 191, 115, 0.25)',
+            padding: '12px 14px',
+            animation: 'fadeInUp 0.3s ease-out',
           }}
         >
-          <div className="container-fluid d-flex align-items-center justify-content-between p-0 max-w-1200 mx-auto" style={{ maxWidth: '1140px' }}>
-            <div className="d-flex align-items-center gap-3 min-w-0">
+          <div className="d-flex align-items-center justify-content-between gap-2.5">
+            {/* Left: App icon and info */}
+            <div className="d-flex align-items-center gap-2.5 min-w-0 flex-grow-1">
               <div
                 style={{
-                  width: '42px',
-                  height: '42px',
-                  borderRadius: '10px',
+                  width: '44px',
+                  height: '44px',
+                  borderRadius: '11px',
                   overflow: 'hidden',
                   flexShrink: 0,
                   border: '1.5px solid rgba(255,255,255,0.2)',
                   backgroundColor: '#FFFFFF',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
                 }}
               >
                 <img
@@ -104,34 +108,38 @@ export default function InstallPromptBanner() {
                   }}
                 />
               </div>
-              <div className="min-w-0">
-                <div className="d-flex align-items-center gap-2">
-                  <strong className="text-white text-truncate" style={{ fontSize: '14.5px', fontWeight: 700 }}>
-                    Install QwikConnect App
+
+              <div className="min-w-0" style={{ lineHeight: 1.25 }}>
+                <div className="d-flex align-items-center gap-1.5 flex-wrap">
+                  <strong className="text-white text-truncate" style={{ fontSize: '14px', fontWeight: 700 }}>
+                    QwikConnect App
                   </strong>
-                  <span className="badge d-none d-sm-inline-block" style={{ backgroundColor: 'var(--main-color-one, #1DBF73)', color: '#fff', fontSize: '10.5px' }}>
-                    PWA Ready
+                  <span className="badge" style={{ backgroundColor: 'var(--main-color-one, #1DBF73)', color: '#fff', fontSize: '9.5px', padding: '2px 5px' }}>
+                    Mobile
                   </span>
                 </div>
-                <span className="text-truncate d-block" style={{ fontSize: '12px', color: '#94a3b8' }}>
-                  Fast instant bookings, live chat, offline access & artisan notifications
+                <span className="text-truncate d-block text-white-50 mt-0.5" style={{ fontSize: '11.5px' }}>
+                  1-Tap Instant Service Bookings
                 </span>
               </div>
             </div>
 
-            <div className="d-flex align-items-center gap-2 ms-3 flex-shrink-0">
+            {/* Right: Install CTA button & Close */}
+            <div className="d-flex align-items-center gap-1.5 flex-shrink-0">
               <button
                 type="button"
                 onClick={handleInstallClick}
-                className="btn text-white fw-bold px-3 py-1.5 d-flex align-items-center gap-1.5"
+                className="btn text-white fw-bold d-flex align-items-center gap-1 shadow-sm"
                 style={{
                   backgroundColor: 'var(--main-color-one, #1DBF73)',
                   borderColor: 'var(--main-color-one, #1DBF73)',
                   borderRadius: '8px',
-                  fontSize: '13px',
+                  fontSize: '12.5px',
+                  padding: '7px 12px',
+                  whiteSpace: 'nowrap',
                 }}
               >
-                <i className="las la-download fs-6"></i>
+                <i className="las la-download" style={{ fontSize: '14px' }}></i>
                 <span>{canInstall ? 'Install App' : isIosSafari ? 'Add to Phone' : 'Install App'}</span>
               </button>
 
@@ -139,14 +147,38 @@ export default function InstallPromptBanner() {
                 type="button"
                 onClick={handleDismiss}
                 aria-label="Dismiss banner"
-                className="btn p-1 border-0 text-white-50"
-                style={{ fontSize: '20px', lineHeight: 1 }}
+                className="btn p-1 border-0 text-white-50 d-flex align-items-center justify-content-center"
+                style={{ fontSize: '18px', width: '28px', height: '28px', cursor: 'pointer' }}
               >
                 <i className="las la-times"></i>
               </button>
             </div>
           </div>
         </div>
+      ) : (
+        /* Minimized Floating Pill in bottom corner (always accessible) */
+        <button
+          type="button"
+          onClick={() => setDismissed(false)}
+          className="position-fixed shadow-lg d-flex align-items-center gap-1.5 px-3 py-2 border-0"
+          style={{
+            bottom: 'calc(18px + env(safe-area-inset-bottom, 0px))',
+            right: '16px',
+            zIndex: 99999,
+            backgroundColor: '#0f172a',
+            color: '#FFFFFF',
+            borderRadius: '24px',
+            fontSize: '12.5px',
+            fontWeight: 700,
+            cursor: 'pointer',
+            border: '1.5px solid var(--main-color-one, #1DBF73)',
+            boxShadow: '0 6px 20px rgba(0,0,0,0.35)',
+          }}
+          title="Install QwikConnect App"
+        >
+          <i className="las la-mobile-alt" style={{ color: 'var(--main-color-one, #1DBF73)', fontSize: '18px' }}></i>
+          <span>Install App</span>
+        </button>
       )}
 
       {/* iOS Safari Guide Modal */}
@@ -157,7 +189,7 @@ export default function InstallPromptBanner() {
             position: 'fixed',
             inset: 0,
             backgroundColor: 'rgba(0,0,0,0.65)',
-            zIndex: 2000,
+            zIndex: 100000,
             backdropFilter: 'blur(3px)',
           }}
           onClick={() => setShowIosGuide(false)}
@@ -204,7 +236,7 @@ export default function InstallPromptBanner() {
             position: 'fixed',
             inset: 0,
             backgroundColor: 'rgba(0,0,0,0.65)',
-            zIndex: 2000,
+            zIndex: 100000,
             backdropFilter: 'blur(3px)',
           }}
           onClick={() => setShowGeneralGuide(false)}
@@ -225,13 +257,13 @@ export default function InstallPromptBanner() {
             </p>
             <ul className="ps-3 mb-4" style={{ fontSize: '13px', color: '#475467', lineHeight: 1.7 }}>
               <li>
-                <strong>On Desktop (Chrome/Edge):</strong> Look for the <strong>Install</strong> icon <i className="las la-arrow-circle-down text-success"></i> in the right side of your browser URL bar.
+                <strong>On Android (Chrome):</strong> Tap the <strong>three dots menu (⋮)</strong>, then tap <strong>&ldquo;Add to Home screen&rdquo;</strong> or <strong>&ldquo;Install app&rdquo;</strong>.
               </li>
               <li>
-                <strong>On Mobile (Android/Chrome):</strong> Tap the <strong>three dots menu (⋮)</strong> in your browser, then tap <strong>&ldquo;Add to Home screen&rdquo;</strong> or <strong>&ldquo;Install app&rdquo;</strong>.
+                <strong>On Desktop (Chrome/Edge):</strong> Click the <strong>Install icon</strong> <i className="las la-arrow-circle-down text-success"></i> in your browser address bar.
               </li>
               <li>
-                <strong>PWA Mobile Experience:</strong> You can also access the full mobile app interface with <code>?pwa=1</code>.
+                <strong>Instant App Mode:</strong> You can also access the full app view directly with <code>?pwa=1</code>.
               </li>
             </ul>
             <div className="d-flex gap-2">
@@ -240,7 +272,7 @@ export default function InstallPromptBanner() {
                 className="btn btn-outline-success flex-grow-1 py-2 fw-semibold"
                 style={{ borderColor: 'var(--main-color-one, #1DBF73)', color: 'var(--main-color-one, #1DBF73)', borderRadius: '8px' }}
               >
-                Launch App Preview
+                Launch App View
               </a>
               <button
                 type="button"
