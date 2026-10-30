@@ -12,7 +12,7 @@ export async function GET() {
     const escrow = {
       escrowEnabled: settings.escrowEnabled !== false,
       escrowType: settings.escrowType || 'percentage',
-      escrowRate: settings.escrowRate || '5',
+      escrowRate: settings.escrowRate ?? '0',
       escrowPayer: settings.escrowPayer || 'buyer',
       escrowDescription: settings.escrowDescription || '100% Secure Escrow Protection. Funds held safely until service completion is approved.',
     };

@@ -84,6 +84,9 @@ export default function MobileOrderDetailsModal({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'revision_requested', notes: revisionNotes }),
       });
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('qixer-orders-changed'));
+      }
       alert('Revision request sent to artisan.');
       setShowRevisionModal(false);
     } catch (e) {
@@ -127,12 +130,12 @@ export default function MobileOrderDetailsModal({
 
       {/* 2. Order Header & Status Capsule */}
       <div className="px-4 pt-3 pb-3 bg-white border-bottom">
-        <div className="d-flex align-items-center justify-content-between">
-          <div>
+        <div className="d-flex align-items-center justify-content-between gap-2" style={{ minWidth: 0 }}>
+          <div style={{ minWidth: 0, flexShrink: 1 }}>
             <span className="text-muted small d-block" style={{ fontSize: '12px' }}>
               Invoice Number
             </span>
-            <strong className="text-dark" style={{ fontSize: '18px' }}>
+            <strong className="text-dark d-block text-truncate" style={{ fontSize: '18px', maxWidth: '100%', wordBreak: 'break-all' }}>
               {invoice}
             </strong>
           </div>

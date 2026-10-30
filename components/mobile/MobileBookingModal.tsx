@@ -35,11 +35,13 @@ export default function MobileBookingModal({
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [city, setCity] = useState(service?.city || 'Lagos');
+  const [postCode, setPostCode] = useState('');
   const [address, setAddress] = useState('');
   const [orderNote, setOrderNote] = useState('');
 
   // Step 4: Payment
   const [paymentGateway, setPaymentGateway] = useState<string>('paystack');
+  const [termsAgreed, setTermsAgreed] = useState(true);
   const [walletBalance, setWalletBalance] = useState(0);
   const [activeGateways, setActiveGateways] = useState<any[]>([]);
   const [gatewaysLoading, setGatewaysLoading] = useState(true);
@@ -112,10 +114,10 @@ export default function MobileBookingModal({
 
   const subTotal = packageTotal + extrasTotal;
 
-  // Calculate dynamic Escrow Fee based on Admin settings
+  // Calculate dynamic Escrow Fee based on Admin settings (default 0)
   let escrowFee = 0;
   if (escrowConfig?.enabled && (escrowConfig.payer === 'buyer' || escrowConfig.payer === 'split')) {
-    const rate = Number(escrowConfig.rate || 5);
+    const rate = Number(escrowConfig.rate ?? 0);
     const rawFee = escrowConfig.type === 'fixed' ? rate : (subTotal * rate) / 100;
     escrowFee = Math.round(escrowConfig.payer === 'split' ? rawFee / 2 : rawFee);
   }
@@ -180,6 +182,11 @@ export default function MobileBookingModal({
       return;
     }
 
+    if (!termsAgreed) {
+      alert('Please agree to the Terms & Conditions and Privacy Policy to proceed.');
+      return;
+    }
+
     if (paymentGateway === 'wallet' && walletBalance < grandTotal) {
       alert(`Insufficient wallet balance (₦${walletBalance.toLocaleString()}). Required: ₦${grandTotal.toLocaleString()}. Please fund your wallet via Paystack or choose another payment method.`);
       return;
@@ -193,7 +200,7 @@ export default function MobileBookingModal({
         name: name.trim(),
         email: email.trim() || 'buyer@qwikconnect.ng',
         phone: phone.trim(),
-        address: address.trim(),
+        address: postCode.trim() ? `${address.trim()} (Postal Code: ${postCode.trim()})` : address.trim(),
         city: city || 'Lagos',
         country: 'Nigeria',
         date: selectedDate,
@@ -239,6 +246,11 @@ export default function MobileBookingModal({
             window.location.href = payData.redirectUrl;
             return;
           }
+        }
+
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('qixer-orders-changed'));
+          window.dispatchEvent(new CustomEvent('qixer-wallet-changed'));
         }
 
         setCreatedOrder(data.order || { id: orderIdNum, invoice: data.invoice, total: grandTotal });
@@ -340,28 +352,89 @@ export default function MobileBookingModal({
 
       {/* 3. Step Body */}
       <div className="px-4 py-3 flex-grow-1" style={{ paddingBottom: '90px' }}>
-        {/* STEP 1: Packages & Extras */}
-        {currentStep === 1 && (
-          <div>
-            {/* Service Summary Card */}
-            <div className="d-flex align-items-center gap-3 p-3 rounded-3 border mb-4" style={{ backgroundColor: '#F8FAFC' }}>
-              <div style={{ width: '64px', height: '64px', borderRadius: '8px', overflow: 'hidden', flexShrink: 0 }}>
+        {/* Flutter Steps Component Parity (Circular Step Progress + Service Header) */}
+        {currentStep < 5 && (
+          <div className="mb-4">
+            <div className="d-flex align-items-center gap-3 mb-3">
+              {/* 68x68 Circular Step Progress Indicator */}
+              <div
+                className="position-relative d-flex align-items-center justify-content-center flex-shrink-0"
+                style={{ width: '68px', height: '68px' }}
+              >
+                <svg width="68" height="68" viewBox="0 0 70 70">
+                  <circle cx="35" cy="35" r="30" stroke="#F2F4F7" strokeWidth="5" fill="none" />
+                  <circle
+                    cx="35"
+                    cy="35"
+                    r="30"
+                    stroke="var(--main-color-one, #1DBF73)"
+                    strokeWidth="5"
+                    fill="none"
+                    strokeDasharray={2 * Math.PI * 30}
+                    strokeDashoffset={2 * Math.PI * 30 * (1 - currentStep / 4)}
+                    strokeLinecap="round"
+                    transform="rotate(-90 35 35)"
+                    style={{ transition: 'stroke-dashoffset 0.35s ease' }}
+                  />
+                </svg>
+                <div className="position-absolute d-flex align-items-center justify-content-center">
+                  <span style={{ color: 'var(--main-color-one, #1DBF73)', fontSize: '18px', fontWeight: 700 }}>
+                    {currentStep}/
+                  </span>
+                  <span style={{ color: '#98A2B3', fontSize: '18px', fontWeight: 600 }}>4</span>
+                </div>
+              </div>
+
+              <div className="min-w-0">
+                <h5 className="fw-bold mb-1" style={{ color: '#101828', fontSize: '18px' }}>
+                  {currentStep === 1 && 'Personalize'}
+                  {currentStep === 2 && 'Schedule'}
+                  {currentStep === 3 && 'Delivery Address'}
+                  {currentStep === 4 && 'Payment'}
+                </h5>
+                {currentStep < 4 ? (
+                  <div className="d-flex align-items-center gap-1.5" style={{ fontSize: '13px' }}>
+                    <span style={{ color: '#98A2B3' }}>Next:</span>
+                    <span style={{ color: '#475467', fontWeight: 600 }}>
+                      {currentStep === 1 && 'Schedule'}
+                      {currentStep === 2 && 'Delivery Address'}
+                      {currentStep === 3 && 'Payment'}
+                    </span>
+                  </div>
+                ) : (
+                  <span style={{ color: '#98A2B3', fontSize: '13px' }}>Final Step</span>
+                )}
+              </div>
+            </div>
+
+            {/* Service Header Row (Flutter Parity) */}
+            <div className="d-flex align-items-center gap-3 pb-3 border-bottom">
+              <div style={{ width: '56px', height: '56px', borderRadius: '8px', overflow: 'hidden', flexShrink: 0 }}>
                 <img
                   src={service?.image || '/assets/uploads/media-uploader/banner11638279446.png'}
                   alt={service?.title}
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = '/assets/uploads/media-uploader/banner11638279446.png';
+                  }}
                 />
               </div>
-              <div className="min-w-0">
-                <strong className="d-block text-truncate" style={{ fontSize: '15px', color: '#101828' }}>
+              <div className="min-w-0 flex-grow-1">
+                <strong
+                  className="d-block text-truncate"
+                  style={{ color: '#101828', fontSize: '15px', fontWeight: 700, lineHeight: 1.3 }}
+                >
                   {service?.title}
                 </strong>
-                <span className="text-muted small">Standard Package</span>
-                <strong className="d-block mt-0.5" style={{ color: 'var(--main-color-one, #1DBF73)', fontSize: '14px' }}>
-                  ₦{basePrice.toLocaleString()}
-                </strong>
+                <span className="text-muted small">Standard Package • ₦{basePrice.toLocaleString()}</span>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* STEP 1: Packages & Extras */}
+        {currentStep === 1 && (
+          <div>
 
             {/* Quantity Selector */}
             <div className="d-flex align-items-center justify-content-between p-3 rounded-3 border mb-4">
@@ -583,6 +656,18 @@ export default function MobileBookingModal({
             </div>
 
             <div>
+              <label className="form-label small fw-bold text-dark mb-1">Postal Code (Optional)</label>
+              <input
+                type="text"
+                value={postCode}
+                onChange={(e) => setPostCode(e.target.value)}
+                placeholder="e.g. 101233"
+                className="form-control py-2.5"
+                style={{ borderRadius: '8px', fontSize: '14px' }}
+              />
+            </div>
+
+            <div>
               <label className="form-label small fw-bold text-dark mb-1">Street Address *</label>
               <input
                 type="text"
@@ -609,106 +694,135 @@ export default function MobileBookingModal({
           </div>
         )}
 
-        {/* STEP 4: Payment & Review */}
+        {/* STEP 4: Payment & Review (Flutter payment_choose_page.dart Parity) */}
         {currentStep === 4 && (
           <div>
-            {/* Payment Method Selector */}
             <h6 className="fw-bold text-dark mb-2.5" style={{ fontSize: '15px' }}>
               Choose Payment Method
             </h6>
-            <div className="d-flex flex-column gap-2.5 mb-4">
-              {gatewaysLoading ? (
-                <div className="p-3 text-center text-muted small border rounded-3 bg-white">
-                  <div className="spinner-border spinner-border-sm text-success me-2" role="status"></div>
-                  Loading active payment methods...
-                </div>
-              ) : activeGateways.length === 0 ? (
-                <div className="alert alert-warning small py-2 mb-0">
-                  No payment methods currently active. Please contact administrator.
-                </div>
-              ) : (
-                activeGateways.map((gw: any) => {
-                  const isSelected = paymentGateway === gw.id || (gw.id === 'cod' && paymentGateway === 'cash_on_delivery');
-                  const isWallet = gw.id === 'wallet';
-                  const isPaystack = gw.id === 'paystack';
-                  const isFlw = gw.id === 'flutterwave';
-                  const isCod = gw.id === 'cod' || gw.id === 'cash_on_delivery';
-                  const isInsufficient = isWallet && walletBalance < grandTotal;
 
-                  return (
-                    <div
-                      key={gw.id}
-                      onClick={() => setPaymentGateway(gw.id)}
-                      className="p-3 rounded-3 border d-flex align-items-center justify-content-between cursor-pointer"
-                      style={{
-                        borderColor: isSelected ? 'var(--main-color-one, #1DBF73)' : '#EAECF0',
-                        backgroundColor: isSelected ? 'rgba(29, 191, 115, 0.05)' : '#FFFFFF',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s ease',
-                      }}
-                    >
-                      <div className="d-flex align-items-center gap-3">
+            {gatewaysLoading ? (
+              <div className="p-3 text-center text-muted small border rounded-3 bg-white mb-4">
+                <div className="spinner-border spinner-border-sm text-success me-2" role="status"></div>
+                Loading active payment methods...
+              </div>
+            ) : activeGateways.length === 0 ? (
+              <div className="alert alert-warning small py-2 mb-4">
+                No payment methods currently active. Please contact administrator.
+              </div>
+            ) : (
+              <>
+                {/* 3-Column Flutter Gateway Grid */}
+                <div className="row row-cols-3 g-2.5 mb-3">
+                  {activeGateways.map((gw: any) => {
+                    const isSelected = paymentGateway === gw.id || (gw.id === 'cod' && paymentGateway === 'cash_on_delivery');
+                    const isWallet = gw.id === 'wallet';
+                    const isPaystack = gw.id === 'paystack';
+                    const isFlw = gw.id === 'flutterwave';
+                    const isCod = gw.id === 'cod' || gw.id === 'cash_on_delivery';
+
+                    return (
+                      <div key={gw.id} className="col">
                         <div
-                          className="rounded-circle d-flex align-items-center justify-content-center"
+                          onClick={() => setPaymentGateway(gw.id)}
+                          className="position-relative d-flex flex-column align-items-center justify-content-center text-center p-2 cursor-pointer bg-white"
                           style={{
-                            width: '38px',
-                            height: '38px',
-                            backgroundColor: isSelected ? 'rgba(29, 191, 115, 0.12)' : '#F1F5F9',
-                            color: isSelected ? 'var(--main-color-one, #1DBF73)' : '#64748B',
-                            fontSize: '20px',
-                            flexShrink: 0,
+                            height: '66px',
+                            border: `1.5px solid ${isSelected ? 'var(--main-color-one, #1DBF73)' : '#EAECF0'}`,
+                            borderRadius: '8px',
+                            backgroundColor: isSelected ? 'rgba(29, 191, 115, 0.04)' : '#FFFFFF',
+                            cursor: 'pointer',
+                            transition: 'all 0.15s ease',
                           }}
                         >
-                          {isWallet ? (
-                            <i className="las la-wallet"></i>
-                          ) : isPaystack ? (
-                            <i className="las la-credit-card"></i>
-                          ) : isFlw ? (
-                            <i className="las la-wave-square"></i>
-                          ) : isCod ? (
-                            <i className="las la-hand-holding-usd"></i>
-                          ) : (
-                            <i className={gw.icon || 'las la-credit-card'}></i>
+                          {isSelected && (
+                            <div
+                              className="position-absolute d-flex align-items-center justify-content-center text-white"
+                              style={{
+                                top: '-6px',
+                                right: '-6px',
+                                width: '18px',
+                                height: '18px',
+                                borderRadius: '50%',
+                                backgroundColor: 'var(--main-color-one, #1DBF73)',
+                                fontSize: '11px',
+                                fontWeight: 900,
+                                boxShadow: '0 2px 4px rgba(0,0,0,0.15)',
+                              }}
+                            >
+                              ✓
+                            </div>
                           )}
-                        </div>
-                        <div>
-                          <div className="d-flex align-items-center gap-2">
-                            <strong className="text-dark" style={{ fontSize: '14.5px' }}>
-                              {gw.name}
-                            </strong>
-                            {gw.badge && (
-                              <span className="badge" style={{ backgroundColor: '#1DBF73', color: '#fff', fontSize: '10px' }}>
-                                {gw.badge}
-                              </span>
+                          <div style={{ fontSize: '20px', color: isSelected ? 'var(--main-color-one, #1DBF73)' : '#64748B', lineHeight: 1 }}>
+                            {isWallet ? (
+                              <i className="las la-wallet"></i>
+                            ) : isPaystack ? (
+                              <i className="las la-credit-card"></i>
+                            ) : isFlw ? (
+                              <i className="las la-wave-square"></i>
+                            ) : isCod ? (
+                              <i className="las la-hand-holding-usd"></i>
+                            ) : (
+                              <i className={gw.icon || 'las la-money-bill'}></i>
                             )}
                           </div>
-                          {isWallet ? (
-                            <span className="text-muted small d-block">
-                              Balance: <strong className={isInsufficient ? "text-danger" : "text-success"}>₦{walletBalance.toLocaleString()}</strong>
-                              {isInsufficient && ' (Insufficient funds)'}
-                            </span>
-                          ) : (
-                            <span className="text-muted small d-block" style={{ fontSize: '12px' }}>
-                              {gw.description}
-                            </span>
-                          )}
+                          <span
+                            className="text-truncate d-block mt-1"
+                            style={{
+                              fontSize: '11px',
+                              fontWeight: isSelected ? 700 : 500,
+                              color: isSelected ? 'var(--main-color-one, #1DBF73)' : '#475467',
+                              maxWidth: '100%',
+                            }}
+                          >
+                            {gw.name}
+                          </span>
                         </div>
                       </div>
-                      <input
-                        type="radio"
-                        name="payment"
-                        checked={isSelected}
-                        onChange={() => setPaymentGateway(gw.id)}
-                        style={{ accentColor: 'var(--main-color-one, #1DBF73)', width: '18px', height: '18px', cursor: 'pointer' }}
-                      />
+                    );
+                  })}
+                </div>
+
+                {/* Selected Payment Method Info Pill */}
+                {(() => {
+                  const selectedGw = activeGateways.find((g: any) => g.id === paymentGateway || (g.id === 'cod' && paymentGateway === 'cash_on_delivery'));
+                  const isWallet = paymentGateway === 'wallet';
+                  const isInsufficient = isWallet && walletBalance < grandTotal;
+                  return (
+                    <div className="p-3 rounded-3 border mb-3 bg-light">
+                      <div className="d-flex align-items-center justify-content-between">
+                        <span className="fw-semibold text-dark small">
+                          Selected: {selectedGw?.name || paymentGateway}
+                        </span>
+                        {isWallet && (
+                          <span className={`small fw-bold ${isInsufficient ? 'text-danger' : 'text-success'}`}>
+                            Balance: ₦{walletBalance.toLocaleString()}
+                          </span>
+                        )}
+                      </div>
+                      {isWallet && isInsufficient && (
+                        <span className="text-danger small d-block mt-1">
+                          ⚠️ Insufficient funds. Please fund your wallet via Paystack or choose another method.
+                        </span>
+                      )}
+                      {paymentGateway === 'paystack' && (
+                        <span className="text-muted small d-block mt-1">
+                          🔒 Secured by Paystack: Debit/Credit cards, USSD, and Bank Transfer supported.
+                        </span>
+                      )}
+                      {(paymentGateway === 'cod' || paymentGateway === 'cash_on_delivery') && (
+                        <span className="text-muted small d-block mt-1">
+                          💵 Cash on Delivery: Pay the artisan in cash upon service completion.
+                        </span>
+                      )}
                     </div>
                   );
-                })
-              )}
-            </div>
+                })()}
+              </>
+            )}
 
             {/* Coupon Code Input */}
-            <div className="p-3 rounded-3 border mb-4" style={{ backgroundColor: '#F8FAFC' }}>
+            <div className="p-3 rounded-3 border mb-3" style={{ backgroundColor: '#F8FAFC' }}>
               <label className="form-label small fw-bold text-dark mb-1.5">Have a Promo Coupon?</label>
               <div className="input-group">
                 <input
@@ -735,7 +849,28 @@ export default function MobileBookingModal({
               )}
             </div>
 
-            {/* Order Price Breakdown */}
+            {/* Flutter Agreement Checkbox (TacPP) */}
+            <div className="d-flex align-items-start gap-2.5 mb-3 px-1">
+              <input
+                type="checkbox"
+                id="agree-terms"
+                checked={termsAgreed}
+                onChange={(e) => setTermsAgreed(e.target.checked)}
+                style={{
+                  accentColor: 'var(--main-color-one, #1DBF73)',
+                  width: '18px',
+                  height: '18px',
+                  marginTop: '2px',
+                  cursor: 'pointer',
+                  flexShrink: 0,
+                }}
+              />
+              <label htmlFor="agree-terms" className="small text-muted" style={{ fontSize: '12.5px', lineHeight: 1.4, cursor: 'pointer' }}>
+                I agree to the <span style={{ color: 'var(--main-color-one, #1DBF73)', fontWeight: 600 }}>Terms & Conditions</span> and <span style={{ color: 'var(--main-color-one, #1DBF73)', fontWeight: 600 }}>Privacy Policy</span>.
+              </label>
+            </div>
+
+            {/* Order Price Breakdown (Flutter TotalPayable Parity) */}
             <div className="p-3 rounded-3 border bg-white">
               <h6 className="fw-bold text-dark mb-3" style={{ fontSize: '14.5px' }}>
                 Price Breakdown

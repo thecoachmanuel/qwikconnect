@@ -217,10 +217,10 @@ function BookingContent({ params }: BookingPageProps) {
 
   const subtotalWithoutCoupon = basePrice + extraServiceTotal;
 
-  // Dynamic Escrow Fee Calculation
+  // Dynamic Escrow Fee Calculation (default 0)
   let escrowFee = 0;
   if (escrowConfig?.enabled && (escrowConfig.payer === 'buyer' || escrowConfig.payer === 'split')) {
-    const rate = Number(escrowConfig.rate || 5);
+    const rate = Number(escrowConfig.rate ?? 0);
     const rawFee = escrowConfig.type === 'fixed' ? rate : (subtotalWithoutCoupon * rate) / 100;
     escrowFee = Math.round(escrowConfig.payer === 'split' ? rawFee / 2 : rawFee);
   }
@@ -369,6 +369,10 @@ function BookingContent({ params }: BookingPageProps) {
       if (!res.ok) {
         setErrorMessage(data.error || 'Failed to place booking.');
       } else {
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('qixer-orders-changed'));
+          window.dispatchEvent(new CustomEvent('qixer-wallet-changed'));
+        }
         if (formData.payment_gateway && formData.payment_gateway !== 'cash_on_delivery' && formData.payment_gateway !== 'cod') {
           const payRes = await fetch('/api/payments/checkout', {
             method: 'POST',

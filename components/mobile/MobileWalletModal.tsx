@@ -50,6 +50,9 @@ export default function MobileWalletModal({ onClose }: MobileWalletModalProps) {
           .then((data) => {
             if (data.success) {
               alert(data.message || 'Wallet funded successfully!');
+              if (typeof window !== 'undefined') {
+                window.dispatchEvent(new CustomEvent('qixer-wallet-changed'));
+              }
               loadWallet();
             }
           })
@@ -85,6 +88,9 @@ export default function MobileWalletModal({ onClose }: MobileWalletModalProps) {
           return;
         }
         setBalance(data.balance);
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('qixer-wallet-changed', { detail: { balance: data.balance } }));
+        }
         alert(`Successfully deposited ₦${num.toLocaleString()} to your wallet!`);
         setShowDepositSheet(false);
         loadWallet();

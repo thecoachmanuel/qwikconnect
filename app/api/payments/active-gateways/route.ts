@@ -76,7 +76,7 @@ export async function GET() {
       escrow: {
         enabled: settings?.escrowEnabled !== false,
         type: settings?.escrowType || 'percentage',
-        rate: Number(settings?.escrowRate || 5),
+        rate: Number(settings?.escrowRate ?? 0),
         payer: settings?.escrowPayer || 'buyer',
         description: settings?.escrowDescription || 'Safe Escrow Protection & Satisfaction Guarantee',
       },

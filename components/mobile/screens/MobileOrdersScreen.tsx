@@ -17,7 +17,7 @@ export default function MobileOrdersScreen({
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
 
-  useEffect(() => {
+  const fetchOrders = () => {
     fetch('/api/orders')
       .then((res) => res.json())
       .then((data) => {
@@ -27,6 +27,19 @@ export default function MobileOrdersScreen({
       })
       .catch(() => {})
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    fetchOrders();
+
+    const handleOrdersChanged = () => {
+      fetchOrders();
+    };
+
+    window.addEventListener('qixer-orders-changed', handleOrdersChanged);
+    return () => {
+      window.removeEventListener('qixer-orders-changed', handleOrdersChanged);
+    };
   }, []);
 
   const filteredOrders = orders.filter((order) => {
@@ -146,8 +159,11 @@ export default function MobileOrdersScreen({
                 }}
               >
                 {/* Header: #InvoiceNumber & statusCapsule (Flutter Parity) */}
-                <div className="d-flex align-items-center justify-content-between mb-3">
-                  <strong style={{ color: '#475467', fontSize: '16px', fontWeight: 700 }}>
+                <div className="d-flex align-items-center justify-content-between mb-3 gap-2" style={{ minWidth: 0 }}>
+                  <strong
+                    className="text-truncate"
+                    style={{ color: '#475467', fontSize: '16px', fontWeight: 700, minWidth: 0, flexShrink: 1 }}
+                  >
                     {invoiceNum}
                   </strong>
 
@@ -160,6 +176,8 @@ export default function MobileOrdersScreen({
                       fontSize: '12px',
                       fontWeight: 600,
                       lineHeight: 1,
+                      flexShrink: 0,
+                      whiteSpace: 'nowrap',
                     }}
                   >
                     {badge.text}
@@ -169,7 +187,7 @@ export default function MobileOrdersScreen({
                 <div style={{ height: '1px', backgroundColor: '#F0F0F0', width: '100%', marginBottom: '12px' }} />
 
                 {/* Service Details: 75x78 image + Title + By artisan */}
-                <div className="d-flex align-items-start gap-3">
+                <div className="d-flex align-items-start gap-3" style={{ minWidth: 0 }}>
                   <div style={{ width: '75px', height: '78px', flexShrink: 0, borderRadius: '8px', overflow: 'hidden' }}>
                     <img
                       src={serviceImage}
@@ -181,17 +199,26 @@ export default function MobileOrdersScreen({
                     />
                   </div>
 
-                  <div className="min-w-0 flex-grow-1">
+                  <div className="min-w-0 flex-grow-1" style={{ minWidth: 0, overflow: 'hidden' }}>
                     <strong
-                      className="d-block text-truncate"
-                      style={{ color: '#475467', fontSize: '15px', fontWeight: 600, lineHeight: 1.3 }}
+                      style={{
+                        color: '#475467',
+                        fontSize: '15px',
+                        fontWeight: 600,
+                        lineHeight: 1.3,
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden',
+                        wordBreak: 'break-word',
+                      }}
                     >
                       {serviceTitle}
                     </strong>
 
-                    <div className="d-flex align-items-center gap-1 mt-1.5">
-                      <span style={{ color: 'rgba(71, 84, 103, 0.6)', fontSize: '13px' }}>by:</span>
-                      <span className="text-truncate" style={{ color: '#475467', fontSize: '13px', fontWeight: 600 }}>
+                    <div className="d-flex align-items-center gap-1 mt-1.5" style={{ minWidth: 0 }}>
+                      <span style={{ color: 'rgba(71, 84, 103, 0.6)', fontSize: '13px', flexShrink: 0 }}>by:</span>
+                      <span className="text-truncate" style={{ color: '#475467', fontSize: '13px', fontWeight: 600, minWidth: 0 }}>
                         {artisanName}
                       </span>
                     </div>
@@ -201,23 +228,30 @@ export default function MobileOrdersScreen({
                 <div style={{ height: '1px', backgroundColor: '#F0F0F0', width: '100%', margin: '14px 0 10px 0' }} />
 
                 {/* Flutter orderRow: Schedule (clock.svg) & Billed (bill.svg) */}
-                <div className="d-flex flex-column gap-2">
+                <div className="d-flex flex-column gap-2" style={{ minWidth: 0 }}>
                   {/* Schedule */}
-                  <div className="d-flex align-items-center justify-content-between">
-                    <div className="d-flex align-items-center gap-2">
+                  <div className="d-flex align-items-center justify-content-between gap-2" style={{ minWidth: 0 }}>
+                    <div className="d-flex align-items-center gap-2 flex-shrink-0">
                       <img src="/assets/flutter/svg/clock.svg" alt="Clock" style={{ width: '18px', height: '18px' }} />
                       <span style={{ color: '#475467', fontSize: '13.5px', fontWeight: 400 }}>Schedule</span>
                     </div>
-                    <span style={{ color: '#475467', fontSize: '13.5px', fontWeight: 600 }}>{schedule}</span>
+                    <span
+                      className="text-truncate text-end"
+                      style={{ color: '#475467', fontSize: '13.5px', fontWeight: 600, minWidth: 0, maxWidth: '65%' }}
+                    >
+                      {schedule}
+                    </span>
                   </div>
 
                   {/* Billed */}
-                  <div className="d-flex align-items-center justify-content-between">
-                    <div className="d-flex align-items-center gap-2">
+                  <div className="d-flex align-items-center justify-content-between gap-2" style={{ minWidth: 0 }}>
+                    <div className="d-flex align-items-center gap-2 flex-shrink-0">
                       <img src="/assets/flutter/svg/bill.svg" alt="Bill" style={{ width: '18px', height: '18px' }} />
                       <span style={{ color: '#475467', fontSize: '13.5px', fontWeight: 400 }}>Billed</span>
                     </div>
-                    <strong style={{ color: '#475467', fontSize: '15px', fontWeight: 700 }}>₦{total}</strong>
+                    <strong style={{ color: '#475467', fontSize: '15px', fontWeight: 700, flexShrink: 0, whiteSpace: 'nowrap' }}>
+                      ₦{total}
+                    </strong>
                   </div>
                 </div>
               </div>

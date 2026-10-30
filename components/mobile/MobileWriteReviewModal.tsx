@@ -45,6 +45,9 @@ export default function MobileWriteReviewModal({
 
       const data = await res.json();
       if (res.ok) {
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('qixer-orders-changed'));
+        }
         alert('Thank you! Your review has been submitted.');
         if (onSuccess) onSuccess();
         onClose();

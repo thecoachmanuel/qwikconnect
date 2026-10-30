@@ -60,6 +60,9 @@ export default function MobileReportsModal({ initialOrderId, onClose }: MobileRe
 
       const data = await res.json();
       if (data && data.success) {
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('qixer-orders-changed'));
+        }
         alert('Dispute report filed successfully. Our mediation team will review within 24 hours.');
         setShowCreate(false);
         setDescription('');

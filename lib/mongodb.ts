@@ -2066,7 +2066,7 @@ const DEFAULT_SETTINGS = {
   commissionRate: '10',
   escrowEnabled: true,
   escrowType: 'percentage', // 'percentage' | 'fixed'
-  escrowRate: '5', // 5% platform escrow protection charge
+  escrowRate: '0', // 0% platform escrow protection charge by default
   escrowPayer: 'buyer', // 'buyer' adds on top, 'seller' deducted from payout
   escrowDescription: '100% Secure Escrow Protection. Funds held safely until service completion is approved.',
   autoApproveServices: false,

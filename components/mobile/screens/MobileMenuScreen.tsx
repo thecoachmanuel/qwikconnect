@@ -47,16 +47,36 @@ export default function MobileMenuScreen({
   });
 
   const [orderCounts, setOrderCounts] = useState({
-    pending: 1,
-    active: 2,
-    completed: 8,
-    total: 11,
+    pending: 0,
+    active: 0,
+    completed: 0,
+    total: 0,
   });
 
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deletePassword, setDeletePassword] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
+
+  const loadCounts = () => {
+    fetch('/api/orders')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data && Array.isArray(data.orders)) {
+          const list = data.orders;
+          const pending = list.filter((o: any) => o.status === 0 || o.order_status === 'pending').length;
+          const active = list.filter((o: any) => o.status === 1 || o.order_status === 'active' || o.order_status === 'in_progress').length;
+          const completed = list.filter((o: any) => o.status === 2 || o.order_status === 'completed').length;
+          setOrderCounts({
+            pending,
+            active,
+            completed,
+            total: list.length,
+          });
+        }
+      })
+      .catch(() => {});
+  };
 
   useEffect(() => {
     // 1. Fetch live user profile
@@ -76,23 +96,16 @@ export default function MobileMenuScreen({
       .catch(() => {});
 
     // 2. Fetch order counts for 2x2 grid
-    fetch('/api/orders')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data && Array.isArray(data.orders)) {
-          const list = data.orders;
-          const pending = list.filter((o: any) => o.status === 0 || o.order_status === 'pending').length;
-          const active = list.filter((o: any) => o.status === 1 || o.order_status === 'active' || o.order_status === 'in_progress').length;
-          const completed = list.filter((o: any) => o.status === 2 || o.order_status === 'completed').length;
-          setOrderCounts({
-            pending: pending || 1,
-            active: active || 2,
-            completed: completed || 8,
-            total: list.length || 11,
-          });
-        }
-      })
-      .catch(() => {});
+    loadCounts();
+
+    const handleOrdersChanged = () => {
+      loadCounts();
+    };
+
+    window.addEventListener('qixer-orders-changed', handleOrdersChanged);
+    return () => {
+      window.removeEventListener('qixer-orders-changed', handleOrdersChanged);
+    };
   }, []);
 
   const handleLogout = async () => {
