@@ -2991,9 +2991,24 @@ export async function deleteReport(id: number) {
 // 19. BUYER FAVORITE SERVICES
 // ==========================================
 export async function getFavorites(userId: number) {
-  const data = readDataFile();
-  const allFavs = data.favorites || [];
-  const userFavs = allFavs.filter((f: any) => Number(f.user_id) === Number(userId));
+  let userFavs: any[] = [];
+  const db = await getMongoDb();
+  if (db) {
+    try {
+      const favs = await db.collection('favorites').find({
+        $or: [{ user_id: Number(userId) }, { user_id: String(userId) }],
+      }).toArray();
+      if (favs && favs.length > 0) {
+        userFavs = favs.map(({ _id, ...rest }) => rest);
+      }
+    } catch (e) {}
+  }
+
+  if (userFavs.length === 0) {
+    const data = readDataFile();
+    const allFavs = data.favorites || [];
+    userFavs = allFavs.filter((f: any) => Number(f.user_id) === Number(userId));
+  }
 
   const services = await getServices();
   const serviceMap = new Map((services as any[]).map((s) => [s.id, s]));
@@ -3057,6 +3072,18 @@ export async function toggleFavorite(userId: number, serviceId: number) {
 }
 
 export async function checkIsFavorite(userId: number, serviceId: number): Promise<boolean> {
+  const db = await getMongoDb();
+  if (db) {
+    try {
+      const found = await db.collection('favorites').findOne({
+        $and: [
+          { $or: [{ user_id: Number(userId) }, { user_id: String(userId) }] },
+          { $or: [{ service_id: Number(serviceId) }, { service_id: String(serviceId) }] },
+        ],
+      });
+      if (found) return true;
+    } catch (e) {}
+  }
   const data = readDataFile();
   const allFavs = data.favorites || [];
   return allFavs.some(
