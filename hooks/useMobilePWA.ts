@@ -43,12 +43,15 @@ export function useMobilePWA() {
     const mobile = checkMobile();
     setIsStandalone(standalone);
     setIsMobileScreen(mobile);
-    setIsPwaActive(standalone || mobile);
+    // PWA is strictly active ONLY when running as an installed standalone app, NEVER on standard mobile web browsers
+    setIsPwaActive(standalone);
 
     const handleResize = () => {
       const mob = checkMobile();
+      const stand = checkStandalone();
       setIsMobileScreen(mob);
-      setIsPwaActive(checkStandalone() || mob);
+      setIsStandalone(stand);
+      setIsPwaActive(stand);
     };
 
     window.addEventListener('resize', handleResize);

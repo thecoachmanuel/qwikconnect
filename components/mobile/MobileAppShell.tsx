@@ -6,7 +6,6 @@ import { useMobilePWA } from '@/hooks/useMobilePWA';
 import MobileTopBar from './MobileTopBar';
 import MobileBottomNav from './MobileBottomNav';
 import FloatingLiveChat from './FloatingLiveChat';
-import InstallPromptBanner from './InstallPromptBanner';
 import MobileOnboardingModal from './MobileOnboardingModal';
 import HomeMapView from './HomeMapView';
 import MobileWalletModal from './MobileWalletModal';
@@ -111,10 +110,7 @@ export default function MobileAppShell({ children }: { children?: React.ReactNod
         <FloatingLiveChat unreadCount={0} />
       )}
 
-      {/* 4. In-App Install Prompt Banner */}
-      <InstallPromptBanner />
-
-      {/* 5. Fixed 5-Tab Bottom Navigation Bar */}
+      {/* 4. Fixed 5-Tab Bottom Navigation Bar */}
       <MobileBottomNav currentTab={currentTab} onTabChange={(idx) => setCurrentTab(idx)} />
 
       {/* 6. First-Launch Onboarding Walkthrough */}

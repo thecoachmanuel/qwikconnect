@@ -142,8 +142,9 @@ export default function FrontendLayout({
     }
   }, [settings?.siteFavicon]);
 
-  // If mounted on client, not preferring desktop, and running on mobile/standalone PWA on home
-  if (mounted && !preferDesktop && (isStandalone || (isPwaActive && (pathname === '/' || pathname === '')))) {
+  // Only render Flutter PWA MobileAppShell when strictly installed and running as a standalone PWA on home
+  // All regular web browsers (mobile Safari/Chrome, tablet, desktop) strictly retain the standard website web view
+  if (mounted && !preferDesktop && isStandalone && (pathname === '/' || pathname === '')) {
     return (
       <div className="site-wrapper">
         <MobileAppShell />

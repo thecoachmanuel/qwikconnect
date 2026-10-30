@@ -35,14 +35,20 @@ export default function InstallPromptBanner() {
   return (
     <>
       <div
-        className="install-pwa-banner position-fixed start-0 end-0 p-3 shadow-lg"
+        className="install-pwa-banner position-fixed p-3 shadow-lg"
         style={{
-          bottom: '76px',
+          bottom: '16px',
+          left: '16px',
+          right: '16px',
+          maxWidth: '520px',
+          margin: '0 auto',
           zIndex: 1040,
           backgroundColor: '#1e293b',
           color: '#fff',
-          borderRadius: '16px 16px 0 0',
-          borderTop: '2px solid var(--main-color-one, #1DBF73)',
+          borderRadius: '16px',
+          border: '1px solid rgba(255,255,255,0.1)',
+          borderTop: '2.5px solid var(--main-color-one, #1DBF73)',
+          boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.3)',
         }}
       >
         <div className="d-flex align-items-center justify-content-between gap-3">
