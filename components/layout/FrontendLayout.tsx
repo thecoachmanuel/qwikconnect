@@ -4,6 +4,10 @@ import React, { useState, useEffect } from 'react';
 import Navbar from './Navbar';
 import Footer from './Footer';
 import { useSession } from 'next-auth/react';
+import { usePathname } from 'next/navigation';
+import { useMobilePWA } from '@/hooks/useMobilePWA';
+import MobileAppShell from '@/components/mobile/MobileAppShell';
+import InstallPromptBanner from '@/components/mobile/InstallPromptBanner';
 
 interface FrontendLayoutProps {
   children: React.ReactNode;
@@ -19,6 +23,25 @@ export default function FrontendLayout({
   copyrightText = 'Copyright © 2026 QwikConnect. All Rights Reserved.',
 }: FrontendLayoutProps) {
   const { data: session } = useSession();
+  const pathname = usePathname();
+  const { isPwaActive, isStandalone } = useMobilePWA();
+  const [mounted, setMounted] = useState(false);
+  const [preferDesktop, setPreferDesktop] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('view') === 'desktop') {
+        setPreferDesktop(true);
+        try {
+          sessionStorage.setItem('qixer_prefer_desktop', '1');
+        } catch (e) {}
+      } else if (sessionStorage.getItem('qixer_prefer_desktop') === '1') {
+        setPreferDesktop(true);
+      }
+    }
+  }, []);
 
   // Instant synchronous hydration from localStorage on client to eliminate logo/title flicker
   const [settings, setSettings] = useState<any>(() => {
@@ -119,6 +142,15 @@ export default function FrontendLayout({
     }
   }, [settings?.siteFavicon]);
 
+  // If mounted on client, not preferring desktop, and running on mobile/standalone PWA on home
+  if (mounted && !preferDesktop && (isStandalone || (isPwaActive && (pathname === '/' || pathname === '')))) {
+    return (
+      <div className="site-wrapper">
+        <MobileAppShell />
+      </div>
+    );
+  }
+
   return (
     <div className="site-wrapper">
       {activeMaintenance && (
@@ -152,6 +184,7 @@ export default function FrontendLayout({
         copyrightText={activeCopyright}
         settings={settings}
       />
+      <InstallPromptBanner />
     </div>
   );
 }

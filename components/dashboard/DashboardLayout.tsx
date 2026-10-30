@@ -381,6 +381,8 @@ export default function DashboardLayout({
     { label: 'Dashboard', href: '/buyer/dashboard', icon: 'las la-chart-bar' },
     { label: 'My Profile', href: '/buyer/profile', icon: 'las la-user-alt' },
     { label: 'My Bookings', href: '/buyer/orders', icon: 'las la-list-alt' },
+    { label: 'My Wallet', href: '/buyer/wallet', icon: 'las la-wallet' },
+    { label: 'Custom Jobs', href: '/buyer/jobs', icon: 'las la-briefcase' },
     { label: 'Saved Favorites', href: '/buyer/favorites', icon: 'las la-heart' },
     { label: 'Browse Services', href: '/service-list', icon: 'las la-search' },
     { label: 'Chat Inbox', href: '/buyer/live-chat', icon: 'las la-sms' },
@@ -406,6 +408,7 @@ export default function DashboardLayout({
     { label: 'Support Tickets', href: '/admin/support-tickets', icon: 'las la-ticket-alt' },
     { label: 'Payment Settings', href: '/admin/payment-settings', icon: 'las la-credit-card' },
     { label: 'General Settings', href: '/admin/settings', icon: 'las la-sliders-h' },
+    { label: 'Mobile PWA App', href: '/admin/mobile-pwa', icon: 'las la-mobile' },
   ];
 
   const currentNav = activeRole === 'seller' ? sellerNav : activeRole === 'buyer' ? buyerNav : adminNav;

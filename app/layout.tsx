@@ -6,6 +6,12 @@ import AuthProvider from '@/components/providers/AuthProvider';
 export const metadata: Metadata = {
   title: 'QwikConnect - On Demand Service Marketplace and Service Finder',
   description: 'Find top rated local services and hire professionals with QwikConnect.',
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'QwikConnect',
+  },
 };
 
 export const viewport: Viewport = {
@@ -43,6 +49,19 @@ export default function RootLayout({
         <link rel="stylesheet" href="/assets/frontend/css/style.css" />
         <link rel="stylesheet" href="/assets/frontend/css/dynamic-style.css" />
         <link rel="stylesheet" href="/assets/frontend/theme-two/css/02_style.css" />
+        <link rel="apple-touch-icon" href="/assets/frontend/img/static/mobile_app_icon_192.png" />
+        <meta name="theme-color" content="#1DBF73" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+                window.addEventListener('load', function() {
+                  navigator.serviceWorker.register('/sw.js').catch(function() {});
+                });
+              }
+            `,
+          }}
+        />
       </head>
       <body className="__qixer">
         <AuthProvider>{children}</AuthProvider>

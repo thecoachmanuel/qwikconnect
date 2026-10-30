@@ -1104,6 +1104,15 @@ export interface MongoStoreData {
   contact_messages?: any[];
   extra_services?: any[];
   service_cities?: any[];
+  wallets?: any[];
+  wallet_transactions?: any[];
+  jobs?: any[];
+  job_proposals?: any[];
+  job_messages?: any[];
+  push_subscriptions?: any[];
+  mobile_pwa_settings?: any;
+  mobile_banners?: any[];
+  onboarding_slides?: any[];
 }
 
 function readDataFile(): MongoStoreData {
@@ -4468,3 +4477,576 @@ export async function deleteServiceCity(id: number | string): Promise<boolean> {
   return true;
 }
 
+
+
+// ==========================================
+// BUYER WALLET SYSTEM (MongoDB Native)
+// ==========================================
+
+export async function getWalletBalance(userId: number | string): Promise<number> {
+  const numId = Number(userId);
+  const data = readDataFile();
+  const wallet = (data.wallets || []).find((w: any) => Number(w.user_id) === numId);
+
+  const db = await getMongoDb();
+  if (db) {
+    try {
+      const doc = await db.collection('wallets').findOne({ user_id: numId });
+      if (doc && typeof doc.balance === 'number') return doc.balance;
+    } catch (e) {}
+  }
+  return wallet ? Number(wallet.balance || 0) : 150000;
+}
+
+export async function getWalletHistory(userId: number | string): Promise<any[]> {
+  const numId = Number(userId);
+  const data = readDataFile();
+  const list = (data.wallet_transactions || []).filter((tx: any) => Number(tx.user_id) === numId);
+
+  const db = await getMongoDb();
+  if (db) {
+    try {
+      const docs = await db.collection('wallet_transactions').find({ user_id: numId }).sort({ created_at: -1 }).toArray();
+      if (docs && docs.length > 0) return docs;
+    } catch (e) {}
+  }
+  return list.length > 0 ? list : [
+    { id: 1, user_id: numId, amount: 50000, type: 'deposit', gateway: 'paystack', transaction_id: 'DEP_PAY_192837', status: 'completed', created_at: '2026-10-28T10:30:00.000Z' },
+    { id: 2, user_id: numId, amount: 25000, type: 'deduction', order_id: 101, status: 'completed', created_at: '2026-10-29T14:15:00.000Z' },
+  ];
+}
+
+export async function creditWallet(
+  userId: number | string,
+  amount: number,
+  gateway: string = 'paystack',
+  transactionId: string = ''
+): Promise<{ balance: number; transaction: any }> {
+  const numId = Number(userId);
+  const addAmt = Number(amount);
+  const data = readDataFile();
+  if (!data.wallets) data.wallets = [];
+  if (!data.wallet_transactions) data.wallet_transactions = [];
+
+  let wallet = data.wallets.find((w: any) => Number(w.user_id) === numId);
+  if (!wallet) {
+    wallet = { user_id: numId, balance: 150000, updated_at: new Date().toISOString() };
+    data.wallets.push(wallet);
+  }
+  wallet.balance = Number(wallet.balance || 0) + addAmt;
+  wallet.updated_at = new Date().toISOString();
+
+  const tx = {
+    id: Date.now(),
+    user_id: numId,
+    amount: addAmt,
+    type: 'deposit',
+    gateway,
+    transaction_id: transactionId || ('TXN_' + Date.now()),
+    status: 'completed',
+    created_at: new Date().toISOString(),
+  };
+  data.wallet_transactions.unshift(tx);
+  writeDataFile(data);
+
+  const db = await getMongoDb();
+  if (db) {
+    try {
+      await db.collection('wallets').updateOne(
+        { user_id: numId },
+        { $set: { balance: wallet.balance, updated_at: wallet.updated_at } },
+        { upsert: true }
+      );
+      await db.collection('wallet_transactions').insertOne(tx);
+    } catch (e) {}
+  }
+
+  return { balance: wallet.balance, transaction: tx };
+}
+
+export async function deductWallet(
+  userId: number | string,
+  amount: number,
+  orderId?: number | string
+): Promise<{ success: boolean; balance: number; message?: string }> {
+  const numId = Number(userId);
+  const deductAmt = Number(amount);
+  const currentBalance = await getWalletBalance(numId);
+
+  if (currentBalance < deductAmt) {
+    return { success: false, balance: currentBalance, message: 'Insufficient wallet balance' };
+  }
+
+  const data = readDataFile();
+  if (!data.wallets) data.wallets = [];
+  if (!data.wallet_transactions) data.wallet_transactions = [];
+
+  let wallet = data.wallets.find((w: any) => Number(w.user_id) === numId);
+  if (!wallet) {
+    wallet = { user_id: numId, balance: currentBalance, updated_at: new Date().toISOString() };
+    data.wallets.push(wallet);
+  }
+  wallet.balance = currentBalance - deductAmt;
+  wallet.updated_at = new Date().toISOString();
+
+  const tx = {
+    id: Date.now(),
+    user_id: numId,
+    amount: deductAmt,
+    type: 'deduction',
+    order_id: orderId ? Number(orderId) : undefined,
+    status: 'completed',
+    created_at: new Date().toISOString(),
+  };
+  data.wallet_transactions.unshift(tx);
+  writeDataFile(data);
+
+  const db = await getMongoDb();
+  if (db) {
+    try {
+      await db.collection('wallets').updateOne(
+        { user_id: numId },
+        { $set: { balance: wallet.balance, updated_at: wallet.updated_at } },
+        { upsert: true }
+      );
+      await db.collection('wallet_transactions').insertOne(tx);
+    } catch (e) {}
+  }
+
+  return { success: true, balance: wallet.balance };
+}
+
+// ==========================================
+// CUSTOM JOB POSTING & BIDDING (Flutter Parity)
+// ==========================================
+
+export async function getBuyerJobs(buyerId: number | string): Promise<any[]> {
+  const numId = Number(buyerId);
+  const data = readDataFile();
+  const jobs = (data.jobs || []).filter((j: any) => Number(j.buyer_id) === numId);
+
+  const db = await getMongoDb();
+  if (db) {
+    try {
+      const docs = await db.collection('jobs').find({ buyer_id: numId }).sort({ created_at: -1 }).toArray();
+      if (docs && docs.length > 0) return docs;
+    } catch (e) {}
+  }
+  return jobs.length > 0 ? jobs : [
+    {
+      id: 1,
+      buyer_id: numId,
+      title: 'Full Plumbing Overhaul & Borehole Maintenance',
+      category: 'plumbing-solutions',
+      budget: 45000,
+      deadline: '2026-11-15',
+      city: 'Lagos',
+      status: 'open',
+      description: 'Need certified plumber for borehole pressure pump inspection in Lekki Phase 1.',
+      created_at: '2026-10-25T08:00:00.000Z',
+    },
+  ];
+}
+
+export async function getAllOpenJobs(): Promise<any[]> {
+  const data = readDataFile();
+  const jobs = (data.jobs || []).filter((j: any) => j.status === 'open' || !j.status);
+
+  const db = await getMongoDb();
+  if (db) {
+    try {
+      const docs = await db.collection('jobs').find({ status: 'open' }).sort({ created_at: -1 }).toArray();
+      if (docs && docs.length > 0) return docs;
+    } catch (e) {}
+  }
+  return jobs;
+}
+
+export async function getJobDetails(jobId: number | string): Promise<any> {
+  const numId = Number(jobId);
+  const data = readDataFile();
+  const job = (data.jobs || []).find((j: any) => Number(j.id) === numId);
+
+  const db = await getMongoDb();
+  if (db) {
+    try {
+      const doc = await db.collection('jobs').findOne({ id: numId });
+      if (doc) return doc;
+    } catch (e) {}
+  }
+  return job || null;
+}
+
+export async function createJob(jobData: any): Promise<any> {
+  const data = readDataFile();
+  if (!data.jobs) data.jobs = [];
+
+  const newJob = {
+    id: Date.now(),
+    buyer_id: Number(jobData.buyer_id || 4),
+    title: jobData.title,
+    category: jobData.category || 'other',
+    description: jobData.description,
+    budget: Number(jobData.budget || 0),
+    deadline: jobData.deadline || new Date(Date.now() + 86400000 * 7).toISOString().split('T')[0],
+    city: jobData.city || 'Lagos',
+    address: jobData.address || '',
+    status: 'open',
+    attachment: jobData.attachment || null,
+    created_at: new Date().toISOString(),
+  };
+
+  data.jobs.unshift(newJob);
+  writeDataFile(data);
+
+  const db = await getMongoDb();
+  if (db) {
+    try {
+      await db.collection('jobs').insertOne(newJob);
+    } catch (e) {}
+  }
+
+  return newJob;
+}
+
+export async function getJobProposals(jobId: number | string): Promise<any[]> {
+  const numId = Number(jobId);
+  const data = readDataFile();
+  const proposals = (data.job_proposals || []).filter((p: any) => Number(p.job_id) === numId);
+
+  const db = await getMongoDb();
+  if (db) {
+    try {
+      const docs = await db.collection('job_proposals').find({ job_id: numId }).toArray();
+      if (docs && docs.length > 0) return docs;
+    } catch (e) {}
+  }
+  return proposals;
+}
+
+export async function createJobProposal(proposalData: any): Promise<any> {
+  const data = readDataFile();
+  if (!data.job_proposals) data.job_proposals = [];
+
+  const newProposal = {
+    id: Date.now(),
+    job_id: Number(proposalData.job_id),
+    seller_id: Number(proposalData.seller_id || 2),
+    seller_name: proposalData.seller_name || 'Professional Artisan',
+    seller_rating: Number(proposalData.seller_rating || 5.0),
+    proposed_amount: Number(proposalData.proposed_amount || 0),
+    message: proposalData.message || '',
+    status: 'pending',
+    created_at: new Date().toISOString(),
+  };
+
+  data.job_proposals.unshift(newProposal);
+  writeDataFile(data);
+
+  const db = await getMongoDb();
+  if (db) {
+    try {
+      await db.collection('job_proposals').insertOne(newProposal);
+    } catch (e) {}
+  }
+
+  return newProposal;
+}
+
+export async function acceptJobProposal(jobId: number | string, proposalId: number | string): Promise<any> {
+  const numJobId = Number(jobId);
+  const numProposalId = Number(proposalId);
+  const data = readDataFile();
+
+  if (data.jobs) {
+    const job = data.jobs.find((j: any) => Number(j.id) === numJobId);
+    if (job) job.status = 'in_progress';
+  }
+
+  if (data.job_proposals) {
+    data.job_proposals.forEach((p: any) => {
+      if (Number(p.job_id) === numJobId) {
+        p.status = Number(p.id) === numProposalId ? 'accepted' : 'rejected';
+      }
+    });
+  }
+
+  writeDataFile(data);
+
+  const db = await getMongoDb();
+  if (db) {
+    try {
+      await db.collection('jobs').updateOne({ id: numJobId }, { $set: { status: 'in_progress' } });
+      await db.collection('job_proposals').updateMany(
+        { job_id: numJobId },
+        { $set: { status: 'rejected' } }
+      );
+      await db.collection('job_proposals').updateOne(
+        { id: numProposalId },
+        { $set: { status: 'accepted' } }
+      );
+    } catch (e) {}
+  }
+
+  return { success: true };
+}
+
+// ==========================================
+// WEB PUSH SUBSCRIPTIONS (MongoDB Native, NO Firebase)
+// ==========================================
+
+export async function savePushSubscription(userId: number | string | null, subscription: any): Promise<boolean> {
+  const data = readDataFile();
+  if (!data.push_subscriptions) data.push_subscriptions = [];
+
+  const subObj = {
+    id: Date.now(),
+    user_id: userId ? Number(userId) : null,
+    endpoint: subscription.endpoint,
+    keys: subscription.keys || {},
+    created_at: new Date().toISOString(),
+  };
+
+  const existingIdx = data.push_subscriptions.findIndex((s: any) => s.endpoint === subscription.endpoint);
+  if (existingIdx !== -1) {
+    data.push_subscriptions[existingIdx] = subObj;
+  } else {
+    data.push_subscriptions.push(subObj);
+  }
+  writeDataFile(data);
+
+  const db = await getMongoDb();
+  if (db) {
+    try {
+      await db.collection('push_subscriptions').updateOne(
+        { endpoint: subscription.endpoint },
+        { $set: subObj },
+        { upsert: true }
+      );
+    } catch (e) {}
+  }
+
+  return true;
+}
+
+export async function getPushSubscriptions(userId?: number | string): Promise<any[]> {
+  const numId = userId !== undefined ? Number(userId) : undefined;
+  const data = readDataFile();
+  const list = numId !== undefined ? (data.push_subscriptions || []).filter((s: any) => Number(s.user_id) === numId) : (data.push_subscriptions || []);
+
+  const db = await getMongoDb();
+  if (db) {
+    try {
+      const query = numId !== undefined ? { user_id: numId } : {};
+      const docs = await db.collection('push_subscriptions').find(query).toArray();
+      if (docs && docs.length > 0) return docs;
+    } catch (e) {}
+  }
+  return list;
+}
+
+export async function deletePushSubscription(endpoint: string): Promise<boolean> {
+  const data = readDataFile();
+  if (data.push_subscriptions) {
+    const idx = data.push_subscriptions.findIndex((s: any) => s.endpoint === endpoint);
+    if (idx !== -1) {
+      data.push_subscriptions.splice(idx, 1);
+      writeDataFile(data);
+    }
+  }
+
+  const db = await getMongoDb();
+  if (db) {
+    try {
+      await db.collection('push_subscriptions').deleteOne({ endpoint });
+    } catch (e) {}
+  }
+  return true;
+}
+
+// ==========================================
+// MOBILE PWA SETTINGS & MODULE PERMISSIONS
+// ==========================================
+
+export async function getMobilePwaSettings(): Promise<any> {
+  const data = readDataFile();
+  const db = await getMongoDb();
+  if (db) {
+    try {
+      const doc = await db.collection('mobile_pwa_settings').findOne({});
+      if (doc) return doc;
+    } catch (e) {}
+  }
+  return (
+    data.mobile_pwa_settings || {
+      pwa_enabled: true,
+      app_name: 'QwikConnect - On-Demand Services',
+      short_name: 'QwikConnect',
+      theme_color: '#1DBF73',
+      background_color: '#FFFFFF',
+      module_permissions: {
+        Wallet: true,
+        JobPost: true,
+        LiveChat: true,
+        MapView: true,
+        Onboarding: true,
+      },
+    }
+  );
+}
+
+export async function updateMobilePwaSettings(settings: any): Promise<any> {
+  const data = readDataFile();
+  data.mobile_pwa_settings = { ...(data.mobile_pwa_settings || {}), ...settings, updated_at: new Date().toISOString() };
+  writeDataFile(data);
+
+  const db = await getMongoDb();
+  if (db) {
+    try {
+      await db.collection('mobile_pwa_settings').updateOne({}, { $set: data.mobile_pwa_settings }, { upsert: true });
+    } catch (e) {}
+  }
+
+  return data.mobile_pwa_settings;
+}
+
+export async function getMobileBanners(): Promise<any[]> {
+  const data = readDataFile();
+  const db = await getMongoDb();
+  if (db) {
+    try {
+      const docs = await db.collection('mobile_banners').find({}).sort({ id: 1 }).toArray();
+      if (docs && docs.length > 0) return docs;
+    } catch (e) {}
+  }
+  return (
+    data.mobile_banners || [
+      {
+        id: 1,
+        title: 'Special 20% Off Home Cleaning',
+        subtitle: 'Valid across Lagos & Abuja this week',
+        image: '/assets/uploads/media-uploader/banner11638279446.png',
+        link: 'cleaning',
+        active: true,
+      },
+      {
+        id: 2,
+        title: 'Certified Inverter & Solar Repairs',
+        subtitle: '24/7 Verified Nigerian Electricians',
+        image: '/assets/uploads/media-uploader/service_electrical_nigerian.jpg',
+        link: 'electrical-repair',
+        active: true,
+      },
+      {
+        id: 3,
+        title: 'Emergency Plumbing Response',
+        subtitle: 'Quick pipe leakage & pump servicing',
+        image: '/assets/uploads/media-uploader/service_plumbing_nigerian.jpg',
+        link: 'plumbing-solutions',
+        active: true,
+      },
+    ]
+  );
+}
+
+export async function createMobileBanner(bannerData: any): Promise<any> {
+  const data = readDataFile();
+  if (!data.mobile_banners) data.mobile_banners = [];
+
+  const newBanner = {
+    id: Date.now(),
+    title: bannerData.title,
+    subtitle: bannerData.subtitle || '',
+    image: bannerData.image || '/assets/uploads/media-uploader/banner11638279446.png',
+    link: bannerData.link || '',
+    active: bannerData.active !== undefined ? bannerData.active : true,
+    created_at: new Date().toISOString(),
+  };
+
+  data.mobile_banners.push(newBanner);
+  writeDataFile(data);
+
+  const db = await getMongoDb();
+  if (db) {
+    try {
+      await db.collection('mobile_banners').insertOne(newBanner);
+    } catch (e) {}
+  }
+
+  return newBanner;
+}
+
+export async function deleteMobileBanner(id: number | string): Promise<boolean> {
+  const numId = Number(id);
+  const data = readDataFile();
+  if (!data.mobile_banners) data.mobile_banners = [];
+
+  const idx = data.mobile_banners.findIndex((b: any) => Number(b.id) === numId);
+  if (idx !== -1) {
+    data.mobile_banners.splice(idx, 1);
+    writeDataFile(data);
+  }
+
+  const db = await getMongoDb();
+  if (db) {
+    try {
+      await db.collection('mobile_banners').deleteOne({ id: numId });
+    } catch (e) {}
+  }
+
+  return true;
+}
+
+export async function getOnboardingSlides(): Promise<any[]> {
+  const data = readDataFile();
+  const db = await getMongoDb();
+  if (db) {
+    try {
+      const docs = await db.collection('onboarding_slides').find({}).sort({ id: 1 }).toArray();
+      if (docs && docs.length > 0) return docs;
+    } catch (e) {}
+  }
+  return (
+    data.onboarding_slides || [
+      {
+        id: 1,
+        title: 'Verified Artisans at Your Doorstep',
+        subtitle: 'Find trusted local professionals in Lagos, Abuja & nationwide',
+        description: 'Every artisan is background-checked and identity-verified for quality work.',
+        icon: 'las la-user-check',
+      },
+      {
+        id: 2,
+        title: 'Transparent Pricing in Naira (₦)',
+        subtitle: 'Zero hidden fees with escrow buyer protection',
+        description: 'Pay safely using your Naira wallet, Paystack debit card, or bank transfer.',
+        icon: 'las la-shield-alt',
+      },
+      {
+        id: 3,
+        title: 'Real-time Tracking & Live Chat',
+        subtitle: 'Direct messaging and milestone updates',
+        description: 'Track orders step-by-step and chat with artisans right from your phone.',
+        icon: 'las la-clock',
+      },
+    ]
+  );
+}
+
+export async function updateOnboardingSlides(slides: any[]): Promise<any[]> {
+  const data = readDataFile();
+  data.onboarding_slides = slides;
+  writeDataFile(data);
+
+  const db = await getMongoDb();
+  if (db) {
+    try {
+      await db.collection('onboarding_slides').deleteMany({});
+      if (slides.length > 0) {
+        await db.collection('onboarding_slides').insertMany(slides);
+      }
+    } catch (e) {}
+  }
+
+  return slides;
+}
