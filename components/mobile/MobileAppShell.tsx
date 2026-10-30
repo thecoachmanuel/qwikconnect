@@ -51,7 +51,7 @@ export default function MobileAppShell({ children }: { children?: React.ReactNod
           setUnreadCount(unread);
         }
       })
-      .catch(() => {});
+      .catch(() => { });
   }, [permissions.Onboarding]);
 
   const handleGoToSearch = (query?: string, category?: string) => {
@@ -65,16 +65,18 @@ export default function MobileAppShell({ children }: { children?: React.ReactNod
       style={{
         maxWidth: '100vw',
         overflowX: 'clip',
-        paddingBottom: '64px',
+        paddingBottom: '75px',
+        backgroundColor: '#FFFFFF',
       }}
     >
-      {/* 1. Native Mobile Top Bar */}
+      {/* 1. Native Mobile Top Bar (Flutter HomeAppBar Parity) */}
       <MobileTopBar
         selectedCity={selectedCity}
         onSelectCity={(city) => setSelectedCity(city)}
         onOpenNotifications={() => setCurrentTab(1)}
         onOpenMenu={() => setCurrentTab(4)}
-        userAvatar={(session?.user as any)?.image || '/assets/frontend/img/static/user_profile.png'}
+        userName={(session?.user as any)?.name || 'Emma Watson'}
+        userAvatar={(session?.user as any)?.image || '/assets/flutter/images/avatar.png'}
         unreadCount={unreadCount}
       />
 

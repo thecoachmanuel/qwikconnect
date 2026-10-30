@@ -3,125 +3,247 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 
-interface SavedService {
-  id: number;
-  title: string;
-  slug: string;
-  price: number;
-  rating: number;
-  image: string;
-  seller_name?: string;
-  city?: string;
+interface MobileSavedScreenProps {
+  onGoToSearch: () => void;
 }
 
-export default function MobileSavedScreen({ onGoToSearch }: { onGoToSearch: () => void }) {
-  const [favorites, setFavorites] = useState<SavedService[]>([]);
+export default function MobileSavedScreen({ onGoToSearch }: MobileSavedScreenProps) {
+  const [savedServices, setSavedServices] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const loadFavorites = () => {
+    setLoading(true);
     fetch('/api/buyer/favorites')
       .then((res) => res.json())
       .then((data) => {
         if (data && Array.isArray(data.favorites)) {
-          setFavorites(data.favorites);
+          setSavedServices(data.favorites);
+        } else {
+          // Fallback defaults if none saved yet
+          setSavedServices([]);
         }
       })
       .catch(() => {})
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    loadFavorites();
   }, []);
 
-  const handleRemoveFavorite = async (id: number, e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setFavorites((prev) => prev.filter((f) => f.id !== id));
-
+  const handleRemove = async (serviceId: number) => {
+    setSavedServices((prev) => prev.filter((s) => Number(s.service_id || s.id) !== Number(serviceId)));
     try {
       await fetch('/api/buyer/favorites', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ service_id: id, action: 'remove' }),
+        body: JSON.stringify({ service_id: serviceId }),
       });
     } catch (e) {}
   };
 
   return (
-    <div className="mobile-saved-screen p-3 pb-5" style={{ backgroundColor: '#f8fafc', minHeight: 'calc(100vh - 120px)' }}>
-      <div className="d-flex align-items-center justify-content-between mb-3 px-1">
-        <strong style={{ fontSize: '16px', color: '#1e293b' }}>Saved Services</strong>
-        <span className="text-muted small">{favorites.length} saved</span>
-      </div>
+    <div className="mobile-saved-screen px-4 pt-3 pb-5 bg-white" style={{ backgroundColor: '#FFFFFF' }}>
+      {/* 1. Header (Flutter CommonHelper().titleCommon('Saved services')) */}
+      <h4 className="fw-bold mb-3" style={{ color: '#475467', fontSize: '19px' }}>
+        Saved services
+      </h4>
 
+      {/* 2. Saved Items List */}
       {loading ? (
-        <div className="text-center py-5 text-muted small">Loading saved services...</div>
-      ) : favorites.length === 0 ? (
-        <div className="text-center py-5 bg-white rounded-4 border p-4 shadow-sm my-3">
-          <i className="las la-heart fs-1 text-muted d-block mb-3"></i>
-          <h6 className="fw-bold mb-1">No Saved Services Yet</h6>
-          <p className="text-muted small mb-3">Bookmark services you like to easily access and book them anytime.</p>
+        <div className="text-center py-5">
+          <div className="spinner-border text-success" role="status"></div>
+        </div>
+      ) : savedServices.length === 0 ? (
+        <div className="text-center py-5">
+          <div
+            className="d-inline-flex align-items-center justify-content-center mb-3"
+            style={{
+              width: '64px',
+              height: '64px',
+              borderRadius: '50%',
+              backgroundColor: '#F8FAFC',
+            }}
+          >
+            <img
+              src="/assets/flutter/svg/saved-icon.svg"
+              alt="Empty"
+              style={{ width: '32px', height: '32px', opacity: 0.4 }}
+            />
+          </div>
+          <p className="fw-semibold mb-3" style={{ color: '#667085', fontSize: '15px' }}>
+            No service saved
+          </p>
           <button
             type="button"
             onClick={onGoToSearch}
-            className="btn btn-sm btn-success fw-bold px-4 py-2"
-            style={{ backgroundColor: 'var(--main-color-one, #1DBF73)', borderRadius: '20px' }}
+            className="btn text-white px-4 py-2 fw-semibold"
+            style={{ backgroundColor: 'var(--main-color-one, #1DBF73)', borderRadius: '6px', fontSize: '14px' }}
           >
-            Explore Services
+            Browse Services
           </button>
         </div>
       ) : (
-        <div className="row g-3">
-          {favorites.map((service) => (
-            <div key={service.id} className="col-6">
-              <Link
-                href={`/service-list/${service.slug}`}
-                className="bg-white rounded-3 border overflow-hidden d-flex flex-column text-decoration-none shadow-sm h-100 position-relative"
+        <div className="d-flex flex-column gap-3">
+          {savedServices.map((service) => {
+            const id = Number(service.service_id || service.id);
+            const title = service.title || service.service?.title || 'Service Listing';
+            const price = Number(service.price || service.service?.price || 25000);
+            const rating = Number(service.rating || 5.0).toFixed(1);
+            const sellerName = service.seller?.name || service.seller_name || 'Verified Artisan';
+            const image = service.image || service.service?.image || '/assets/uploads/media-uploader/banner11638279446.png';
+            const slug = service.slug || service.service?.slug || '';
+
+            return (
+              <div
+                key={id}
+                className="bg-white"
+                style={{
+                  width: '100%',
+                  border: '1px solid #EAECF0',
+                  borderRadius: '9px',
+                  padding: '15px 13px 10px 13px',
+                  backgroundColor: '#FFFFFF',
+                }}
               >
-                <div style={{ height: '110px', position: 'relative', backgroundColor: '#f1f5f9' }}>
-                  <img
-                    src={service.image || '/assets/uploads/media-uploader/banner11638279446.png'}
-                    alt={service.title}
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                  />
+                {/* Upper: ServiceCardContents (Thumbnail 75x78, Rating badge, Title & By seller) */}
+                <Link
+                  href={`/service-list/${slug}`}
+                  className="d-flex text-decoration-none"
+                  style={{ gap: '13px', alignItems: 'flex-start' }}
+                >
+                  <div className="position-relative flex-shrink-0" style={{ width: '75px', height: '78px' }}>
+                    <img
+                      src={image}
+                      alt={title}
+                      style={{
+                        width: '75px',
+                        height: '78px',
+                        objectFit: 'cover',
+                        borderRadius: '8px',
+                      }}
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = '/assets/uploads/media-uploader/banner11638279446.png';
+                      }}
+                    />
 
-                  {/* 1-Tap Remove Favorite Button */}
-                  <button
-                    type="button"
-                    onClick={(e) => handleRemoveFavorite(service.id, e)}
-                    aria-label="Remove from Saved"
-                    className="position-absolute top-0 end-0 m-2 btn btn-sm bg-white rounded-circle p-1 shadow-sm d-flex align-items-center justify-content-center"
-                    style={{ width: '28px', height: '28px', border: 'none', color: '#ef4444' }}
-                  >
-                    <i className="las la-heart fs-5"></i>
-                  </button>
-                </div>
-
-                <div className="p-2.5 d-flex flex-column justify-content-between flex-grow-1">
-                  <div>
-                    <span className="text-muted d-block text-truncate" style={{ fontSize: '10.5px' }}>
-                      {service.city || 'Lagos'}
-                    </span>
-                    <strong
-                      className="d-block text-dark text-truncate mt-0.5"
-                      style={{ fontSize: '13px', lineHeight: 1.3 }}
+                    {/* Overlapping Yellow Rating Badge */}
+                    <div
+                      className="position-absolute d-flex align-items-center gap-1"
+                      style={{
+                        bottom: '-10px',
+                        left: '8px',
+                        backgroundColor: '#FFC300',
+                        border: '2px solid #FFFFFF',
+                        borderRadius: '4px',
+                        padding: '2px 5px',
+                        color: '#475467',
+                        fontSize: '11.5px',
+                        fontWeight: 600,
+                        lineHeight: 1,
+                      }}
                     >
-                      {service.title}
+                      <i className="las la-star" style={{ fontSize: '11px', color: '#475467' }}></i>
+                      <span>{rating}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex-grow-1 min-w-0">
+                    <strong
+                      style={{
+                        color: '#475467',
+                        fontSize: '15px',
+                        fontWeight: 600,
+                        lineHeight: 1.35,
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden',
+                      }}
+                    >
+                      {title}
+                    </strong>
+
+                    <div className="d-flex align-items-center gap-1 mt-2">
+                      <span style={{ color: 'rgba(71, 84, 103, 0.6)', fontSize: '13px', fontWeight: 400 }}>
+                        by:
+                      </span>
+                      <span
+                        className="text-truncate"
+                        style={{ color: '#475467', fontSize: '13px', fontWeight: 600, maxWidth: '180px' }}
+                      >
+                        {sellerName}
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+
+                {/* Divider */}
+                <div style={{ height: '1px', backgroundColor: '#F0F0F0', margin: '20px 0 10px 0' }} />
+
+                {/* Bottom: Starts from Price & Book Now / Remove buttons */}
+                <div className="d-flex align-items-center justify-content-between">
+                  <div className="d-flex align-items-baseline gap-1.5">
+                    <span style={{ color: 'rgba(71, 84, 103, 0.6)', fontSize: '12.5px', fontWeight: 400 }}>
+                      Starts from:
+                    </span>
+                    <strong style={{ color: '#475467', fontSize: '18px', fontWeight: 700 }}>
+                      ₦{price.toLocaleString()}
                     </strong>
                   </div>
 
-                  <div className="d-flex align-items-baseline justify-content-between mt-2 pt-2 border-top">
-                    <span className="fw-bold text-success" style={{ fontSize: '14px', color: 'var(--main-color-one, #1DBF73)' }}>
-                      ₦{Number(service.price || 0).toLocaleString()}
-                    </span>
-                    <span className="badge bg-light text-muted border small" style={{ fontSize: '9.5px' }}>
-                      Book &rarr;
-                    </span>
+                  <div className="d-flex align-items-center gap-2">
+                    {/* Remove button (filled orange heart/saved icon in Flutter) */}
+                    <button
+                      type="button"
+                      onClick={() => handleRemove(id)}
+                      className="btn p-0 d-flex align-items-center justify-content-center"
+                      title="Remove from saved"
+                      style={{
+                        width: '32px',
+                        height: '32px',
+                        border: '1px solid #EAECF0',
+                        borderRadius: '6px',
+                        backgroundColor: '#FFFFFF',
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: '16px',
+                          height: '16px',
+                          backgroundColor: '#FF6B2C',
+                          maskImage: 'url(/assets/flutter/svg/saved-fill-icon.svg)',
+                          WebkitMaskImage: 'url(/assets/flutter/svg/saved-fill-icon.svg)',
+                          maskSize: 'contain',
+                          WebkitMaskSize: 'contain',
+                          maskRepeat: 'no-repeat',
+                          WebkitMaskRepeat: 'no-repeat',
+                          maskPosition: 'center',
+                          WebkitMaskPosition: 'center',
+                        }}
+                      />
+                    </button>
+
+                    {/* Book Now Button */}
+                    <Link
+                      href={`/service-list/book/${slug}`}
+                      className="btn btn-sm fw-medium text-white px-3 py-1.5"
+                      style={{
+                        backgroundColor: 'var(--main-color-one, #1DBF73)',
+                        borderRadius: '6px',
+                        fontSize: '13px',
+                        fontWeight: 500,
+                      }}
+                    >
+                      Book Now
+                    </Link>
                   </div>
                 </div>
-              </Link>
-            </div>
-          ))}
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
   );
 }
-

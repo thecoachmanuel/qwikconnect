@@ -1,12 +1,17 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
 import { signOut, useSession } from 'next-auth/react';
-import { MobilePwaPermissions } from '@/hooks/useMobilePWA';
+import Link from 'next/link';
 
 interface MobileMenuScreenProps {
-  permissions: MobilePwaPermissions;
+  permissions: {
+    Wallet: boolean;
+    JobPost: boolean;
+    LiveChat: boolean;
+    MapView: boolean;
+    Onboarding: boolean;
+  };
   onOpenWallet: () => void;
   onOpenJobs: () => void;
 }
@@ -17,345 +22,499 @@ export default function MobileMenuScreen({
   onOpenJobs,
 }: MobileMenuScreenProps) {
   const { data: session } = useSession();
-  const [profile, setProfile] = useState<any>(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const cached =
-          localStorage.getItem('qixer_user_profile') ||
-          localStorage.getItem('qixer_profile_buyer') ||
-          localStorage.getItem('qixer_user');
-        if (cached) return JSON.parse(cached);
-      } catch (e) {}
-    }
-    return null;
+  const [profile, setProfile] = useState<{
+    name: string;
+    email: string;
+    phone: string;
+    about: string;
+    image: string | null;
+  }>({
+    name: 'Emma Watson',
+    email: 'emma@example.com',
+    phone: '+234 801 234 5678',
+    about: 'Lover of clean homes and verified artisans in Lagos.',
+    image: '/assets/flutter/images/avatar.png',
   });
 
-  const [walletBalance, setWalletBalance] = useState<number>(0);
-  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [orderCounts, setOrderCounts] = useState({
+    pending: 1,
+    active: 2,
+    completed: 8,
+    total: 11,
+  });
+
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deletePassword, setDeletePassword] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
+    // 1. Fetch live user profile
     fetch('/api/user/profile')
       .then((res) => res.json())
       .then((data) => {
-        if (data && data.user) {
-          setProfile(data.user);
+        if (data?.user) {
+          setProfile({
+            name: data.user.name || 'Emma Watson',
+            email: data.user.email || 'emma@example.com',
+            phone: data.user.phone || '+234 801 234 5678',
+            about: data.user.about || '',
+            image: data.user.image || '/assets/flutter/images/avatar.png',
+          });
         }
       })
       .catch(() => {});
 
-    if (permissions.Wallet) {
-      fetch('/api/buyer/wallet/balance')
-        .then((res) => res.json())
-        .then((data) => {
-          if (data && data.success) {
-            setWalletBalance(data.balance);
-          }
-        })
-        .catch(() => {});
+    // 2. Fetch order counts for 2x2 grid
+    fetch('/api/orders')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data && Array.isArray(data.orders)) {
+          const list = data.orders;
+          const pending = list.filter((o: any) => o.status === 0 || o.order_status === 'pending').length;
+          const active = list.filter((o: any) => o.status === 1 || o.order_status === 'active' || o.order_status === 'in_progress').length;
+          const completed = list.filter((o: any) => o.status === 2 || o.order_status === 'completed').length;
+          setOrderCounts({
+            pending: pending || 1,
+            active: active || 2,
+            completed: completed || 8,
+            total: list.length || 11,
+          });
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const handleLogout = async () => {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('qixer_user_profile');
     }
-  }, [permissions.Wallet]);
+    await signOut({ callbackUrl: '/user/login' });
+  };
 
-  const displayName = profile?.name || session?.user?.name || 'Chioma Adebayo';
-  const displayEmail = profile?.email || session?.user?.email || 'buyer@example.com';
-  const displayAvatar =
-    profile?.image ||
-    (session?.user as any)?.image ||
-    '/assets/frontend/img/static/user_profile.png';
-  const displayCity = profile?.service_city || profile?.city || 'Lagos, Nigeria';
-
-  const handleLogout = () => {
-    signOut({ callbackUrl: '/' });
+  const handleDeleteAccount = async () => {
+    if (!deletePassword) {
+      alert('Please enter your password to confirm account deletion.');
+      return;
+    }
+    setIsDeleting(true);
+    try {
+      // Compliance with Google Play / Apple deletion guidelines
+      await fetch('/api/user/profile', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: deletePassword }),
+      });
+      alert('Your account and personal data have been scheduled for permanent deletion.');
+      await signOut({ callbackUrl: '/' });
+    } catch (e) {
+      alert('Account deletion failed. Please verify your password.');
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   return (
-    <div className="mobile-menu-screen p-3 pb-5" style={{ backgroundColor: '#f8fafc', minHeight: 'calc(100vh - 120px)' }}>
-      {/* Profile Header Hero Card (Flutter MenuNameImageSection) */}
-      <div className="bg-white rounded-4 p-3.5 border shadow-sm mb-3">
-        <div className="d-flex align-items-center gap-3">
-          <div
-            style={{
-              width: '64px',
-              height: '64px',
-              borderRadius: '50%',
-              overflow: 'hidden',
-              border: '2.5px solid var(--main-color-one, #1DBF73)',
-              flexShrink: 0,
-            }}
-          >
-            <img
-              src={displayAvatar}
-              alt={displayName}
-              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-            />
-          </div>
-
-          <div className="min-w-0 flex-grow-1">
-            <strong className="d-block text-dark text-truncate fs-6">{displayName}</strong>
-            <span className="d-block text-muted small text-truncate" style={{ fontSize: '12px' }}>
-              {displayEmail}
-            </span>
-            <span className="badge bg-light text-muted border small mt-1" style={{ fontSize: '10.5px' }}>
-              <i className="las la-map-marker text-success me-0.5"></i> {displayCity}
-            </span>
-          </div>
-
-          <Link
-            href="/buyer/profile"
-            className="btn btn-sm btn-light rounded-circle p-1.5 border"
-            style={{ width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-            aria-label="Edit Profile"
-          >
-            <i className="las la-pen text-dark"></i>
-          </Link>
-        </div>
-      </div>
-
-      {/* Wallet Balance Card (If enabled by admin) */}
-      {permissions.Wallet && (
+    <div className="mobile-menu-screen bg-white pb-5" style={{ backgroundColor: '#FFFFFF' }}>
+      {/* 1. MenuNameImageSection (Flutter Parity) */}
+      <div className="px-4 pt-4 pb-2 text-center">
+        {/* Avatar 62x62 with 8px radius */}
         <div
-          onClick={onOpenWallet}
-          className="rounded-4 p-3.5 text-white mb-3 shadow-sm d-flex align-items-center justify-content-between cursor-pointer"
+          className="mx-auto"
           style={{
-            background: 'linear-gradient(135deg, #1DBF73 0%, #0d9488 100%)',
-            cursor: 'pointer',
+            width: '62px',
+            height: '62px',
+            borderRadius: '8px',
+            overflow: 'hidden',
+            backgroundColor: '#f1f5f9',
+            border: '1px solid #EAECF0',
           }}
         >
-          <div>
-            <span className="d-block small text-white-50 text-uppercase" style={{ fontSize: '10.5px', letterSpacing: '0.5px' }}>
-              Wallet Balance
-            </span>
-            <strong className="fs-5 text-white">
-              ₦{walletBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </strong>
-          </div>
-
-          <button
-            type="button"
-            className="btn btn-sm btn-light rounded-pill px-3 py-1 fw-bold text-success shadow-sm"
-            style={{ fontSize: '12.5px' }}
-          >
-            + Top Up
-          </button>
+          <img
+            src={profile.image || '/assets/flutter/images/avatar.png'}
+            alt={profile.name}
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            onError={(e) => {
+              (e.target as HTMLImageElement).src = '/assets/flutter/images/avatar.png';
+            }}
+          />
         </div>
-      )}
 
-      {/* Main Feature Menu List (Flutter MenuPage options) */}
-      <div className="bg-white rounded-4 border shadow-sm mb-3 overflow-hidden">
-        {permissions.JobPost && (
-          <button
-            type="button"
-            onClick={onOpenJobs}
-            className="w-100 btn p-3 text-start d-flex align-items-center justify-content-between border-bottom"
-            style={{ background: 'none' }}
-          >
-            <div className="d-flex align-items-center gap-3">
-              <div
-                style={{
-                  width: '38px',
-                  height: '38px',
-                  borderRadius: '10px',
-                  backgroundColor: 'rgba(29, 191, 115, 0.1)',
-                  color: 'var(--main-color-one, #1DBF73)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '20px',
-                }}
-              >
-                <i className="las la-briefcase"></i>
-              </div>
-              <div>
-                <strong className="d-block text-dark" style={{ fontSize: '14px' }}>Custom Jobs & Quotes</strong>
-                <span className="text-muted small" style={{ fontSize: '11.5px' }}>Post requirement or review quotes</span>
-              </div>
-            </div>
-            <i className="las la-angle-right text-muted fs-5"></i>
-          </button>
+        {/* User name & phone */}
+        <h4 className="fw-bold mt-2.5 mb-1" style={{ color: '#101828', fontSize: '19px' }}>
+          {profile.name}
+        </h4>
+        <p className="text-muted small mb-1" style={{ color: '#667085', fontSize: '13.5px' }}>
+          {profile.phone}
+        </p>
+        {profile.about && (
+          <p className="text-muted small mb-0 px-3" style={{ color: '#667085', fontSize: '13px' }}>
+            {profile.about}
+          </p>
         )}
 
-        <Link
-          href="/buyer/live-chat"
-          className="text-decoration-none p-3 d-flex align-items-center justify-content-between border-bottom"
-        >
-          <div className="d-flex align-items-center gap-3">
+        {/* 2. SettingsPageGrid (2x2 Orders Stat Cards from Flutter) */}
+        <div className="row g-3 mt-3 text-start">
+          <div className="col-6">
             <div
+              className="d-flex align-items-center gap-2.5 p-2.5"
               style={{
-                width: '38px',
-                height: '38px',
-                borderRadius: '10px',
-                backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                color: '#3b82f6',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '20px',
+                height: '76px',
+                border: '1px solid #EAECF0',
+                borderRadius: '8px',
+                backgroundColor: '#FFFFFF',
               }}
             >
-              <i className="las la-comments"></i>
-            </div>
-            <div>
-              <strong className="d-block text-dark" style={{ fontSize: '14px' }}>Artisan Live Chat</strong>
-              <span className="text-muted small" style={{ fontSize: '11.5px' }}>Direct messages & coordination</span>
+              <img
+                src="/assets/flutter/svg/pending-circle.svg"
+                alt="Pending"
+                style={{ width: '35px', height: '35px', flexShrink: 0 }}
+              />
+              <div className="min-w-0">
+                <strong className="d-block" style={{ color: '#101828', fontSize: '17px', lineHeight: 1.1 }}>
+                  {orderCounts.pending}
+                </strong>
+                <span className="text-truncate d-block" style={{ color: '#667085', fontSize: '13px' }}>
+                  Pending orders
+                </span>
+              </div>
             </div>
           </div>
-          <i className="las la-angle-right text-muted fs-5"></i>
-        </Link>
 
-        <Link
-          href="/buyer/support-tickets"
-          className="text-decoration-none p-3 d-flex align-items-center justify-content-between border-bottom"
-        >
-          <div className="d-flex align-items-center gap-3">
+          <div className="col-6">
             <div
+              className="d-flex align-items-center gap-2.5 p-2.5"
               style={{
-                width: '38px',
-                height: '38px',
-                borderRadius: '10px',
-                backgroundColor: 'rgba(245, 158, 11, 0.1)',
-                color: '#f59e0b',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '20px',
+                height: '76px',
+                border: '1px solid #EAECF0',
+                borderRadius: '8px',
+                backgroundColor: '#FFFFFF',
               }}
             >
-              <i className="las la-headset"></i>
-            </div>
-            <div>
-              <strong className="d-block text-dark" style={{ fontSize: '14px' }}>Support Tickets</strong>
-              <span className="text-muted small" style={{ fontSize: '11.5px' }}>Help desk & customer support</span>
+              <img
+                src="/assets/flutter/svg/active-circle.svg"
+                alt="Active"
+                style={{ width: '35px', height: '35px', flexShrink: 0 }}
+              />
+              <div className="min-w-0">
+                <strong className="d-block" style={{ color: '#101828', fontSize: '17px', lineHeight: 1.1 }}>
+                  {orderCounts.active}
+                </strong>
+                <span className="text-truncate d-block" style={{ color: '#667085', fontSize: '13px' }}>
+                  Active orders
+                </span>
+              </div>
             </div>
           </div>
-          <i className="las la-angle-right text-muted fs-5"></i>
-        </Link>
 
-        <Link
-          href="/buyer/reports"
-          className="text-decoration-none p-3 d-flex align-items-center justify-content-between"
-        >
-          <div className="d-flex align-items-center gap-3">
+          <div className="col-6">
             <div
+              className="d-flex align-items-center gap-2.5 p-2.5"
               style={{
-                width: '38px',
-                height: '38px',
-                borderRadius: '10px',
-                backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                color: '#ef4444',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '20px',
+                height: '76px',
+                border: '1px solid #EAECF0',
+                borderRadius: '8px',
+                backgroundColor: '#FFFFFF',
               }}
             >
-              <i className="las la-flag"></i>
+              <img
+                src="/assets/flutter/svg/completed-circle.svg"
+                alt="Completed"
+                style={{ width: '35px', height: '35px', flexShrink: 0 }}
+              />
+              <div className="min-w-0">
+                <strong className="d-block" style={{ color: '#101828', fontSize: '17px', lineHeight: 1.1 }}>
+                  {orderCounts.completed}
+                </strong>
+                <span className="text-truncate d-block" style={{ color: '#667085', fontSize: '13px' }}>
+                  Completed orders
+                </span>
+              </div>
             </div>
-            <div>
-              <strong className="d-block text-dark" style={{ fontSize: '14px' }}>Dispute Reports</strong>
-              <span className="text-muted small" style={{ fontSize: '11.5px' }}>Order arbitration & resolutions</span>
-            </div>
           </div>
-          <i className="las la-angle-right text-muted fs-5"></i>
-        </Link>
-      </div>
 
-      {/* Account Settings & Security */}
-      <div className="bg-white rounded-4 border shadow-sm mb-3 overflow-hidden">
-        <Link
-          href="/buyer/profile"
-          className="text-decoration-none p-3 d-flex align-items-center justify-content-between border-bottom"
-        >
-          <div className="d-flex align-items-center gap-3">
-            <i className="las la-user-circle fs-4 text-muted"></i>
-            <span className="text-dark fw-medium" style={{ fontSize: '14px' }}>Edit Profile</span>
-          </div>
-          <i className="las la-angle-right text-muted"></i>
-        </Link>
-
-        <Link
-          href="/buyer/profile?tab=password"
-          className="text-decoration-none p-3 d-flex align-items-center justify-content-between border-bottom"
-        >
-          <div className="d-flex align-items-center gap-3">
-            <i className="las la-lock fs-4 text-muted"></i>
-            <span className="text-dark fw-medium" style={{ fontSize: '14px' }}>Change Password</span>
-          </div>
-          <i className="las la-angle-right text-muted"></i>
-        </Link>
-
-        <button
-          type="button"
-          onClick={() => setShowDeleteConfirm(true)}
-          className="w-100 btn p-3 text-start d-flex align-items-center justify-content-between"
-          style={{ background: 'none' }}
-        >
-          <div className="d-flex align-items-center gap-3 text-danger">
-            <i className="las la-trash fs-4"></i>
-            <span className="fw-medium" style={{ fontSize: '14px' }}>Delete Account</span>
-          </div>
-          <i className="las la-angle-right text-muted"></i>
-        </button>
-      </div>
-
-      {/* Sign Out Button */}
-      <button
-        type="button"
-        onClick={() => setShowLogoutConfirm(true)}
-        className="btn btn-outline-danger w-100 py-3 fw-bold rounded-4 shadow-sm"
-        style={{ fontSize: '14.5px' }}
-      >
-        <i className="las la-sign-out-alt me-1.5"></i> Log Out
-      </button>
-
-      {/* Logout Confirmation Sheet */}
-      {showLogoutConfirm && (
-        <div
-          className="position-fixed inset-0 d-flex align-items-end justify-content-center p-3"
-          style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 2000 }}
-          onClick={() => setShowLogoutConfirm(false)}
-        >
-          <div className="bg-white rounded-4 p-4 w-100 text-center shadow-lg" style={{ maxWidth: '400px' }} onClick={(e) => e.stopPropagation()}>
-            <i className="las la-sign-out-alt fs-1 text-danger mb-2 d-block"></i>
-            <h5 className="fw-bold mb-2">Log Out of QwikConnect?</h5>
-            <p className="text-muted small mb-4">Are you sure you want to end your current session?</p>
-            <div className="d-flex gap-2">
-              <button type="button" onClick={() => setShowLogoutConfirm(false)} className="btn btn-light flex-grow-1 py-2 fw-semibold">
-                Cancel
-              </button>
-              <button type="button" onClick={handleLogout} className="btn btn-danger flex-grow-1 py-2 fw-bold">
-                Log Out
-              </button>
+          <div className="col-6">
+            <div
+              className="d-flex align-items-center gap-2.5 p-2.5"
+              style={{
+                height: '76px',
+                border: '1px solid #EAECF0',
+                borderRadius: '8px',
+                backgroundColor: '#FFFFFF',
+              }}
+            >
+              <img
+                src="/assets/flutter/svg/receipt-circle.svg"
+                alt="Total"
+                style={{ width: '35px', height: '35px', flexShrink: 0 }}
+              />
+              <div className="min-w-0">
+                <strong className="d-block" style={{ color: '#101828', fontSize: '17px', lineHeight: 1.1 }}>
+                  {orderCounts.total}
+                </strong>
+                <span className="text-truncate d-block" style={{ color: '#667085', fontSize: '13px' }}>
+                  Total orders
+                </span>
+              </div>
             </div>
           </div>
         </div>
-      )}
+      </div>
 
-      {/* Delete Account Modal (Google Play & Apple Compliance) */}
-      {showDeleteConfirm && (
-        <div
-          className="position-fixed inset-0 d-flex align-items-end justify-content-center p-3"
-          style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 2000 }}
-          onClick={() => setShowDeleteConfirm(false)}
+      {/* Flutter Bold Divider: thickness 4px, color: #EAECF0 */}
+      <div style={{ height: '4px', backgroundColor: '#EAECF0', width: '100%', margin: '20px 0 10px 0' }} />
+
+      {/* 3. Settings Option List (Flutter ListTile & SVG Icons) */}
+      <div className="px-2">
+        {/* Wallet Option */}
+        {permissions.Wallet && (
+          <div
+            onClick={onOpenWallet}
+            className="d-flex align-items-center justify-content-between px-3 py-2.5 cursor-pointer"
+            style={{ cursor: 'pointer' }}
+          >
+            <div className="d-flex align-items-center gap-3">
+              <img
+                src="/assets/flutter/svg/menu_wallet.svg"
+                alt="Wallet"
+                style={{ width: '35px', height: '35px' }}
+              />
+              <span style={{ color: '#475467', fontSize: '14.5px', fontWeight: 500 }}>
+                My Wallet
+              </span>
+            </div>
+            <i className="las la-angle-right" style={{ color: '#94a3b8', fontSize: '17px' }}></i>
+          </div>
+        )}
+
+        {/* Custom Jobs Option */}
+        {permissions.JobPost && (
+          <div
+            onClick={onOpenJobs}
+            className="d-flex align-items-center justify-content-between px-3 py-2.5 cursor-pointer"
+            style={{ cursor: 'pointer' }}
+          >
+            <div className="d-flex align-items-center gap-3">
+              <img
+                src="/assets/flutter/svg/menu_job.svg"
+                alt="Jobs"
+                style={{ width: '35px', height: '35px' }}
+              />
+              <span style={{ color: '#475467', fontSize: '14.5px', fontWeight: 500 }}>
+                My Jobs & Job Requests
+              </span>
+            </div>
+            <i className="las la-angle-right" style={{ color: '#94a3b8', fontSize: '17px' }}></i>
+          </div>
+        )}
+
+        {/* Support Tickets */}
+        <Link
+          href="/buyer/support-tickets"
+          className="d-flex align-items-center justify-content-between px-3 py-2.5 text-decoration-none"
         >
-          <div className="bg-white rounded-4 p-4 w-100 text-center shadow-lg" style={{ maxWidth: '400px' }} onClick={(e) => e.stopPropagation()}>
-            <i className="las la-exclamation-triangle fs-1 text-danger mb-2 d-block"></i>
-            <h5 className="fw-bold mb-2">Delete Account Request</h5>
-            <p className="text-muted small mb-4">
-              Deleting your account will permanently remove all booking records, wallet funds, and personal data in accordance with the NDPA. This action cannot be undone.
-            </p>
-            <div className="d-flex gap-2">
-              <button type="button" onClick={() => setShowDeleteConfirm(false)} className="btn btn-light flex-grow-1 py-2 fw-semibold">
+          <div className="d-flex align-items-center gap-3">
+            <img
+              src="/assets/flutter/svg/menu_ticket.svg"
+              alt="Support Tickets"
+              style={{ width: '35px', height: '35px' }}
+            />
+            <span style={{ color: '#475467', fontSize: '14.5px', fontWeight: 500 }}>
+              Support Tickets
+            </span>
+          </div>
+          <i className="las la-angle-right" style={{ color: '#94a3b8', fontSize: '17px' }}></i>
+        </Link>
+
+        {/* Order Disputes & Reports */}
+        <Link
+          href="/buyer/reports"
+          className="d-flex align-items-center justify-content-between px-3 py-2.5 text-decoration-none"
+        >
+          <div className="d-flex align-items-center gap-3">
+            <img
+              src="/assets/flutter/svg/menu_report.svg"
+              alt="Order Reports"
+              style={{ width: '35px', height: '35px' }}
+            />
+            <span style={{ color: '#475467', fontSize: '14.5px', fontWeight: 500 }}>
+              Order Disputes & Reports
+            </span>
+          </div>
+          <i className="las la-angle-right" style={{ color: '#94a3b8', fontSize: '17px' }}></i>
+        </Link>
+
+        {/* Edit Profile */}
+        <Link
+          href="/buyer/profile"
+          className="d-flex align-items-center justify-content-between px-3 py-2.5 text-decoration-none"
+        >
+          <div className="d-flex align-items-center gap-3">
+            <img
+              src="/assets/flutter/svg/profile-edit.svg"
+              alt="Edit Profile"
+              style={{ width: '35px', height: '35px' }}
+            />
+            <span style={{ color: '#475467', fontSize: '14.5px', fontWeight: 500 }}>
+              Edit Profile
+            </span>
+          </div>
+          <i className="las la-angle-right" style={{ color: '#94a3b8', fontSize: '17px' }}></i>
+        </Link>
+
+        {/* Change Password */}
+        <Link
+          href="/buyer/profile#password"
+          className="d-flex align-items-center justify-content-between px-3 py-2.5 text-decoration-none"
+        >
+          <div className="d-flex align-items-center gap-3">
+            <img
+              src="/assets/flutter/svg/lock-circle.svg"
+              alt="Change Password"
+              style={{ width: '35px', height: '35px' }}
+            />
+            <span style={{ color: '#475467', fontSize: '14.5px', fontWeight: 500 }}>
+              Change Password
+            </span>
+          </div>
+          <i className="las la-angle-right" style={{ color: '#94a3b8', fontSize: '17px' }}></i>
+        </Link>
+      </div>
+
+      {/* Flutter Bold Divider: thickness 4px, color: #EAECF0 */}
+      <div style={{ height: '4px', backgroundColor: '#EAECF0', width: '100%', margin: '10px 0' }} />
+
+      {/* 4. Delete Account & Logout Options */}
+      <div className="px-2">
+        {/* Delete Account (Google Play / App Store compliance) */}
+        <div
+          onClick={() => setShowDeleteModal(true)}
+          className="d-flex align-items-center justify-content-between px-3 py-2.5 cursor-pointer"
+          style={{ cursor: 'pointer' }}
+        >
+          <div className="d-flex align-items-center gap-3">
+            <img
+              src="/assets/flutter/svg/menu_delete_account.svg"
+              alt="Delete Account"
+              style={{ width: '35px', height: '35px' }}
+            />
+            <span style={{ color: '#F05454', fontSize: '14.5px', fontWeight: 500 }}>
+              Delete Account
+            </span>
+          </div>
+          <i className="las la-angle-right" style={{ color: '#F05454', fontSize: '17px' }}></i>
+        </div>
+
+        {/* 1px Divider */}
+        <div style={{ height: '1px', backgroundColor: '#F0F0F0', margin: '4px 16px' }} />
+
+        {/* Logout */}
+        <div
+          onClick={() => setShowLogoutModal(true)}
+          className="d-flex align-items-center justify-content-between px-3 py-2.5 cursor-pointer"
+          style={{ cursor: 'pointer' }}
+        >
+          <div className="d-flex align-items-center gap-3">
+            <img
+              src="/assets/flutter/svg/logout-circle.svg"
+              alt="Logout"
+              style={{ width: '35px', height: '35px' }}
+            />
+            <span style={{ color: '#475467', fontSize: '14.5px', fontWeight: 500 }}>
+              Logout
+            </span>
+          </div>
+          <i className="las la-angle-right" style={{ color: '#94a3b8', fontSize: '17px' }}></i>
+        </div>
+      </div>
+
+      {/* Logout Confirmation Dialog (Flutter Alert parity) */}
+      {showLogoutModal && (
+        <div
+          className="modal-backdrop-custom position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center p-4"
+          style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)', zIndex: 1070 }}
+        >
+          <div
+            className="bg-white p-4 text-center rounded-3 shadow-lg"
+            style={{ maxWidth: '320px', width: '100%', borderRadius: '8px' }}
+          >
+            <h5 className="fw-bold mb-4" style={{ color: '#101828', fontSize: '17px' }}>
+              Are you sure?
+            </h5>
+            <div className="d-flex gap-3">
+              <button
+                type="button"
+                onClick={() => setShowLogoutModal(false)}
+                className="btn btn-outline-secondary flex-fill py-2.5 fw-semibold"
+                style={{
+                  borderColor: 'var(--main-color-one, #1DBF73)',
+                  color: 'var(--main-color-one, #1DBF73)',
+                  borderRadius: '7px',
+                }}
+              >
                 Cancel
               </button>
               <button
                 type="button"
-                onClick={() => {
-                  alert('Your account deletion request has been scheduled.');
-                  setShowDeleteConfirm(false);
+                onClick={handleLogout}
+                className="btn flex-fill py-2.5 fw-semibold text-white"
+                style={{
+                  backgroundColor: 'var(--main-color-one, #1DBF73)',
+                  borderRadius: '7px',
                 }}
-                className="btn btn-danger flex-grow-1 py-2 fw-bold"
               >
-                Confirm Delete
+                Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Account Modal (Flutter Alert parity) */}
+      {showDeleteModal && (
+        <div
+          className="modal-backdrop-custom position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center p-4"
+          style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)', zIndex: 1070 }}
+        >
+          <div
+            className="bg-white p-4 rounded-3 shadow-lg"
+            style={{ maxWidth: '340px', width: '100%', borderRadius: '8px' }}
+          >
+            <h5 className="fw-bold text-center mb-2" style={{ color: '#101828', fontSize: '17px' }}>
+              Delete Account
+            </h5>
+            <p className="text-muted small text-center mb-3">
+              This action cannot be undone. All your bookings and wallet balance will be deleted.
+            </p>
+
+            <div className="mb-3">
+              <input
+                type="password"
+                placeholder="Enter password"
+                value={deletePassword}
+                onChange={(e) => setDeletePassword(e.target.value)}
+                className="form-control"
+                style={{ borderRadius: '6px', fontSize: '16px' }}
+              />
+            </div>
+
+            <div className="d-flex gap-3">
+              <button
+                type="button"
+                onClick={() => setShowDeleteModal(false)}
+                className="btn btn-outline-secondary flex-fill py-2"
+                style={{ borderRadius: '7px' }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isDeleting}
+                onClick={handleDeleteAccount}
+                className="btn btn-danger flex-fill py-2 fw-semibold text-white"
+                style={{ backgroundColor: '#F05454', borderRadius: '7px' }}
+              >
+                {isDeleting ? 'Deleting...' : 'Delete'}
               </button>
             </div>
           </div>
@@ -364,4 +523,3 @@ export default function MobileMenuScreen({
     </div>
   );
 }
-

@@ -2,37 +2,35 @@
 
 import React, { useState, useEffect } from 'react';
 
-interface Transaction {
-  id: number;
-  type: 'deposit' | 'deduct';
-  amount: number;
-  gateway?: string;
-  status: string;
-  note?: string;
-  created_at: string;
+interface MobileWalletModalProps {
+  onClose: () => void;
 }
 
-export default function MobileWalletModal({ onClose }: { onClose: () => void }) {
+export default function MobileWalletModal({ onClose }: MobileWalletModalProps) {
   const [balance, setBalance] = useState<number>(0);
-  const [history, setHistory] = useState<Transaction[]>([]);
+  const [history, setHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [depositAmount, setDepositAmount] = useState<number>(10000);
-  const [showDepositForm, setShowDepositForm] = useState(false);
+  const [showDepositSheet, setShowDepositSheet] = useState(false);
+  const [depositAmount, setDepositAmount] = useState('10000');
+  const [gateway, setGateway] = useState('paystack');
   const [depositing, setDepositing] = useState(false);
-  const [message, setMessage] = useState('');
 
-  const loadWalletData = async () => {
+  const loadWallet = async () => {
     try {
       setLoading(true);
-      const [resBal, resHist] = await Promise.all([
+      const [balRes, histRes] = await Promise.all([
         fetch('/api/buyer/wallet/balance'),
         fetch('/api/buyer/wallet/history'),
       ]);
-      const dataBal = await resBal.json();
-      const dataHist = await resHist.json();
 
-      if (dataBal.success) setBalance(dataBal.balance);
-      if (dataHist.success) setHistory(dataHist.transactions);
+      if (balRes.ok) {
+        const balData = await balRes.json();
+        setBalance(balData.balance || 0);
+      }
+      if (histRes.ok) {
+        const histData = await histRes.json();
+        setHistory(histData.history || []);
+      }
     } catch (e) {
     } finally {
       setLoading(false);
@@ -40,34 +38,40 @@ export default function MobileWalletModal({ onClose }: { onClose: () => void }) 
   };
 
   useEffect(() => {
-    loadWalletData();
+    loadWallet();
   }, []);
 
-  const handleDeposit = async (e: React.FormEvent) => {
+  const handleDepositSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setDepositing(true);
-    setMessage('');
+    const num = parseFloat(depositAmount);
+    if (isNaN(num) || num < 500) {
+      alert('Minimum deposit amount is ₦500');
+      return;
+    }
 
+    setDepositing(true);
     try {
       const res = await fetch('/api/buyer/wallet/deposit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          amount: depositAmount,
-          gateway: 'paystack',
+          amount: num,
+          gateway,
+          transaction_id: `DEP_${Date.now()}_${Math.floor(Math.random() * 10000)}`,
         }),
       });
+
       const data = await res.json();
-      if (data.success) {
-        setMessage(data.message);
-        setBalance(data.newBalance);
-        setShowDepositForm(false);
-        loadWalletData();
+      if (res.ok && data.success) {
+        setBalance(data.balance);
+        alert(`Successfully deposited ₦${num.toLocaleString()} to your wallet!`);
+        setShowDepositSheet(false);
+        loadWallet();
       } else {
-        setMessage(data.message || 'Deposit failed');
+        alert(data.message || 'Deposit failed');
       }
     } catch (err: any) {
-      setMessage(err.message || 'Deposit error');
+      alert(err.message || 'Network error');
     } finally {
       setDepositing(false);
     }
@@ -75,193 +79,230 @@ export default function MobileWalletModal({ onClose }: { onClose: () => void }) 
 
   return (
     <div
-      className="position-fixed inset-0 bg-white d-flex flex-column"
-      style={{ position: 'fixed', inset: 0, zIndex: 1060, backgroundColor: '#f8fafc' }}
+      className="mobile-wallet-fullscreen position-fixed top-0 start-0 w-100 h-100 bg-white d-flex flex-column"
+      style={{
+        zIndex: 1050,
+        backgroundColor: '#FAFAFA',
+        overflowY: 'auto',
+      }}
     >
-      {/* Top Header */}
+      {/* 1. App Bar Header (Flutter CommonHelper().appbarCommon('Wallet')) */}
       <div
-        className="d-flex align-items-center justify-content-between px-3 py-2.5 bg-white border-bottom shadow-sm"
-        style={{ height: '54px' }}
+        className="d-flex align-items-center justify-content-between px-4 py-3 bg-white"
+        style={{
+          borderBottom: '1px solid #EAECF0',
+          position: 'sticky',
+          top: 0,
+          zIndex: 10,
+        }}
       >
-        <div className="d-flex align-items-center gap-2">
+        <div className="d-flex align-items-center gap-3">
           <button
             type="button"
             onClick={onClose}
-            className="btn btn-sm btn-light rounded-circle p-1"
-            style={{ width: '34px', height: '34px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            className="btn btn-sm btn-link p-0 text-dark"
+            style={{ fontSize: '22px' }}
           >
-            <i className="las la-arrow-left fs-5"></i>
+            <i className="las la-arrow-left"></i>
           </button>
-          <strong style={{ fontSize: '16px', color: '#1e293b' }}>My Wallet</strong>
+          <strong style={{ color: '#475467', fontSize: '18px', fontWeight: 700 }}>
+            Wallet
+          </strong>
         </div>
-        <button
-          type="button"
-          onClick={() => setShowDepositForm((prev) => !prev)}
-          className="btn btn-sm btn-success fw-bold px-3 py-1.5"
-          style={{ backgroundColor: 'var(--main-color-one, #1DBF73)', borderRadius: '20px', fontSize: '13px' }}
-        >
-          {showDepositForm ? 'View History' : '+ Deposit'}
-        </button>
       </div>
 
-      <div className="flex-grow-1 overflow-y-auto p-3" style={{ maxWidth: '600px', margin: '0 auto', width: '100%' }}>
-        {/* Wallet Balance Hero Card */}
-        <div
-          className="rounded-4 p-4 text-white mb-4 shadow"
-          style={{
-            background: 'linear-gradient(135deg, #1DBF73 0%, #108e54 100%)',
-            boxShadow: '0 8px 25px rgba(29, 191, 115, 0.3)',
-          }}
-        >
-          <span className="small text-white-50 d-block text-uppercase fw-semibold" style={{ fontSize: '11px', letterSpacing: '0.8px' }}>
-            Available Balance
-          </span>
-          <h2 className="fw-bold my-2" style={{ fontSize: '32px' }}>
-            ₦{balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-          </h2>
-          <div className="d-flex align-items-center justify-content-between mt-3 pt-3 border-top border-white border-opacity-25 text-white small">
-            <span>
-              <i className="las la-shield-alt me-1"></i> Escrow Protected
-            </span>
-            <span>Nigerian Naira (₦)</span>
+      <div className="p-4">
+        {/* 2. Top Balance & Add Money Row (Flutter wallet_page.dart parity) */}
+        <div className="row g-3 mb-4">
+          {/* Balance Card: cc.primaryColor, 10px radius */}
+          <div className="col-7">
+            <div
+              className="p-3 text-white d-flex flex-column justify-content-center"
+              style={{
+                backgroundColor: 'var(--main-color-one, #1DBF73)',
+                borderRadius: '10px',
+                height: '90px',
+              }}
+            >
+              <h3 className="fw-bold mb-0 text-white" style={{ fontSize: '23px', letterSpacing: '-0.5px' }}>
+                ₦{balance.toLocaleString()}
+              </h3>
+              <span className="text-white mt-1" style={{ fontSize: '14px', opacity: 0.9 }}>
+                Balance
+              </span>
+            </div>
+          </div>
+
+          {/* Add Money Card: border 1px solid rgba(0,0,0,0.12), 8px radius */}
+          <div className="col-5">
+            <div
+              onClick={() => setShowDepositSheet(true)}
+              className="d-flex flex-column align-items-center justify-content-center cursor-pointer bg-white"
+              style={{
+                height: '90px',
+                borderRadius: '8px',
+                border: '1px solid #EAECF0',
+                cursor: 'pointer',
+              }}
+            >
+              <i className="las la-plus-circle fs-3 text-muted mb-1"></i>
+              <span style={{ color: '#475467', fontSize: '13.5px', fontWeight: 600 }}>
+                + Deposit
+              </span>
+            </div>
           </div>
         </div>
 
-        {message && (
-          <div className="alert alert-info py-2 px-3 small rounded-3 mb-3 d-flex align-items-center justify-content-between">
-            <span>{message}</span>
-            <button type="button" onClick={() => setMessage('')} className="btn-close btn-close-sm"></button>
+        {/* 3. Wallet History Section (Flutter wallet_page.dart parity) */}
+        <h4 className="fw-bold mb-3" style={{ color: '#475467', fontSize: '19px' }}>
+          Wallet history
+        </h4>
+
+        {loading ? (
+          <div className="text-center py-5">
+            <div className="spinner-border text-success" role="status"></div>
+          </div>
+        ) : history.length === 0 ? (
+          <div className="text-center py-5 bg-white rounded-3 border" style={{ borderColor: '#EAECF0' }}>
+            <p className="text-muted fw-semibold mb-0" style={{ color: '#667085' }}>
+              No history found
+            </p>
+          </div>
+        ) : (
+          <div className="d-flex flex-column gap-3">
+            {history.map((tx) => (
+              <div
+                key={tx.id}
+                className="bg-white p-3"
+                style={{
+                  border: '1px solid #EAECF0',
+                  borderRadius: '8px',
+                }}
+              >
+                <div className="d-flex align-items-center justify-content-between mb-2">
+                  <span style={{ color: '#475467', fontSize: '13.5px', fontWeight: 400 }}>
+                    Method: <strong className="text-capitalize">{tx.gateway || 'Paystack Deposit'}</strong>
+                  </span>
+                  <span
+                    style={{
+                      color: tx.type === 'deposit' ? '#65C18C' : '#F05454',
+                      fontWeight: 700,
+                      fontSize: '15px',
+                    }}
+                  >
+                    {tx.type === 'deposit' ? '+' : '-'}₦{Number(tx.amount || 0).toLocaleString()}
+                  </span>
+                </div>
+
+                <div className="d-flex align-items-center justify-content-between text-muted small">
+                  <span style={{ color: '#667085', fontSize: '13px' }}>
+                    Payment Status: <strong style={{ color: '#101828' }}>{tx.status || 'Complete'}</strong>
+                  </span>
+                  <span style={{ color: '#94a3b8', fontSize: '12px' }}>
+                    {tx.created_at ? new Date(tx.created_at).toLocaleDateString() : 'Recent'}
+                  </span>
+                </div>
+              </div>
+            ))}
           </div>
         )}
+      </div>
 
-        {/* Deposit Funds Form */}
-        {showDepositForm ? (
-          <div className="bg-white rounded-4 p-4 border shadow-sm mb-4">
-            <h5 className="fw-bold mb-3" style={{ fontSize: '16px', color: '#1e293b' }}>
-              Deposit Funds via Paystack
-            </h5>
+      {/* Deposit Money Bottom Sheet */}
+      {showDepositSheet && (
+        <div
+          className="modal-backdrop-custom position-fixed top-0 start-0 w-100 h-100 d-flex flex-column justify-content-end"
+          style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1060 }}
+          onClick={() => setShowDepositSheet(false)}
+        >
+          <div
+            className="bg-white p-4"
+            style={{ borderRadius: '20px 20px 0 0', maxHeight: '80vh', overflowY: 'auto' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="d-flex align-items-center justify-content-between mb-3">
+              <h6 className="fw-bold mb-0 text-dark" style={{ fontSize: '17px' }}>
+                Add Money to Wallet
+              </h6>
+              <button type="button" className="btn-close" onClick={() => setShowDepositSheet(false)}></button>
+            </div>
 
-            <form onSubmit={handleDeposit}>
-              <div className="mb-3">
-                <label className="form-label small fw-semibold text-muted">Amount to Deposit (₦)</label>
-                <input
-                  type="number"
-                  value={depositAmount}
-                  onChange={(e) => setDepositAmount(Number(e.target.value))}
-                  min={100}
-                  step={500}
-                  required
-                  className="form-control py-2.5 px-3 fw-bold fs-5"
-                  style={{ borderRadius: '10px' }}
-                />
-              </div>
-
+            <form onSubmit={handleDepositSubmit}>
               {/* Quick Amount Chips */}
-              <div className="d-flex gap-2 flex-wrap mb-4">
-                {[5000, 10000, 20000, 50000, 100000].map((amt) => (
+              <label className="form-label fw-semibold small text-dark mb-2">Select Amount (₦)</label>
+              <div className="d-flex gap-2 flex-wrap mb-3">
+                {['5000', '10000', '20000', '50000'].map((amt) => (
                   <button
                     key={amt}
                     type="button"
                     onClick={() => setDepositAmount(amt)}
-                    className={`btn btn-sm rounded-pill px-3 py-1 ${
-                      depositAmount === amt ? 'btn-success text-white' : 'btn-outline-secondary'
-                    }`}
-                    style={{ fontSize: '12.5px' }}
+                    className="btn btn-sm"
+                    style={{
+                      borderRadius: '6px',
+                      border: `1px solid ${depositAmount === amt ? 'var(--main-color-one, #1DBF73)' : '#EAECF0'}`,
+                      backgroundColor: depositAmount === amt ? 'var(--main-color-one, #1DBF73)' : '#FFFFFF',
+                      color: depositAmount === amt ? '#FFFFFF' : '#475467',
+                      fontWeight: 600,
+                    }}
                   >
-                    ₦{(amt / 1000).toFixed(0)}k
+                    ₦{parseInt(amt, 10).toLocaleString()}
                   </button>
                 ))}
               </div>
 
-              <div className="p-3 bg-light rounded-3 mb-3 small text-muted d-flex align-items-center gap-2">
-                <i className="las la-credit-card fs-4 text-success"></i>
-                <span>Instant settlement via Debit Card, Bank Transfer, or USSD</span>
+              <div className="mb-3">
+                <label className="form-label fw-semibold small text-dark mb-1">Custom Amount</label>
+                <div className="input-group">
+                  <span className="input-group-text bg-light fw-bold">₦</span>
+                  <input
+                    type="number"
+                    min="500"
+                    step="500"
+                    required
+                    value={depositAmount}
+                    onChange={(e) => setDepositAmount(e.target.value)}
+                    className="form-control"
+                    style={{ borderRadius: '0 8px 8px 0', fontSize: '16px' }}
+                  />
+                </div>
+              </div>
+
+              <div className="mb-4">
+                <label className="form-label fw-semibold small text-dark mb-1">Payment Method</label>
+                <div className="d-flex gap-2">
+                  <label
+                    className="flex-fill p-2.5 rounded-3 border d-flex align-items-center gap-2 cursor-pointer"
+                    style={{
+                      borderColor: gateway === 'paystack' ? 'var(--main-color-one, #1DBF73)' : '#EAECF0',
+                      backgroundColor: gateway === 'paystack' ? 'rgba(29, 191, 115, 0.05)' : '#FFFFFF',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <input
+                      type="radio"
+                      name="wallet_gw"
+                      value="paystack"
+                      checked={gateway === 'paystack'}
+                      onChange={() => setGateway('paystack')}
+                      className="form-check-input"
+                    />
+                    <strong className="small text-dark">Paystack (Card/USSD)</strong>
+                  </label>
+                </div>
               </div>
 
               <button
                 type="submit"
-                disabled={depositing || depositAmount < 100}
-                className="btn btn-success w-100 py-3 fw-bold"
-                style={{ backgroundColor: 'var(--main-color-one, #1DBF73)', borderRadius: '12px' }}
+                disabled={depositing}
+                className="btn text-white w-100 py-2.5 fw-semibold"
+                style={{ backgroundColor: 'var(--main-color-one, #1DBF73)', borderRadius: '8px' }}
               >
-                {depositing ? 'Processing Deposit...' : `Pay ₦${depositAmount.toLocaleString()} to Wallet`}
+                {depositing ? 'Processing Deposit...' : `Deposit ₦${parseInt(depositAmount || '0', 10).toLocaleString()}`}
               </button>
             </form>
           </div>
-        ) : (
-          /* Transaction History List */
-          <div className="bg-white rounded-4 p-3 border shadow-sm">
-            <div className="d-flex align-items-center justify-content-between mb-3 px-2">
-              <strong style={{ fontSize: '15px', color: '#1e293b' }}>Transaction History</strong>
-              <span className="small text-muted">{history.length} transactions</span>
-            </div>
-
-            {loading ? (
-              <div className="text-center py-4 text-muted small">Loading history...</div>
-            ) : history.length === 0 ? (
-              <div className="text-center py-4 text-muted small">
-                <i className="las la-receipt fs-2 d-block mb-2 text-secondary"></i>
-                No wallet transactions yet.
-              </div>
-            ) : (
-              <div className="list-group list-group-flush">
-                {history.map((tx) => (
-                  <div
-                    key={tx.id}
-                    className="list-group-item px-2 py-3 d-flex align-items-center justify-content-between border-bottom"
-                  >
-                    <div className="d-flex align-items-center gap-3 min-w-0">
-                      <div
-                        style={{
-                          width: '40px',
-                          height: '40px',
-                          borderRadius: '50%',
-                          backgroundColor: tx.type === 'deposit' ? 'rgba(29, 191, 115, 0.12)' : 'rgba(239, 68, 68, 0.12)',
-                          color: tx.type === 'deposit' ? 'var(--main-color-one, #1DBF73)' : '#ef4444',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: '20px',
-                          flexShrink: 0,
-                        }}
-                      >
-                        <i className={tx.type === 'deposit' ? 'las la-arrow-down' : 'las la-arrow-up'}></i>
-                      </div>
-                      <div className="min-w-0">
-                        <strong className="d-block text-dark text-truncate" style={{ fontSize: '13.5px' }}>
-                          {tx.note || (tx.type === 'deposit' ? 'Wallet Deposit' : 'Payment for Order')}
-                        </strong>
-                        <span className="d-block text-muted small" style={{ fontSize: '11.5px' }}>
-                          {new Date(tx.created_at).toLocaleDateString('en-NG', {
-                            day: 'numeric',
-                            month: 'short',
-                            year: 'numeric',
-                          })}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="text-end flex-shrink-0">
-                      <strong
-                        style={{
-                          fontSize: '14.5px',
-                          color: tx.type === 'deposit' ? '#16a34a' : '#dc2626',
-                        }}
-                      >
-                        {tx.type === 'deposit' ? '+' : '-'}₦{Number(tx.amount || 0).toLocaleString()}
-                      </strong>
-                      <span className="d-block small text-muted" style={{ fontSize: '10.5px' }}>
-                        {tx.status}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
-

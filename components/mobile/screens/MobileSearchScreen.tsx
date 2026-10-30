@@ -13,14 +13,16 @@ export default function MobileSearchScreen({
   initialCategory = '',
 }: MobileSearchScreenProps) {
   const [query, setQuery] = useState(initialQuery);
-  const [category, setCategory] = useState(initialCategory);
-  const [rating, setRating] = useState<number>(0);
-  const [sortBy, setSortBy] = useState<string>('latest');
-  const [city, setCity] = useState<string>('');
+  const [selectedCategory, setSelectedCategory] = useState(initialCategory);
+  const [selectedCity, setSelectedCity] = useState('');
+  const [selectedRating, setSelectedRating] = useState<number | null>(null);
+  const [sortBy, setSortBy] = useState('latest');
+  const [showFilterModal, setShowFilterModal] = useState(false);
+
   const [categories, setCategories] = useState<any[]>([]);
   const [services, setServices] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  const [showFilters, setShowFilters] = useState(false);
+  const [savedServiceIds, setSavedServiceIds] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     fetch('/api/categories')
@@ -31,317 +33,454 @@ export default function MobileSearchScreen({
         }
       })
       .catch(() => {});
+
+    fetch('/api/buyer/favorites')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data && Array.isArray(data.favorites)) {
+          setSavedServiceIds(new Set(data.favorites.map((f: any) => Number(f.service_id || f.id))));
+        }
+      })
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
-    const fetchServices = async () => {
-      setLoading(true);
-      try {
-        const params = new URLSearchParams();
-        if (query) params.set('q', query);
-        if (category) params.set('category', category);
-        if (city) params.set('city', city);
-        if (sortBy) params.set('sort', sortBy);
+    setQuery(initialQuery);
+    setSelectedCategory(initialCategory);
+  }, [initialQuery, initialCategory]);
 
-        const res = await fetch(`/api/services?${params.toString()}`);
-        const data = await res.json();
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchServices();
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [query, selectedCategory, selectedCity, selectedRating, sortBy]);
+
+  const fetchServices = () => {
+    setLoading(true);
+    const params = new URLSearchParams();
+    if (query) params.set('q', query);
+    if (selectedCategory) params.set('category', selectedCategory);
+    if (selectedCity) params.set('city', selectedCity);
+    if (sortBy) params.set('sort', sortBy);
+
+    fetch(`/api/services?${params.toString()}`)
+      .then((res) => res.json())
+      .then((data) => {
         if (data && Array.isArray(data.services)) {
           let list = data.services;
-          if (rating > 0) {
-            list = list.filter((s: any) => Number(s.rating || 5) >= rating);
+          if (selectedRating !== null) {
+            list = list.filter((s: any) => Number(s.rating || 5) >= selectedRating);
           }
           setServices(list);
         }
-      } catch (e) {
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    const timer = setTimeout(fetchServices, 250);
-    return () => clearTimeout(timer);
-  }, [query, category, city, sortBy, rating]);
-
-  const resetFilters = () => {
-    setQuery('');
-    setCategory('');
-    setRating(0);
-    setSortBy('latest');
-    setCity('');
-    setShowFilters(false);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
   };
 
-  const activeFilterCount = (category ? 1 : 0) + (city ? 1 : 0) + (rating > 0 ? 1 : 0) + (sortBy !== 'latest' ? 1 : 0);
+  const toggleSaveService = async (service: any, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const id = Number(service.id);
+    const nextSaved = new Set(savedServiceIds);
+    if (nextSaved.has(id)) {
+      nextSaved.delete(id);
+    } else {
+      nextSaved.add(id);
+    }
+    setSavedServiceIds(nextSaved);
+
+    try {
+      await fetch('/api/buyer/favorites', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ service_id: id }),
+      });
+    } catch (err) {}
+  };
 
   return (
-    <div className="mobile-search-screen p-3 pb-5" style={{ backgroundColor: '#ffffff', minHeight: 'calc(100vh - 120px)' }}>
-      {/* Search Bar & Filter Toggle */}
+    <div className="mobile-search-screen px-4 pt-3 pb-5 bg-white" style={{ backgroundColor: '#FFFFFF' }}>
+      {/* 1. Header (Flutter SearchTab Title) */}
+      <h4 className="fw-bold mb-3" style={{ color: '#475467', fontSize: '19px' }}>
+        Search services
+      </h4>
+
+      {/* 2. Search Input & Filter Button (Flutter SearchBar parity) */}
       <div className="d-flex align-items-center gap-2 mb-3">
-        <div className="flex-grow-1 position-relative d-flex align-items-center bg-light rounded-pill px-3 py-2 border">
-          <i className="las la-search text-muted me-2 fs-5"></i>
+        <div
+          className="d-flex align-items-center bg-white px-3 flex-grow-1"
+          style={{
+            height: '48px',
+            border: '1px solid #EAECF0',
+            borderRadius: '8px',
+          }}
+        >
+          <i className="las la-search me-2" style={{ color: '#7E7E7E', fontSize: '20px' }}></i>
           <input
             type="text"
-            placeholder="Search services, skills, or artisans..."
+            placeholder="Search services"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            className="form-control border-0 bg-transparent p-0 shadow-none text-dark"
-            style={{ fontSize: '14px', height: '24px' }}
+            style={{
+              border: 'none',
+              outline: 'none',
+              background: 'transparent',
+              color: '#101828',
+              fontSize: '14px',
+              width: '100%',
+            }}
           />
           {query && (
             <button
               type="button"
               onClick={() => setQuery('')}
-              style={{ background: 'none', border: 'none', color: '#94a3b8', padding: '0 4px' }}
+              className="btn btn-sm btn-link p-0 text-muted"
             >
-              <i className="las la-times"></i>
+              <i className="las la-times-circle fs-5"></i>
             </button>
           )}
         </div>
 
+        {/* Filter Sheet Trigger with Flutter filter.svg */}
         <button
           type="button"
-          onClick={() => setShowFilters(true)}
-          className={`btn btn-sm d-flex align-items-center gap-1 rounded-pill px-3 py-2 border ${
-            activeFilterCount > 0 ? 'btn-success text-white' : 'btn-light text-dark'
-          }`}
-          style={{ height: '42px', fontSize: '13px', fontWeight: 600 }}
+          onClick={() => setShowFilterModal(true)}
+          className="btn p-0 d-flex align-items-center justify-content-center flex-shrink-0"
+          title="Filter Services"
+          style={{
+            width: '48px',
+            height: '48px',
+            border: '1px solid #EAECF0',
+            borderRadius: '8px',
+            backgroundColor: (selectedCategory || selectedCity || selectedRating || sortBy !== 'latest') ? 'rgba(29, 191, 115, 0.08)' : '#FFFFFF',
+          }}
         >
-          <i className="las la-sliders-h fs-5"></i>
-          <span>Filter</span>
-          {activeFilterCount > 0 && (
-            <span className="badge bg-white text-success rounded-pill px-1.5 py-0.5 ms-1" style={{ fontSize: '10px' }}>
-              {activeFilterCount}
-            </span>
-          )}
+          <div
+            style={{
+              width: '20px',
+              height: '20px',
+              backgroundColor: (selectedCategory || selectedCity || selectedRating || sortBy !== 'latest') ? 'var(--main-color-one, #1DBF73)' : '#475467',
+              maskImage: 'url(/assets/flutter/svg/filter.svg)',
+              WebkitMaskImage: 'url(/assets/flutter/svg/filter.svg)',
+              maskSize: 'contain',
+              WebkitMaskSize: 'contain',
+              maskRepeat: 'no-repeat',
+              WebkitMaskRepeat: 'no-repeat',
+              maskPosition: 'center',
+              WebkitMaskPosition: 'center',
+            }}
+          />
         </button>
       </div>
 
-      {/* Active Filter Chips */}
-      {activeFilterCount > 0 && (
-        <div className="d-flex align-items-center gap-2 flex-wrap mb-3">
-          {category && (
-            <span className="badge bg-light text-dark border d-flex align-items-center gap-1 py-1.5 px-2.5">
-              <span>Category: {category}</span>
-              <i className="las la-times cursor-pointer ms-1" onClick={() => setCategory('')}></i>
-            </span>
-          )}
-          {city && (
-            <span className="badge bg-light text-dark border d-flex align-items-center gap-1 py-1.5 px-2.5">
-              <span>City: {city}</span>
-              <i className="las la-times cursor-pointer ms-1" onClick={() => setCity('')}></i>
-            </span>
-          )}
-          {rating > 0 && (
-            <span className="badge bg-light text-dark border d-flex align-items-center gap-1 py-1.5 px-2.5">
-              <span>★ {rating}+ Stars</span>
-              <i className="las la-times cursor-pointer ms-1" onClick={() => setRating(0)}></i>
-            </span>
-          )}
-          <button
-            type="button"
-            onClick={resetFilters}
-            className="btn btn-sm btn-link text-danger p-0 text-decoration-none small"
-          >
-            Reset All
-          </button>
-        </div>
-      )}
-
-      {/* Results Count */}
-      <div className="d-flex align-items-center justify-content-between mb-2 px-1">
-        <span className="text-muted small">
-          {loading ? 'Searching...' : `${services.length} services found`}
-        </span>
+      {/* 3. Category Chips Scroller */}
+      <div
+        className="d-flex gap-2 overflow-x-auto pb-2 mb-3"
+        style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}
+      >
+        <button
+          type="button"
+          onClick={() => setSelectedCategory('')}
+          className="btn btn-sm px-3 py-1.5 flex-shrink-0"
+          style={{
+            borderRadius: '20px',
+            border: `1px solid ${!selectedCategory ? 'var(--main-color-one, #1DBF73)' : '#EAECF0'}`,
+            backgroundColor: !selectedCategory ? 'var(--main-color-one, #1DBF73)' : '#FFFFFF',
+            color: !selectedCategory ? '#FFFFFF' : '#475467',
+            fontSize: '12.5px',
+            fontWeight: !selectedCategory ? 600 : 400,
+          }}
+        >
+          All
+        </button>
+        {categories.map((cat) => {
+          const isSelected = selectedCategory === cat.slug;
+          return (
+            <button
+              key={cat.id}
+              type="button"
+              onClick={() => setSelectedCategory(isSelected ? '' : cat.slug)}
+              className="btn btn-sm px-3 py-1.5 flex-shrink-0"
+              style={{
+                borderRadius: '20px',
+                border: `1px solid ${isSelected ? 'var(--main-color-one, #1DBF73)' : '#EAECF0'}`,
+                backgroundColor: isSelected ? 'var(--main-color-one, #1DBF73)' : '#FFFFFF',
+                color: isSelected ? '#FFFFFF' : '#475467',
+                fontSize: '12.5px',
+                fontWeight: isSelected ? 600 : 400,
+              }}
+            >
+              {cat.name}
+            </button>
+          );
+        })}
       </div>
 
-      {/* Services Grid */}
+      {/* 4. Results List (Flutter ServiceCard Parity) */}
       {loading ? (
-        <div className="text-center py-5 text-muted small">Searching marketplace...</div>
+        <div className="text-center py-5">
+          <div className="spinner-border text-success" role="status"></div>
+        </div>
       ) : services.length === 0 ? (
-        <div className="text-center py-5 bg-light rounded-4 border p-4 shadow-sm my-3">
-          <i className="las la-search fs-1 text-muted d-block mb-3"></i>
-          <h6 className="fw-bold mb-1">No Services Matching Criteria</h6>
-          <p className="text-muted small mb-3">Try clearing filters or searching for terms like "cleaning", "plumbing", or "electrical".</p>
+        <div className="text-center py-5">
+          <p className="text-muted fw-semibold">No services found matching your criteria</p>
           <button
             type="button"
-            onClick={resetFilters}
-            className="btn btn-sm btn-success fw-bold px-4 py-2"
-            style={{ backgroundColor: 'var(--main-color-one, #1DBF73)', borderRadius: '20px' }}
+            onClick={() => {
+              setQuery('');
+              setSelectedCategory('');
+              setSelectedCity('');
+              setSelectedRating(null);
+              setSortBy('latest');
+            }}
+            className="btn btn-sm text-white px-3 py-1.5"
+            style={{ backgroundColor: 'var(--main-color-one, #1DBF73)', borderRadius: '6px' }}
           >
-            Clear Filters
+            Reset Filters
           </button>
         </div>
       ) : (
-        <div className="d-flex flex-column gap-2.5">
-          {services.map((service) => (
-            <Link
-              key={service.id}
-              href={`/service-list/${service.slug}`}
-              className="text-decoration-none bg-white rounded-3 border p-2.5 d-flex align-items-center justify-content-between gap-3 shadow-sm"
-            >
-              <div className="d-flex align-items-center gap-2.5 min-w-0">
-                <div
-                  style={{
-                    width: '60px',
-                    height: '60px',
-                    borderRadius: '10px',
-                    overflow: 'hidden',
-                    backgroundColor: '#f1f5f9',
-                    flexShrink: 0,
-                  }}
+        <div className="d-flex flex-column gap-3">
+          {services.map((service) => {
+            const isSaved = savedServiceIds.has(Number(service.id));
+            return (
+              <div
+                key={service.id}
+                className="bg-white"
+                style={{
+                  width: '100%',
+                  border: '1px solid #EAECF0',
+                  borderRadius: '9px',
+                  padding: '15px 13px 10px 13px',
+                  backgroundColor: '#FFFFFF',
+                }}
+              >
+                <Link
+                  href={`/service-list/${service.slug}`}
+                  className="d-flex text-decoration-none"
+                  style={{ gap: '13px', alignItems: 'flex-start' }}
                 >
-                  <img
-                    src={service.image || '/assets/uploads/media-uploader/banner11638279446.png'}
-                    alt={service.title}
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                  />
-                </div>
+                  <div className="position-relative flex-shrink-0" style={{ width: '75px', height: '78px' }}>
+                    <img
+                      src={service.image || '/assets/uploads/media-uploader/banner11638279446.png'}
+                      alt={service.title}
+                      style={{
+                        width: '75px',
+                        height: '78px',
+                        objectFit: 'cover',
+                        borderRadius: '8px',
+                      }}
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = '/assets/uploads/media-uploader/banner11638279446.png';
+                      }}
+                    />
 
-                <div className="min-w-0">
-                  <strong className="d-block text-dark text-truncate" style={{ fontSize: '13.5px' }}>
-                    {service.title}
-                  </strong>
-                  <span className="d-block text-muted small text-truncate" style={{ fontSize: '11.5px' }}>
-                    {service.city || 'Lagos'} &bull; {service.seller?.name || 'Verified Artisan'}
-                  </span>
-                  <div className="d-flex align-items-center gap-1 text-warning small mt-0.5" style={{ fontSize: '11px' }}>
-                    <i className="las la-star"></i>
-                    <span className="text-dark fw-semibold">{service.rating || 4.9}</span>
+                    <div
+                      className="position-absolute d-flex align-items-center gap-1"
+                      style={{
+                        bottom: '-10px',
+                        left: '8px',
+                        backgroundColor: '#FFC300',
+                        border: '2px solid #FFFFFF',
+                        borderRadius: '4px',
+                        padding: '2px 5px',
+                        color: '#475467',
+                        fontSize: '11.5px',
+                        fontWeight: 600,
+                        lineHeight: 1,
+                      }}
+                    >
+                      <i className="las la-star" style={{ fontSize: '11px', color: '#475467' }}></i>
+                      <span>{Number(service.rating || 5.0).toFixed(1)}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex-grow-1 min-w-0">
+                    <strong
+                      style={{
+                        color: '#475467',
+                        fontSize: '15px',
+                        fontWeight: 600,
+                        lineHeight: 1.35,
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden',
+                      }}
+                    >
+                      {service.title}
+                    </strong>
+
+                    <div className="d-flex align-items-center gap-1 mt-2">
+                      <span style={{ color: 'rgba(71, 84, 103, 0.6)', fontSize: '13px', fontWeight: 400 }}>
+                        by:
+                      </span>
+                      <span
+                        className="text-truncate"
+                        style={{ color: '#475467', fontSize: '13px', fontWeight: 600, maxWidth: '180px' }}
+                      >
+                        {service.seller?.name || 'Verified Artisan'}
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+
+                <div style={{ height: '1px', backgroundColor: '#F0F0F0', margin: '20px 0 10px 0' }} />
+
+                <div className="d-flex align-items-center justify-content-between">
+                  <div className="d-flex align-items-baseline gap-1.5">
+                    <span style={{ color: 'rgba(71, 84, 103, 0.6)', fontSize: '12.5px', fontWeight: 400 }}>
+                      Starts from:
+                    </span>
+                    <strong style={{ color: '#475467', fontSize: '18px', fontWeight: 700 }}>
+                      ₦{Number(service.price || 0).toLocaleString()}
+                    </strong>
+                  </div>
+
+                  <div className="d-flex align-items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={(e) => toggleSaveService(service, e)}
+                      className="btn p-0 d-flex align-items-center justify-content-center"
+                      style={{
+                        width: '32px',
+                        height: '32px',
+                        border: '1px solid #EAECF0',
+                        borderRadius: '6px',
+                        backgroundColor: '#FFFFFF',
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: '16px',
+                          height: '16px',
+                          backgroundColor: isSaved ? '#FF6B2C' : '#475467',
+                          maskImage: `url(/assets/flutter/svg/${isSaved ? 'saved-fill-icon.svg' : 'saved-icon.svg'})`,
+                          WebkitMaskImage: `url(/assets/flutter/svg/${isSaved ? 'saved-fill-icon.svg' : 'saved-icon.svg'})`,
+                          maskSize: 'contain',
+                          WebkitMaskSize: 'contain',
+                          maskRepeat: 'no-repeat',
+                          WebkitMaskRepeat: 'no-repeat',
+                          maskPosition: 'center',
+                          WebkitMaskPosition: 'center',
+                        }}
+                      />
+                    </button>
+
+                    <Link
+                      href={`/service-list/book/${service.slug}`}
+                      className="btn btn-sm fw-medium text-white px-3 py-1.5"
+                      style={{
+                        backgroundColor: 'var(--main-color-one, #1DBF73)',
+                        borderRadius: '6px',
+                        fontSize: '13px',
+                        fontWeight: 500,
+                      }}
+                    >
+                      Book Now
+                    </Link>
                   </div>
                 </div>
               </div>
-
-              <div className="text-end flex-shrink-0">
-                <span className="d-block fw-bold text-success" style={{ fontSize: '14.5px', color: 'var(--main-color-one, #1DBF73)' }}>
-                  ₦{Number(service.price || 0).toLocaleString()}
-                </span>
-                <span className="btn btn-sm btn-outline-success rounded-pill px-2.5 py-0.5 fw-semibold mt-1" style={{ fontSize: '11px' }}>
-                  Book
-                </span>
-              </div>
-            </Link>
-          ))}
+            );
+          })}
         </div>
       )}
 
-      {/* Bottom Sheet Filter Modal (Flutter Parity) */}
-      {showFilters && (
+      {/* 5. Filter Bottom Sheet (Flutter FilterSheet parity) */}
+      {showFilterModal && (
         <div
-          className="position-fixed inset-0 d-flex align-items-end justify-content-center"
-          style={{
-            position: 'fixed',
-            inset: 0,
-            backgroundColor: 'rgba(0,0,0,0.6)',
-            zIndex: 2000,
-            backdropFilter: 'blur(3px)',
-          }}
-          onClick={() => setShowFilters(false)}
+          className="modal-backdrop-custom position-fixed top-0 start-0 w-100 h-100 d-flex flex-column justify-content-end"
+          style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1060 }}
+          onClick={() => setShowFilterModal(false)}
         >
           <div
-            className="bg-white rounded-top-4 w-100 p-4 shadow-lg"
-            style={{ maxWidth: '520px', maxHeight: '80vh', overflowY: 'auto' }}
+            className="bg-white p-4"
+            style={{ borderRadius: '20px 20px 0 0', maxHeight: '75vh', overflowY: 'auto' }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="d-flex align-items-center justify-content-between mb-3 border-bottom pb-2">
-              <h5 className="fw-bold mb-0" style={{ fontSize: '16px', color: '#1e293b' }}>
+            <div className="d-flex align-items-center justify-content-between mb-3">
+              <h6 className="fw-bold mb-0 text-dark" style={{ fontSize: '17px' }}>
                 Filter Services
-              </h5>
-              <button
-                type="button"
-                onClick={() => setShowFilters(false)}
-                style={{ background: 'none', border: 'none', fontSize: '20px', color: '#94a3b8' }}
-              >
-                <i className="las la-times"></i>
-              </button>
-            </div>
-
-            {/* Category */}
-            <div className="mb-3">
-              <label className="form-label small fw-semibold text-muted">Category</label>
-              <select
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                className="form-select"
-                style={{ borderRadius: '8px', fontSize: '14px', height: '44px' }}
-              >
-                <option value="">All Categories</option>
-                {categories.map((c) => (
-                  <option key={c.id} value={c.slug}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Service Location City */}
-            <div className="mb-3">
-              <label className="form-label small fw-semibold text-muted">City / Location</label>
-              <select
-                value={city}
-                onChange={(e) => setCity(e.target.value)}
-                className="form-select"
-                style={{ borderRadius: '8px', fontSize: '14px', height: '44px' }}
-              >
-                <option value="">All Nigeria</option>
-                <option value="Lagos">Lagos</option>
-                <option value="Abuja">Abuja</option>
-                <option value="Port Harcourt">Port Harcourt</option>
-                <option value="Ibadan">Ibadan</option>
-                <option value="Benin City">Benin City</option>
-                <option value="Enugu">Enugu</option>
-              </select>
+              </h6>
+              <button type="button" className="btn-close" onClick={() => setShowFilterModal(false)}></button>
             </div>
 
             {/* Sort By */}
             <div className="mb-3">
-              <label className="form-label small fw-semibold text-muted">Sort By</label>
+              <label className="form-label fw-semibold small text-dark mb-1">Sort By</label>
               <select
+                className="form-select"
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="form-select"
-                style={{ borderRadius: '8px', fontSize: '14px', height: '44px' }}
+                style={{ borderRadius: '8px', border: '1px solid #EAECF0' }}
               >
                 <option value="latest">Latest Services</option>
-                <option value="lowest_price">Price: Low to High</option>
-                <option value="highest_price">Price: High to Low</option>
-                <option value="rating">Highest Rated</option>
+                <option value="price_low">Lowest Price First</option>
+                <option value="price_high">Highest Price First</option>
+                <option value="rating">Top Rated (5 Stars)</option>
               </select>
             </div>
 
-            {/* Rating Filter */}
-            <div className="mb-4">
-              <label className="form-label small fw-semibold text-muted">Minimum Rating</label>
+            {/* Minimum Star Rating */}
+            <div className="mb-3">
+              <label className="form-label fw-semibold small text-dark mb-1">Minimum Rating</label>
               <div className="d-flex gap-2">
-                {[0, 3, 4, 5].map((stars) => (
+                {[5, 4, 3, 2].map((stars) => (
                   <button
                     key={stars}
                     type="button"
-                    onClick={() => setRating(stars)}
-                    className={`btn btn-sm rounded-pill flex-grow-1 py-2 ${
-                      rating === stars ? 'btn-success text-white' : 'btn-outline-secondary'
-                    }`}
-                    style={{ fontSize: '13px', fontWeight: 600 }}
+                    onClick={() => setSelectedRating(selectedRating === stars ? null : stars)}
+                    className={`btn btn-sm flex-fill ${selectedRating === stars ? 'btn-warning text-dark' : 'btn-outline-secondary'}`}
+                    style={{ borderRadius: '8px' }}
                   >
-                    {stars === 0 ? 'All' : `${stars}★ & up`}
+                    ⭐ {stars}+
                   </button>
                 ))}
               </div>
             </div>
 
+            {/* Nigerian City / State */}
+            <div className="mb-4">
+              <label className="form-label fw-semibold small text-dark mb-1">Service City</label>
+              <select
+                className="form-select"
+                value={selectedCity}
+                onChange={(e) => setSelectedCity(e.target.value)}
+                style={{ borderRadius: '8px', border: '1px solid #EAECF0' }}
+              >
+                <option value="">All Nigerian Cities</option>
+                <option value="Lagos">Lagos</option>
+                <option value="Abuja">Abuja</option>
+                <option value="Port Harcourt">Port Harcourt</option>
+                <option value="Ibadan">Ibadan</option>
+                <option value="Kano">Kano</option>
+                <option value="Benin City">Benin City</option>
+              </select>
+            </div>
+
             <div className="d-flex gap-2">
               <button
                 type="button"
-                onClick={resetFilters}
-                className="btn btn-outline-secondary flex-grow-1 py-2.5 fw-semibold"
-                style={{ borderRadius: '10px', fontSize: '14px' }}
+                onClick={() => {
+                  setSelectedCategory('');
+                  setSelectedCity('');
+                  setSelectedRating(null);
+                  setSortBy('latest');
+                  setShowFilterModal(false);
+                }}
+                className="btn btn-light flex-fill py-2"
+                style={{ borderRadius: '8px' }}
               >
                 Reset
               </button>
               <button
                 type="button"
-                onClick={() => setShowFilters(false)}
-                className="btn btn-success flex-grow-1 py-2.5 fw-bold"
-                style={{ backgroundColor: 'var(--main-color-one, #1DBF73)', borderRadius: '10px', fontSize: '14px' }}
+                onClick={() => setShowFilterModal(false)}
+                className="btn text-white flex-fill py-2 fw-semibold"
+                style={{ backgroundColor: 'var(--main-color-one, #1DBF73)', borderRadius: '8px' }}
               >
                 Apply Filters
               </button>
@@ -352,4 +491,3 @@ export default function MobileSearchScreen({
     </div>
   );
 }
-

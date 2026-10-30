@@ -16,25 +16,28 @@ export default function MobileBottomNav({
   savedItemCount = 0,
 }: MobileBottomNavProps) {
   const tabs = [
-    { id: 0, label: 'Home', icon: 'las la-home' },
-    { id: 1, label: 'Orders', icon: 'las la-clipboard-list', badge: activeOrderCount },
-    { id: 2, label: 'Saved', icon: 'las la-heart', badge: savedItemCount },
-    { id: 3, label: 'Search', icon: 'las la-search' },
-    { id: 4, label: 'Menu', icon: 'las la-bars' },
+    { id: 0, label: 'Home', svg: '/assets/flutter/svg/home-icon.svg' },
+    { id: 1, label: 'Orders', svg: '/assets/flutter/svg/orders-icon.svg', badge: activeOrderCount },
+    { id: 2, label: 'Saved', svg: '/assets/flutter/svg/saved-icon.svg', badge: savedItemCount },
+    { id: 3, label: 'Search', svg: '/assets/flutter/svg/search-icon.svg' },
+    { id: 4, label: 'Menu', svg: '/assets/flutter/svg/settings-icon.svg' },
   ];
 
   return (
     <nav
-      className="mobile-bottom-nav position-fixed bottom-0 start-0 end-0 bg-white border-top shadow-sm d-flex align-items-center justify-content-around"
+      className="mobile-bottom-nav position-fixed bottom-0 start-0 end-0 bg-white d-flex align-items-center justify-content-around"
       style={{
-        height: '64px',
+        height: '75px',
+        borderTop: '1px solid #EAECF0',
         paddingBottom: 'env(safe-area-inset-bottom, 0px)',
         zIndex: 1030,
-        boxShadow: '0 -2px 10px rgba(0,0,0,0.05)',
+        backgroundColor: '#FFFFFF',
       }}
     >
       {tabs.map((tab) => {
         const isActive = currentTab === tab.id;
+        const color = isActive ? 'var(--main-color-one, #1DBF73)' : '#475467';
+
         return (
           <button
             key={tab.id}
@@ -43,51 +46,64 @@ export default function MobileBottomNav({
             className="btn p-0 border-0 d-flex flex-column align-items-center justify-content-center flex-grow-1"
             style={{
               background: 'none',
-              color: isActive ? 'var(--main-color-one, #1DBF73)' : '#64748b',
-              transition: 'color 0.15s ease',
+              color: color,
+              transition: 'all 0.15s ease',
               position: 'relative',
               height: '100%',
               cursor: 'pointer',
+              outline: 'none',
+              boxShadow: 'none',
             }}
           >
-            <div className="position-relative" style={{ lineHeight: 1 }}>
-              <i
-                className={tab.icon}
+            <div className="position-relative d-flex align-items-center justify-content-center mb-1">
+              <div
                 style={{
-                  fontSize: isActive ? '24px' : '22px',
-                  transition: 'font-size 0.15s ease',
+                  width: '22px',
+                  height: '22px',
+                  backgroundColor: color,
+                  maskImage: `url(${tab.svg})`,
+                  WebkitMaskImage: `url(${tab.svg})`,
+                  maskSize: 'contain',
+                  WebkitMaskSize: 'contain',
+                  maskRepeat: 'no-repeat',
+                  WebkitMaskRepeat: 'no-repeat',
+                  maskPosition: 'center',
+                  WebkitMaskPosition: 'center',
+                  transition: 'background-color 0.15s ease',
                 }}
-              ></i>
+              />
+
               {Boolean(tab.badge && tab.badge > 0) && (
                 <span
                   style={{
                     position: 'absolute',
-                    top: '-4px',
-                    right: '-8px',
+                    top: '-6px',
+                    right: '-10px',
                     backgroundColor: 'var(--main-color-one, #1DBF73)',
-                    color: '#fff',
-                    fontSize: '9px',
+                    color: '#ffffff',
+                    fontSize: '10px',
                     fontWeight: 700,
-                    borderRadius: '10px',
-                    minWidth: '15px',
-                    height: '15px',
+                    minWidth: '16px',
+                    height: '16px',
+                    borderRadius: '8px',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    padding: '0 3px',
-                    boxShadow: '0 0 0 1.5px #fff',
+                    padding: '0 4px',
+                    border: '1.5px solid #ffffff',
                   }}
                 >
-                  {tab.badge! > 9 ? '9+' : tab.badge}
+                  {tab.badge}
                 </span>
               )}
             </div>
+
             <span
               style={{
                 fontSize: '11px',
-                fontWeight: isActive ? 700 : 500,
-                marginTop: '3px',
-                letterSpacing: '-0.2px',
+                fontWeight: isActive ? 600 : 400,
+                color: color,
+                lineHeight: 1,
               }}
             >
               {tab.label}
@@ -98,4 +114,3 @@ export default function MobileBottomNav({
     </nav>
   );
 }
-

@@ -1,13 +1,13 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
 
 interface MobileTopBarProps {
   selectedCity: string;
   onSelectCity: (city: string) => void;
   onOpenNotifications: () => void;
   onOpenMenu: () => void;
+  userName?: string;
   userAvatar?: string;
   unreadCount?: number;
 }
@@ -17,7 +17,8 @@ export default function MobileTopBar({
   onSelectCity,
   onOpenNotifications,
   onOpenMenu,
-  userAvatar = '/assets/frontend/img/static/user_profile.png',
+  userName = 'Emma Watson',
+  userAvatar = '/assets/flutter/images/avatar.png',
   unreadCount = 0,
 }: MobileTopBarProps) {
   const [showCityPicker, setShowCityPicker] = useState(false);
@@ -41,149 +42,177 @@ export default function MobileTopBar({
           if (cities.length > 0) setAvailableCities(Array.from(new Set(cities)));
         }
       })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   return (
     <>
       <header
-        className="mobile-top-bar d-flex align-items-center justify-content-between px-3"
+        className="mobile-top-bar px-4 py-3 bg-white"
         style={{
-          height: '56px',
-          backgroundColor: '#ffffff',
-          borderBottom: '1px solid #f1f5f9',
+          backgroundColor: '#FFFFFF',
           position: 'sticky',
           top: 0,
           zIndex: 1020,
-          backdropFilter: 'blur(10px)',
         }}
       >
-        {/* Left: Location Selector Pill */}
-        <button
-          type="button"
-          onClick={() => setShowCityPicker(true)}
-          className="btn btn-sm d-flex align-items-center gap-1.5 p-1 px-2.5 rounded-pill"
-          style={{
-            backgroundColor: 'rgba(29, 191, 115, 0.08)',
-            border: '1px solid rgba(29, 191, 115, 0.25)',
-            color: '#1e293b',
-            fontSize: '13px',
-            fontWeight: 600,
-          }}
-        >
-          <i className="las la-map-marker-alt" style={{ color: 'var(--main-color-one, #1DBF73)', fontSize: '16px' }}></i>
-          <span>{selectedCity || 'All Nigeria'}</span>
-          <i className="las la-angle-down" style={{ fontSize: '11px', color: '#64748b' }}></i>
-        </button>
-
-        {/* Center: Brand Logo */}
-        <div style={{ height: '30px', display: 'flex', alignItems: 'center' }}>
-          <img
-            src="/assets/frontend/img/logo.png"
-            alt="QwikConnect"
-            style={{ maxHeight: '28px', maxWidth: '110px', objectFit: 'contain' }}
-            onError={(e) => {
-              (e.target as HTMLElement).style.display = 'none';
-            }}
-          />
-        </div>
-
-        {/* Right: Notification Bell & Profile Avatar */}
-        <div className="d-flex align-items-center gap-2.5">
-          <button
-            type="button"
-            onClick={onOpenNotifications}
-            aria-label="Notifications"
-            style={{
-              background: 'none',
-              border: 'none',
-              position: 'relative',
-              padding: '6px',
-              color: '#334155',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-            }}
+        {/* Flutter HomeAppBar parity: User Image, Welcome, Name & Notification Bell */}
+        <div className="d-flex align-items-center justify-content-between">
+          {/* Left part: Profile image & greeting */}
+          <div
+            className="d-flex align-items-center gap-3 cursor-pointer"
+            onClick={onOpenMenu}
+            style={{ cursor: 'pointer' }}
           >
-            <i className="las la-bell" style={{ fontSize: '22px' }}></i>
-            {unreadCount > 0 && (
+            <div
+              style={{
+                width: '52px',
+                height: '52px',
+                borderRadius: '8px',
+                overflow: 'hidden',
+                backgroundColor: '#f1f5f9',
+                flexShrink: 0,
+                border: '1px solid #EAECF0',
+              }}
+            >
+              <img
+                src={userAvatar || '/assets/flutter/images/avatar.png'}
+                alt={userName}
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = '/assets/flutter/images/avatar.png';
+                }}
+              />
+            </div>
+
+            <div className="d-flex flex-column">
               <span
                 style={{
-                  position: 'absolute',
-                  top: '4px',
-                  right: '3px',
-                  backgroundColor: '#ef4444',
-                  color: '#fff',
-                  fontSize: '10px',
-                  fontWeight: 700,
-                  borderRadius: '10px',
-                  minWidth: '16px',
-                  height: '16px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  padding: '0 4px',
-                  boxShadow: '0 0 0 2px #fff',
+                  color: '#667085',
+                  fontSize: '14px',
+                  fontWeight: 400,
+                  lineHeight: 1.2,
                 }}
               >
-                {unreadCount > 9 ? '9+' : unreadCount}
+                Welcome!
               </span>
-            )}
-          </button>
+              <strong
+                className="text-truncate mt-1"
+                style={{
+                  color: '#475467',
+                  fontSize: '19px',
+                  fontWeight: 700,
+                  maxWidth: '170px',
+                  lineHeight: 1.2,
+                }}
+              >
+                {userName || 'Emma Watson'}
+              </strong>
+            </div>
+          </div>
 
-          <button
-            type="button"
-            onClick={onOpenMenu}
-            aria-label="Profile"
-            style={{
-              width: '32px',
-              height: '32px',
-              borderRadius: '50%',
-              overflow: 'hidden',
-              border: '2px solid var(--main-color-one, #1DBF73)',
-              padding: 0,
-              background: 'none',
-              cursor: 'pointer',
-            }}
-          >
-            <img
-              src={userAvatar}
-              alt="Profile"
-              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-            />
-          </button>
+          {/* Right part: Location pill & Circular notification bell */}
+          <div className="d-flex align-items-center gap-2">
+            {/* City pill */}
+            <button
+              type="button"
+              onClick={() => setShowCityPicker(true)}
+              className="btn btn-sm d-flex align-items-center gap-1 px-2.5 py-1.5 rounded-pill"
+              style={{
+                backgroundColor: '#F8FAFC',
+                border: '1px solid #EAECF0',
+                color: '#344054',
+                fontSize: '12px',
+                fontWeight: 600,
+              }}
+            >
+              <i className="las la-map-marker-alt" style={{ color: 'var(--main-color-one, #1DBF73)', fontSize: '14px' }}></i>
+              <span className="text-truncate" style={{ maxWidth: '65px' }}>{selectedCity || 'Lagos'}</span>
+              <i className="las la-angle-down" style={{ fontSize: '10px', color: '#94a3b8' }}></i>
+            </button>
+
+            {/* Circular Notification Bell (Flutter parity) */}
+            <div
+              onClick={onOpenNotifications}
+              className="position-relative d-flex align-items-center justify-content-center cursor-pointer"
+              style={{
+                width: '40px',
+                height: '38px',
+                borderRadius: '50%',
+                border: '1px solid #D0D5DD',
+                cursor: 'pointer',
+                backgroundColor: '#FFFFFF',
+              }}
+            >
+              <div
+                style={{
+                  width: '20px',
+                  height: '20px',
+                  backgroundColor: '#475467',
+                  maskImage: 'url(/assets/flutter/svg/notification-bell-icon.svg)',
+                  WebkitMaskImage: 'url(/assets/flutter/svg/notification-bell-icon.svg)',
+                  maskSize: 'contain',
+                  WebkitMaskSize: 'contain',
+                  maskRepeat: 'no-repeat',
+                  WebkitMaskRepeat: 'no-repeat',
+                  maskPosition: 'center',
+                  WebkitMaskPosition: 'center',
+                }}
+              />
+
+              {unreadCount > 0 && (
+                <span
+                  className="position-absolute d-flex align-items-center justify-content-center"
+                  style={{
+                    top: '-2px',
+                    right: '-2px',
+                    width: '16px',
+                    height: '16px',
+                    backgroundColor: '#F05454',
+                    color: '#FFFFFF',
+                    fontSize: '10px',
+                    fontWeight: 700,
+                    borderRadius: '50%',
+                    border: '1.5px solid #FFFFFF',
+                  }}
+                >
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
+            </div>
+          </div>
         </div>
       </header>
 
-      {/* Location Bottom Sheet */}
+      {/* City Picker Bottom Sheet */}
       {showCityPicker && (
         <div
-          className="position-fixed inset-0 d-flex align-items-end justify-content-center"
+          className="city-picker-backdrop position-fixed top-0 start-0 w-100 h-100 d-flex flex-column justify-content-end"
           style={{
-            position: 'fixed',
-            inset: 0,
-            backgroundColor: 'rgba(0,0,0,0.5)',
-            zIndex: 2000,
-            backdropFilter: 'blur(2px)',
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            zIndex: 1060,
           }}
           onClick={() => setShowCityPicker(false)}
         >
           <div
-            className="bg-white rounded-top-4 w-100 p-4 shadow-lg"
-            style={{ maxWidth: '500px', maxHeight: '75vh', overflowY: 'auto' }}
+            className="city-picker-sheet bg-white p-4"
+            style={{
+              borderRadius: '20px 20px 0 0',
+              maxHeight: '65vh',
+              overflowY: 'auto',
+            }}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="d-flex align-items-center justify-content-between mb-3">
-              <h5 className="fw-bold mb-0" style={{ fontSize: '16px', color: '#1e293b' }}>
-                Select Your Service City
-              </h5>
+              <div>
+                <h6 className="fw-bold mb-0 text-dark" style={{ fontSize: '17px' }}>Select Service Location</h6>
+                <span className="text-muted small">Show artisans near you in Nigeria</span>
+              </div>
               <button
                 type="button"
+                className="btn-close"
                 onClick={() => setShowCityPicker(false)}
-                style={{ background: 'none', border: 'none', fontSize: '20px', color: '#94a3b8' }}
-              >
-                <i className="las la-times"></i>
-              </button>
+              ></button>
             </div>
 
             <div className="list-group list-group-flush">
@@ -193,35 +222,40 @@ export default function MobileTopBar({
                   onSelectCity('');
                   setShowCityPicker(false);
                 }}
-                className={`list-group-item list-group-item-action d-flex align-items-center justify-content-between py-3 ${
-                  !selectedCity ? 'fw-bold text-success' : 'text-dark'
-                }`}
-                style={{ borderRadius: '8px' }}
+                className={`list-group-item list-group-item-action d-flex align-items-center justify-content-between py-3 border-0 rounded-3 mb-1 ${!selectedCity ? 'fw-bold text-success' : 'text-dark'
+                  }`}
+                style={{
+                  backgroundColor: !selectedCity ? 'rgba(29, 191, 115, 0.08)' : 'transparent',
+                }}
               >
-                <span>All Locations in Nigeria</span>
-                {!selectedCity && <i className="las la-check text-success fs-5"></i>}
+                <span>All Locations (Nationwide)</span>
+                {!selectedCity && <i className="las la-check fs-5"></i>}
               </button>
 
-              {availableCities.map((city) => (
-                <button
-                  key={city}
-                  type="button"
-                  onClick={() => {
-                    onSelectCity(city);
-                    setShowCityPicker(false);
-                  }}
-                  className={`list-group-item list-group-item-action d-flex align-items-center justify-content-between py-3 ${
-                    selectedCity === city ? 'fw-bold text-success' : 'text-dark'
-                  }`}
-                  style={{ borderRadius: '8px' }}
-                >
-                  <span className="d-flex align-items-center gap-2">
-                    <i className="las la-map-pin text-muted"></i>
-                    {city}
-                  </span>
-                  {selectedCity === city && <i className="las la-check text-success fs-5"></i>}
-                </button>
-              ))}
+              {availableCities.map((city) => {
+                const isSelected = selectedCity.toLowerCase() === city.toLowerCase();
+                return (
+                  <button
+                    key={city}
+                    type="button"
+                    onClick={() => {
+                      onSelectCity(city);
+                      setShowCityPicker(false);
+                    }}
+                    className={`list-group-item list-group-item-action d-flex align-items-center justify-content-between py-3 border-0 rounded-3 mb-1 ${isSelected ? 'fw-bold text-success' : 'text-dark'
+                      }`}
+                    style={{
+                      backgroundColor: isSelected ? 'rgba(29, 191, 115, 0.08)' : 'transparent',
+                    }}
+                  >
+                    <div className="d-flex align-items-center gap-2">
+                      <i className="las la-map-marker-alt text-muted"></i>
+                      <span>{city}, Nigeria</span>
+                    </div>
+                    {isSelected && <i className="las la-check fs-5"></i>}
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>
@@ -229,4 +263,3 @@ export default function MobileTopBar({
     </>
   );
 }
-

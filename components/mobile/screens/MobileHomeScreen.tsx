@@ -6,7 +6,7 @@ import Link from 'next/link';
 interface MobileHomeScreenProps {
   onGoToSearch: (query?: string, category?: string) => void;
   onOpenMapView: () => void;
-  selectedCity?: string;
+  selectedCity: string;
 }
 
 export default function MobileHomeScreen({
@@ -15,24 +15,15 @@ export default function MobileHomeScreen({
   selectedCity,
 }: MobileHomeScreenProps) {
   const [searchInput, setSearchInput] = useState('');
-  const [banners, setBanners] = useState<any[]>([]);
-  const [activeBannerIdx, setActiveBannerIdx] = useState(0);
   const [categories, setCategories] = useState<any[]>([]);
   const [services, setServices] = useState<any[]>([]);
+  const [banners, setBanners] = useState<any[]>([]);
+  const [activeBannerIdx, setActiveBannerIdx] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [savedServiceIds, setSavedServiceIds] = useState<Set<number>>(new Set());
 
   useEffect(() => {
-    // 1. Load Mobile Banners from MongoDB API
-    fetch('/api/mobile/settings')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data && Array.isArray(data.banners) && data.banners.length > 0) {
-          setBanners(data.banners);
-        }
-      })
-      .catch(() => {});
-
-    // 2. Load Categories
+    // 1. Fetch categories
     fetch('/api/categories')
       .then((res) => res.json())
       .then((data) => {
@@ -42,9 +33,44 @@ export default function MobileHomeScreen({
       })
       .catch(() => {});
 
-    // 3. Load Services
-    const cityParam = selectedCity ? `?city=${encodeURIComponent(selectedCity)}` : '';
-    fetch(`/api/services${cityParam}`)
+    // 2. Fetch mobile banners
+    fetch('/api/mobile/settings')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data && Array.isArray(data.banners) && data.banners.length > 0) {
+          setBanners(data.banners);
+        } else {
+          setBanners([
+            {
+              id: 1,
+              title: 'Special 20% Off Home Cleaning',
+              subtitle: 'Valid across Lagos & Abuja this week',
+              image: '/assets/uploads/media-uploader/banner11638279446.png',
+              link: 'cleaning',
+            },
+            {
+              id: 2,
+              title: 'Certified Inverter & Solar Repairs',
+              subtitle: '24/7 Verified Nigerian Electricians',
+              image: '/assets/uploads/media-uploader/service_electrical_nigerian.jpg',
+              link: 'electrical-repair',
+            },
+            {
+              id: 3,
+              title: 'Emergency Plumbing Response',
+              subtitle: 'Quick pipe leakage & pump servicing',
+              image: '/assets/uploads/media-uploader/service_plumbing_nigerian.jpg',
+              link: 'plumbing-solutions',
+            },
+          ]);
+        }
+      })
+      .catch(() => {});
+
+    // 3. Fetch services filtered by city
+    setLoading(true);
+    const url = selectedCity ? `/api/services?city=${encodeURIComponent(selectedCity)}` : '/api/services';
+    fetch(url)
       .then((res) => res.json())
       .then((data) => {
         if (data && Array.isArray(data.services)) {
@@ -53,6 +79,16 @@ export default function MobileHomeScreen({
       })
       .catch(() => {})
       .finally(() => setLoading(false));
+
+    // 4. Fetch saved services
+    fetch('/api/buyer/favorites')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data && Array.isArray(data.favorites)) {
+          setSavedServiceIds(new Set(data.favorites.map((f: any) => Number(f.service_id || f.id))));
+        }
+      })
+      .catch(() => {});
   }, [selectedCity]);
 
   // Auto rotate banner carousel
@@ -64,6 +100,27 @@ export default function MobileHomeScreen({
     return () => clearInterval(interval);
   }, [banners]);
 
+  const toggleSaveService = async (service: any, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const id = Number(service.id);
+    const nextSaved = new Set(savedServiceIds);
+    if (nextSaved.has(id)) {
+      nextSaved.delete(id);
+    } else {
+      nextSaved.add(id);
+    }
+    setSavedServiceIds(nextSaved);
+
+    try {
+      await fetch('/api/buyer/favorites', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ service_id: id }),
+      });
+    } catch (err) {}
+  };
+
   const topRatedServices = [...services].sort((a, b) => (b.rating || 5) - (a.rating || 5)).slice(0, 6);
   const recentServices = services.slice(0, 8);
 
@@ -73,146 +130,205 @@ export default function MobileHomeScreen({
   };
 
   return (
-    <div className="mobile-home-screen pb-4" style={{ backgroundColor: '#ffffff' }}>
-      {/* Search Input Bar (Flutter Parity) */}
-      <div className="px-3 pt-3 pb-2">
-        <form onSubmit={handleSearchSubmit}>
-          <div
-            className="d-flex align-items-center bg-light px-3 py-2 rounded-pill border"
-            style={{ borderColor: '#e2e8f0', cursor: 'text' }}
-            onClick={() => onGoToSearch(searchInput)}
-          >
-            <i className="las la-search text-muted me-2 fs-5"></i>
-            <input
-              type="text"
-              placeholder="Search services or artisans..."
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              className="form-control border-0 bg-transparent p-0 shadow-none text-dark"
-              style={{ fontSize: '14px', height: '24px' }}
-            />
-            {searchInput && (
-              <button
-                type="submit"
-                className="btn btn-sm btn-link text-success p-0 text-decoration-none fw-bold"
-                style={{ fontSize: '13px' }}
-              >
-                Go
-              </button>
-            )}
-          </div>
-        </form>
-      </div>
+    <div className="mobile-home-screen pb-4 bg-white" style={{ backgroundColor: '#FFFFFF' }}>
+      {/* 1. Search Bar with Map View Icon (Flutter home.dart parity) */}
+      <div className="px-4 pt-1 pb-3">
+        <div className="d-flex align-items-center gap-2">
+          <form onSubmit={handleSearchSubmit} className="flex-grow-1">
+            <div
+              className="d-flex align-items-center bg-white px-3"
+              style={{
+                height: '48px',
+                border: '1px solid #EAECF0',
+                borderRadius: '8px',
+                cursor: 'text',
+              }}
+              onClick={() => onGoToSearch(searchInput)}
+            >
+              <i
+                className="las la-search me-2"
+                style={{ color: '#7E7E7E', fontSize: '20px' }}
+              ></i>
+              <input
+                type="text"
+                placeholder="Search services"
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                style={{
+                  border: 'none',
+                  outline: 'none',
+                  background: 'transparent',
+                  color: '#101828',
+                  fontSize: '14px',
+                  width: '100%',
+                }}
+              />
+            </div>
+          </form>
 
-      {/* Map View Toggle Pill */}
-      <div className="px-3 py-1 d-flex justify-content-end">
-        <button
-          type="button"
-          onClick={onOpenMapView}
-          className="btn btn-sm d-flex align-items-center gap-1.5 px-3 py-1.5 rounded-pill text-white fw-bold shadow-sm"
-          style={{
-            backgroundColor: '#0f172a',
-            fontSize: '12px',
-          }}
-        >
-          <i className="las la-map-marked-alt text-success fs-6"></i>
-          <span>Nearby Artisans Map</span>
-        </button>
-      </div>
-
-      {/* Promotional Banners Carousel (Flutter SliderHome) */}
-      {banners.length > 0 && (
-        <div className="px-3 py-2">
-          <div
-            className="position-relative overflow-hidden rounded-4 text-white shadow-sm"
+          {/* Map View Toggle Button (Flutter HomeMapView parity) */}
+          <button
+            type="button"
+            onClick={onOpenMapView}
+            className="btn d-flex align-items-center justify-content-center p-0 flex-shrink-0"
+            title="Interactive Map View"
             style={{
-              height: '160px',
-              backgroundColor: '#1e293b',
-              backgroundImage: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.7)), url(${banners[activeBannerIdx]?.image})`,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-              padding: '16px',
+              width: '48px',
+              height: '48px',
+              border: '1px solid #EAECF0',
+              borderRadius: '8px',
+              backgroundColor: '#FFFFFF',
             }}
           >
-            <div>
-              {banners[activeBannerIdx]?.badge && (
-                <span className="badge bg-success small mb-1" style={{ fontSize: '10.5px' }}>
-                  {banners[activeBannerIdx].badge}
-                </span>
-              )}
-              <h5 className="fw-bold mb-1 text-white text-truncate" style={{ fontSize: '16px' }}>
-                {banners[activeBannerIdx]?.title}
-              </h5>
-              <p className="small text-white-50 text-truncate mb-0" style={{ fontSize: '12px', maxWidth: '85%' }}>
-                {banners[activeBannerIdx]?.subtitle}
-              </p>
-            </div>
+            <div
+              style={{
+                width: '22px',
+                height: '22px',
+                backgroundColor: '#475467',
+                maskImage: 'url(/assets/flutter/svg/map.svg)',
+                WebkitMaskImage: 'url(/assets/flutter/svg/map.svg)',
+                maskSize: 'contain',
+                WebkitMaskSize: 'contain',
+                maskRepeat: 'no-repeat',
+                WebkitMaskRepeat: 'no-repeat',
+                maskPosition: 'center',
+                WebkitMaskPosition: 'center',
+              }}
+            />
+          </button>
+        </div>
+      </div>
 
-            <div className="d-flex align-items-center justify-content-between">
-              <button
-                type="button"
-                onClick={() => onGoToSearch('', banners[activeBannerIdx]?.link_value)}
-                className="btn btn-sm btn-light rounded-pill px-3 py-1 fw-bold text-dark"
-                style={{ fontSize: '12px' }}
+      {/* Flutter Divider: 1px solid #F0F0F0 */}
+      <div style={{ height: '1px', backgroundColor: '#F0F0F0', width: '100%', marginBottom: '20px' }}></div>
+
+      {/* 2. Banner Slider (Flutter SliderHome parity: height 175px, viewport 90%, borderRadius 10px) */}
+      {banners.length > 0 && (
+        <div className="px-4 mb-4">
+          <div
+            className="position-relative overflow-hidden"
+            style={{
+              height: '175px',
+              borderRadius: '10px',
+              boxShadow: '0 4px 15px rgba(0, 0, 0, 0.04)',
+            }}
+          >
+            {banners.map((banner, idx) => (
+              <div
+                key={banner.id || idx}
+                className="position-absolute top-0 start-0 w-100 h-100 cursor-pointer"
+                style={{
+                  opacity: activeBannerIdx === idx ? 1 : 0,
+                  transition: 'opacity 0.5s ease-in-out',
+                  pointerEvents: activeBannerIdx === idx ? 'auto' : 'none',
+                }}
+                onClick={() => onGoToSearch('', banner.link)}
               >
-                Book Now &rarr;
-              </button>
-
-              {/* Dots */}
-              <div className="d-flex gap-1.5">
-                {banners.map((_, idx) => (
-                  <div
-                    key={idx}
-                    onClick={() => setActiveBannerIdx(idx)}
+                <img
+                  src={banner.image || '/assets/uploads/media-uploader/banner11638279446.png'}
+                  alt={banner.title}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = '/assets/uploads/media-uploader/banner11638279446.png';
+                  }}
+                />
+                <div
+                  className="position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-start"
+                  style={{
+                    padding: '20px 25px',
+                    background: 'linear-gradient(90deg, rgba(255,255,255,0.92) 0%, rgba(255,255,255,0.7) 55%, transparent 100%)',
+                  }}
+                >
+                  <strong
                     style={{
-                      width: activeBannerIdx === idx ? '16px' : '6px',
+                      color: '#475467',
+                      fontSize: '20px',
+                      fontWeight: 700,
+                      maxWidth: '65%',
+                      lineHeight: 1.25,
+                    }}
+                  >
+                    {banner.title}
+                  </strong>
+                  <span
+                    className="mt-1"
+                    style={{
+                      color: '#475467',
+                      fontSize: '13px',
+                      maxWidth: '60%',
+                      lineHeight: 1.3,
+                    }}
+                  >
+                    {banner.subtitle}
+                  </span>
+                </div>
+              </div>
+            ))}
+
+            {/* Slider Dots */}
+            {banners.length > 1 && (
+              <div
+                className="position-absolute bottom-0 start-0 end-0 d-flex justify-content-center gap-1.5 pb-2"
+                style={{ zIndex: 2 }}
+              >
+                {banners.map((_, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => setActiveBannerIdx(idx)}
+                    className="border-0 p-0"
+                    style={{
+                      width: activeBannerIdx === idx ? '18px' : '6px',
                       height: '6px',
                       borderRadius: '3px',
-                      backgroundColor: activeBannerIdx === idx ? '#fff' : 'rgba(255,255,255,0.4)',
-                      transition: 'all 0.2s ease',
+                      backgroundColor: activeBannerIdx === idx ? 'var(--main-color-one, #1DBF73)' : '#cbd5e1',
+                      transition: 'all 0.25s ease',
                       cursor: 'pointer',
                     }}
-                  ></div>
+                  />
                 ))}
               </div>
-            </div>
+            )}
           </div>
         </div>
       )}
 
-      {/* Browse Categories (Horizontal Chips) */}
-      <div className="pt-3">
-        <div className="d-flex align-items-center justify-content-between px-3 mb-2">
-          <strong style={{ fontSize: '15px', color: '#1e293b' }}>Browse Categories</strong>
+      {/* 3. Browse Categories Section (Flutter Categories parity) */}
+      <div className="mb-4">
+        <div className="d-flex align-items-center justify-content-between px-4 mb-3">
+          <strong style={{ color: '#475467', fontSize: '17px', fontWeight: 700 }}>
+            Browse categories
+          </strong>
           <button
             type="button"
             onClick={() => onGoToSearch()}
-            className="btn btn-sm btn-link p-0 text-decoration-none text-success fw-semibold"
-            style={{ fontSize: '12.5px' }}
+            className="btn btn-sm btn-link p-0 text-decoration-none d-flex align-items-center gap-1"
+            style={{ color: 'var(--main-color-one, #1DBF73)', fontSize: '15px', fontWeight: 600 }}
           >
-            See all &rarr;
+            See all
+            <i className="las la-angle-right" style={{ fontSize: '14px' }}></i>
           </button>
         </div>
 
+        {/* Categories Horizontal Scroller (100px width, 104px height, 9px radius, #EAECF0 border) */}
         <div
-          className="d-flex gap-2.5 px-3 overflow-x-auto pb-2"
+          className="d-flex gap-3 px-4 overflow-x-auto pb-1"
           style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}
         >
-          {categories.slice(0, 8).map((cat) => (
-            <button
-              key={cat.id}
-              type="button"
+          {categories.slice(0, 10).map((cat, i) => (
+            <div
+              key={cat.id || i}
               onClick={() => onGoToSearch('', cat.slug)}
-              className="btn btn-light d-flex flex-column align-items-center justify-content-center p-2 rounded-3 border flex-shrink-0"
+              className="d-flex flex-column align-items-center justify-content-center cursor-pointer flex-shrink-0"
               style={{
-                width: '78px',
-                height: '78px',
-                backgroundColor: '#ffffff',
-                borderColor: '#e2e8f0',
-                boxShadow: '0 2px 6px rgba(0,0,0,0.03)',
+                width: '100px',
+                height: '104px',
+                border: '1px solid #EAECF0',
+                borderRadius: '9px',
+                padding: '10px 13px',
+                backgroundColor: '#FFFFFF',
+                cursor: 'pointer',
+                textAlign: 'center',
               }}
             >
               <div
@@ -225,151 +341,372 @@ export default function MobileHomeScreen({
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontSize: '18px',
-                  marginBottom: '4px',
+                  fontSize: '20px',
+                  marginBottom: '6px',
+                  flexShrink: 0,
                 }}
               >
                 <i className={cat.icon || 'las la-tools'}></i>
               </div>
               <span
-                className="text-truncate text-dark fw-semibold"
-                style={{ fontSize: '11px', maxWidth: '70px', textAlign: 'center' }}
+                style={{
+                  color: '#475467',
+                  fontSize: '13px',
+                  lineHeight: 1.3,
+                  fontWeight: 400,
+                  display: '-webkit-box',
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: 'vertical',
+                  overflow: 'hidden',
+                  textAlign: 'center',
+                }}
               >
                 {cat.name}
               </span>
-            </button>
+            </div>
           ))}
         </div>
       </div>
 
-      {/* Top Rated Services Reel (Flutter TopRatedServices) */}
-      <div className="pt-3">
-        <div className="d-flex align-items-center justify-content-between px-3 mb-2">
-          <strong style={{ fontSize: '15px', color: '#1e293b' }}>Top Rated Services</strong>
+      {/* 4. Top Booked Services Section (Flutter TopRatedServices & ServiceCard parity) */}
+      <div className="mb-4">
+        <div className="d-flex align-items-center justify-content-between px-4 mb-3">
+          <strong style={{ color: '#475467', fontSize: '17px', fontWeight: 700 }}>
+            Top booked services
+          </strong>
           <button
             type="button"
             onClick={() => onGoToSearch()}
-            className="btn btn-sm btn-link p-0 text-decoration-none text-success fw-semibold"
-            style={{ fontSize: '12.5px' }}
+            className="btn btn-sm btn-link p-0 text-decoration-none d-flex align-items-center gap-1"
+            style={{ color: 'var(--main-color-one, #1DBF73)', fontSize: '15px', fontWeight: 600 }}
           >
-            View all
+            See all
+            <i className="las la-angle-right" style={{ fontSize: '14px' }}></i>
           </button>
         </div>
 
+        {/* Horizontal Service Cards Reel */}
         <div
-          className="d-flex gap-3 px-3 overflow-x-auto pb-2"
+          className="d-flex gap-3 px-4 overflow-x-auto pb-2"
           style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}
         >
-          {topRatedServices.map((service) => (
-            <Link
-              key={service.id}
-              href={`/service-list/${service.slug}`}
-              className="text-decoration-none bg-white rounded-3 border shadow-sm flex-shrink-0 overflow-hidden"
-              style={{ width: '210px' }}
-            >
-              <div style={{ height: '115px', position: 'relative', backgroundColor: '#f1f5f9' }}>
-                <img
-                  src={
-                    service.image?.startsWith('/assets')
-                      ? service.image
-                      : '/assets/uploads/media-uploader/banner11638279446.png'
-                  }
-                  alt={service.title}
-                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                />
-                <div
-                  className="position-absolute bottom-0 start-0 m-2 px-2 py-0.5 rounded-pill bg-white shadow-sm small fw-bold text-dark d-flex align-items-center gap-1"
-                  style={{ fontSize: '10.5px' }}
+          {topRatedServices.map((service) => {
+            const isSaved = savedServiceIds.has(Number(service.id));
+            return (
+              <div
+                key={service.id}
+                className="bg-white flex-shrink-0"
+                style={{
+                  width: 'calc(100vw - 85px)',
+                  maxWidth: '310px',
+                  border: '1px solid #EAECF0',
+                  borderRadius: '9px',
+                  padding: '15px 13px 10px 13px',
+                  backgroundColor: '#FFFFFF',
+                }}
+              >
+                {/* Upper: ServiceCardContents (Thumbnail 75x78, Rating pill, Title & By seller) */}
+                <Link
+                  href={`/service-list/${service.slug}`}
+                  className="d-flex text-decoration-none"
+                  style={{ gap: '13px', alignItems: 'flex-start' }}
                 >
-                  <i className="las la-star text-warning"></i> {service.rating || 5.0}
-                </div>
-              </div>
+                  <div className="position-relative flex-shrink-0" style={{ width: '75px', height: '78px' }}>
+                    <img
+                      src={service.image || '/assets/uploads/media-uploader/banner11638279446.png'}
+                      alt={service.title}
+                      style={{
+                        width: '75px',
+                        height: '78px',
+                        objectFit: 'cover',
+                        borderRadius: '8px',
+                      }}
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = '/assets/uploads/media-uploader/banner11638279446.png';
+                      }}
+                    />
 
-              <div className="p-2.5">
-                <span className="text-muted d-block small text-truncate" style={{ fontSize: '11px' }}>
-                  {service.seller?.name || 'Verified Artisan'}
-                </span>
-                <strong className="d-block text-dark text-truncate mt-0.5" style={{ fontSize: '13px' }}>
-                  {service.title}
-                </strong>
-                <div className="d-flex align-items-baseline justify-content-between mt-2">
-                  <span className="fw-bold text-success" style={{ fontSize: '14.5px', color: 'var(--main-color-one, #1DBF73)' }}>
-                    ₦{Number(service.price || 0).toLocaleString()}
-                  </span>
-                  <span className="badge bg-light text-muted border small" style={{ fontSize: '10px' }}>
-                    Book
-                  </span>
-                </div>
-              </div>
-            </Link>
-          ))}
-        </div>
-      </div>
+                    {/* Overlapping Yellow Rating Badge (Flutter parity) */}
+                    <div
+                      className="position-absolute d-flex align-items-center gap-1"
+                      style={{
+                        bottom: '-10px',
+                        left: '8px',
+                        backgroundColor: '#FFC300',
+                        border: '2px solid #FFFFFF',
+                        borderRadius: '4px',
+                        padding: '2px 5px',
+                        color: '#475467',
+                        fontSize: '11.5px',
+                        fontWeight: 600,
+                        lineHeight: 1,
+                      }}
+                    >
+                      <i className="las la-star" style={{ fontSize: '11px', color: '#475467' }}></i>
+                      <span>{Number(service.rating || 5.0).toFixed(1)}</span>
+                    </div>
+                  </div>
 
-      {/* Recent Services Feed (Flutter RecentServices) */}
-      <div className="pt-3 px-3">
-        <div className="d-flex align-items-center justify-content-between mb-2">
-          <strong style={{ fontSize: '15px', color: '#1e293b' }}>Recent Services</strong>
-          <span className="text-muted small">{recentServices.length} available</span>
-        </div>
+                  <div className="flex-grow-1 min-w-0">
+                    <strong
+                      style={{
+                        color: '#475467',
+                        fontSize: '15px',
+                        fontWeight: 600,
+                        lineHeight: 1.35,
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden',
+                      }}
+                    >
+                      {service.title}
+                    </strong>
 
-        <div className="d-flex flex-column gap-2.5">
-          {recentServices.map((service) => (
-            <Link
-              key={service.id}
-              href={`/service-list/${service.slug}`}
-              className="text-decoration-none bg-white rounded-3 border p-2.5 d-flex align-items-center justify-content-between gap-3 shadow-sm"
-              style={{ transition: 'transform 0.1s' }}
-            >
-              <div className="d-flex align-items-center gap-2.5 min-w-0">
-                <div
-                  style={{
-                    width: '60px',
-                    height: '60px',
-                    borderRadius: '10px',
-                    overflow: 'hidden',
-                    backgroundColor: '#f1f5f9',
-                    flexShrink: 0,
-                  }}
-                >
-                  <img
-                    src={
-                      service.image?.startsWith('/assets')
-                        ? service.image
-                        : '/assets/uploads/media-uploader/banner11638279446.png'
-                    }
-                    alt={service.title}
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                  />
-                </div>
+                    <div className="d-flex align-items-center gap-1 mt-2">
+                      <span style={{ color: 'rgba(71, 84, 103, 0.6)', fontSize: '13px', fontWeight: 400 }}>
+                        by:
+                      </span>
+                      <span
+                        className="text-truncate"
+                        style={{ color: '#475467', fontSize: '13px', fontWeight: 600, maxWidth: '140px' }}
+                      >
+                        {service.seller?.name || 'Verified Artisan'}
+                      </span>
+                    </div>
+                  </div>
+                </Link>
 
-                <div className="min-w-0">
-                  <strong className="d-block text-dark text-truncate" style={{ fontSize: '13.5px' }}>
-                    {service.title}
-                  </strong>
-                  <span className="d-block text-muted small text-truncate" style={{ fontSize: '11.5px' }}>
-                    {service.city || 'Lagos'} &bull; {service.seller?.name || 'Artisan'}
-                  </span>
-                  <div className="d-flex align-items-center gap-1 text-warning small mt-0.5" style={{ fontSize: '11px' }}>
-                    <i className="las la-star"></i>
-                    <span className="text-muted text-dark fw-semibold">{service.rating || 4.9}</span>
+                {/* Divider between Content & Bottom Price Row */}
+                <div style={{ height: '1px', backgroundColor: '#F0F0F0', margin: '20px 0 10px 0' }} />
+
+                {/* Bottom: Starts from Price & Book Now / Save buttons */}
+                <div className="d-flex align-items-center justify-content-between">
+                  <div className="d-flex align-items-baseline gap-1.5">
+                    <span style={{ color: 'rgba(71, 84, 103, 0.6)', fontSize: '12.5px', fontWeight: 400 }}>
+                      Starts from:
+                    </span>
+                    <strong style={{ color: '#475467', fontSize: '18px', fontWeight: 700 }}>
+                      ₦{Number(service.price || 0).toLocaleString()}
+                    </strong>
+                  </div>
+
+                  <div className="d-flex align-items-center gap-2">
+                    {/* Bookmark Toggle */}
+                    <button
+                      type="button"
+                      onClick={(e) => toggleSaveService(service, e)}
+                      className="btn p-0 d-flex align-items-center justify-content-center"
+                      style={{
+                        width: '32px',
+                        height: '32px',
+                        border: '1px solid #EAECF0',
+                        borderRadius: '6px',
+                        backgroundColor: '#FFFFFF',
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: '16px',
+                          height: '16px',
+                          backgroundColor: isSaved ? '#FF6B2C' : '#475467',
+                          maskImage: `url(/assets/flutter/svg/${isSaved ? 'saved-fill-icon.svg' : 'saved-icon.svg'})`,
+                          WebkitMaskImage: `url(/assets/flutter/svg/${isSaved ? 'saved-fill-icon.svg' : 'saved-icon.svg'})`,
+                          maskSize: 'contain',
+                          WebkitMaskSize: 'contain',
+                          maskRepeat: 'no-repeat',
+                          WebkitMaskRepeat: 'no-repeat',
+                          maskPosition: 'center',
+                          WebkitMaskPosition: 'center',
+                        }}
+                      />
+                    </button>
+
+                    {/* Book Now Button */}
+                    <Link
+                      href={`/service-list/book/${service.slug}`}
+                      className="btn btn-sm fw-medium text-white px-3 py-1.5"
+                      style={{
+                        backgroundColor: 'var(--main-color-one, #1DBF73)',
+                        borderRadius: '6px',
+                        fontSize: '13px',
+                        fontWeight: 500,
+                      }}
+                    >
+                      Book Now
+                    </Link>
                   </div>
                 </div>
               </div>
+            );
+          })}
+        </div>
+      </div>
 
-              <div className="text-end flex-shrink-0">
-                <span className="d-block fw-bold text-success" style={{ fontSize: '14.5px', color: 'var(--main-color-one, #1DBF73)' }}>
-                  ₦{Number(service.price || 0).toLocaleString()}
-                </span>
-                <span className="btn btn-sm btn-outline-success rounded-pill px-2.5 py-0.5 fw-semibold mt-1" style={{ fontSize: '11px' }}>
-                  View
-                </span>
+      {/* 5. Recently Listed Services Section (Flutter RecentServices parity) */}
+      <div className="px-4 mb-4">
+        <div className="d-flex align-items-center justify-content-between mb-3">
+          <strong style={{ color: '#475467', fontSize: '17px', fontWeight: 700 }}>
+            Recently listed
+          </strong>
+          <button
+            type="button"
+            onClick={() => onGoToSearch()}
+            className="btn btn-sm btn-link p-0 text-decoration-none d-flex align-items-center gap-1"
+            style={{ color: 'var(--main-color-one, #1DBF73)', fontSize: '15px', fontWeight: 600 }}
+          >
+            See all
+            <i className="las la-angle-right" style={{ fontSize: '14px' }}></i>
+          </button>
+        </div>
+
+        {/* Vertical Recent Services List */}
+        <div className="d-flex flex-column gap-3">
+          {recentServices.map((service) => {
+            const isSaved = savedServiceIds.has(Number(service.id));
+            return (
+              <div
+                key={service.id}
+                className="bg-white"
+                style={{
+                  width: '100%',
+                  border: '1px solid #EAECF0',
+                  borderRadius: '9px',
+                  padding: '15px 13px 10px 13px',
+                  backgroundColor: '#FFFFFF',
+                }}
+              >
+                <Link
+                  href={`/service-list/${service.slug}`}
+                  className="d-flex text-decoration-none"
+                  style={{ gap: '13px', alignItems: 'flex-start' }}
+                >
+                  <div className="position-relative flex-shrink-0" style={{ width: '75px', height: '78px' }}>
+                    <img
+                      src={service.image || '/assets/uploads/media-uploader/banner11638279446.png'}
+                      alt={service.title}
+                      style={{
+                        width: '75px',
+                        height: '78px',
+                        objectFit: 'cover',
+                        borderRadius: '8px',
+                      }}
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = '/assets/uploads/media-uploader/banner11638279446.png';
+                      }}
+                    />
+
+                    <div
+                      className="position-absolute d-flex align-items-center gap-1"
+                      style={{
+                        bottom: '-10px',
+                        left: '8px',
+                        backgroundColor: '#FFC300',
+                        border: '2px solid #FFFFFF',
+                        borderRadius: '4px',
+                        padding: '2px 5px',
+                        color: '#475467',
+                        fontSize: '11.5px',
+                        fontWeight: 600,
+                        lineHeight: 1,
+                      }}
+                    >
+                      <i className="las la-star" style={{ fontSize: '11px', color: '#475467' }}></i>
+                      <span>{Number(service.rating || 5.0).toFixed(1)}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex-grow-1 min-w-0">
+                    <strong
+                      style={{
+                        color: '#475467',
+                        fontSize: '15px',
+                        fontWeight: 600,
+                        lineHeight: 1.35,
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden',
+                      }}
+                    >
+                      {service.title}
+                    </strong>
+
+                    <div className="d-flex align-items-center gap-1 mt-2">
+                      <span style={{ color: 'rgba(71, 84, 103, 0.6)', fontSize: '13px', fontWeight: 400 }}>
+                        by:
+                      </span>
+                      <span
+                        className="text-truncate"
+                        style={{ color: '#475467', fontSize: '13px', fontWeight: 600, maxWidth: '180px' }}
+                      >
+                        {service.seller?.name || 'Verified Artisan'}
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+
+                <div style={{ height: '1px', backgroundColor: '#F0F0F0', margin: '20px 0 10px 0' }} />
+
+                <div className="d-flex align-items-center justify-content-between">
+                  <div className="d-flex align-items-baseline gap-1.5">
+                    <span style={{ color: 'rgba(71, 84, 103, 0.6)', fontSize: '12.5px', fontWeight: 400 }}>
+                      Starts from:
+                    </span>
+                    <strong style={{ color: '#475467', fontSize: '18px', fontWeight: 700 }}>
+                      ₦{Number(service.price || 0).toLocaleString()}
+                    </strong>
+                  </div>
+
+                  <div className="d-flex align-items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={(e) => toggleSaveService(service, e)}
+                      className="btn p-0 d-flex align-items-center justify-content-center"
+                      style={{
+                        width: '32px',
+                        height: '32px',
+                        border: '1px solid #EAECF0',
+                        borderRadius: '6px',
+                        backgroundColor: '#FFFFFF',
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: '16px',
+                          height: '16px',
+                          backgroundColor: isSaved ? '#FF6B2C' : '#475467',
+                          maskImage: `url(/assets/flutter/svg/${isSaved ? 'saved-fill-icon.svg' : 'saved-icon.svg'})`,
+                          WebkitMaskImage: `url(/assets/flutter/svg/${isSaved ? 'saved-fill-icon.svg' : 'saved-icon.svg'})`,
+                          maskSize: 'contain',
+                          WebkitMaskSize: 'contain',
+                          maskRepeat: 'no-repeat',
+                          WebkitMaskRepeat: 'no-repeat',
+                          maskPosition: 'center',
+                          WebkitMaskPosition: 'center',
+                        }}
+                      />
+                    </button>
+
+                    <Link
+                      href={`/service-list/book/${service.slug}`}
+                      className="btn btn-sm fw-medium text-white px-3 py-1.5"
+                      style={{
+                        backgroundColor: 'var(--main-color-one, #1DBF73)',
+                        borderRadius: '6px',
+                        fontSize: '13px',
+                        fontWeight: 500,
+                      }}
+                    >
+                      Book Now
+                    </Link>
+                  </div>
+                </div>
               </div>
-            </Link>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>
   );
 }
-
