@@ -133,22 +133,6 @@ export default function HeroLocationSearch() {
           boxShadow: '0 8px 30px rgba(0,0,0,0.08)',
         }}
       >
-        {/* Country (Locked to Nigeria) */}
-        <div
-          className="d-flex align-items-center px-3 py-2 bg-light rounded-3 text-nowrap"
-          style={{
-            fontSize: '13.5px',
-            fontWeight: 600,
-            color: '#1e293b',
-            cursor: 'default',
-            userSelect: 'none',
-          }}
-          title="Service coverage restricted to Nigeria"
-        >
-          <span className="me-2" style={{ fontSize: '17px' }}>🇳🇬</span>
-          <span>Nigeria</span>
-        </div>
-
         {/* City / State Selector (PHP Parity: search_by_location) */}
         <div
           className="d-flex align-items-center px-2 flex-grow-0"
@@ -245,7 +229,7 @@ export default function HeroLocationSearch() {
         >
           <div className="p-2 border-bottom bg-light d-flex justify-content-between align-items-center">
             <span className="small text-muted fw-bold">
-              Matching Services {selectedCity ? `in ${selectedCity}` : 'in Nigeria'}
+              Matching Services {selectedCity ? `in ${selectedCity}` : ''}
             </span>
             <span className="badge bg-success small">{results.length} found</span>
           </div>
@@ -318,7 +302,7 @@ export default function HeroLocationSearch() {
               onClick={() => setShowDropdown(false)}
               className="small fw-semibold text-success text-decoration-none"
             >
-              See all matching services in Nigeria &rarr;
+              See all matching services &rarr;
             </Link>
           </div>
         </div>
