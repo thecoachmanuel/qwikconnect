@@ -328,22 +328,39 @@ export default function Navbar({ sessionUser, siteLogo, siteTitle, settings }: N
 
   // Close dropdowns when clicking outside
   useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (accountRef.current && !accountRef.current.contains(e.target as Node)) {
+    function handleClickOutside(e: MouseEvent | TouchEvent) {
+      const target = e.target as HTMLElement;
+      if (!target) return;
+
+      // Do not close if clicking/tapping inside the active dropdowns or modals
+      if (
+        target.closest('.qixer-mobile-notif-modal') ||
+        target.closest('.qixer-mobile-account-modal') ||
+        target.closest('.account-dropdown-menu') ||
+        target.closest('.notification-list-wrapper')
+      ) {
+        return;
+      }
+
+      if (accountRef.current && !accountRef.current.contains(target)) {
         setIsAccountOpen(false);
       }
-      if (mobileAccountRef.current && !mobileAccountRef.current.contains(e.target as Node)) {
+      if (mobileAccountRef.current && !mobileAccountRef.current.contains(target)) {
         setIsMobileAccountOpen(false);
       }
-      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
+      if (notifRef.current && !notifRef.current.contains(target)) {
         setIsNotifOpen(false);
       }
-      if (mobileNotifRef.current && !mobileNotifRef.current.contains(e.target as Node)) {
+      if (mobileNotifRef.current && !mobileNotifRef.current.contains(target)) {
         setIsMobileNotifOpen(false);
       }
     }
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside, { passive: true });
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
   }, []);
 
   const navLinks = [
@@ -942,49 +959,6 @@ export default function Navbar({ sessionUser, siteLogo, siteTitle, settings }: N
           }}
         >
           {/* Mobile Header Brand & Controls */}
-          <style>{`
-            .qixer-site-logo {
-              max-height: 44px;
-              max-width: 200px;
-              width: auto;
-              height: auto;
-              object-fit: contain;
-              transition: max-height 0.25s ease, max-width 0.25s ease;
-            }
-            @media (max-width: 991px) {
-              .responsive-mobile-menu {
-                display: flex !important;
-                align-items: center !important;
-                justify-content: space-between !important;
-                width: 100% !important;
-                max-width: 100% !important;
-                gap: 6px !important;
-                flex-wrap: nowrap !important;
-                overflow: hidden !important;
-              }
-              .responsive-mobile-menu .logo-wrapper {
-                flex: 0 1 auto !important;
-                min-width: 0 !important;
-                overflow: hidden !important;
-              }
-              .qixer-site-logo {
-                max-height: 32px !important;
-                max-width: 135px !important;
-              }
-            }
-            @media (max-width: 420px) {
-              .qixer-site-logo {
-                max-height: 28px !important;
-                max-width: 110px !important;
-              }
-            }
-            @media (max-width: 350px) {
-              .qixer-site-logo {
-                max-height: 25px !important;
-                max-width: 90px !important;
-              }
-            }
-          `}</style>
           <div className="responsive-mobile-menu">
             <div className="logo-wrapper">
               <Link href="/" className="logo" style={{ display: 'inline-flex', alignItems: 'center' }}>
@@ -992,13 +966,27 @@ export default function Navbar({ sessionUser, siteLogo, siteTitle, settings }: N
                   <img
                     src={siteLogo}
                     alt={siteTitle || "QwikConnect Logo"}
-                    className="qixer-site-logo"
+                    style={{
+                      maxHeight: isScrolled ? '46px' : '52px',
+                      maxWidth: '280px',
+                      width: 'auto',
+                      height: 'auto',
+                      transition: 'max-height 0.25s ease',
+                      objectFit: 'contain',
+                    }}
                   />
                 ) : (
                   <img
                     src="/assets/uploads/media-uploader/logo-footer1642310896.png"
                     alt={siteTitle || "QwikConnect Logo"}
-                    className="qixer-site-logo"
+                    style={{
+                      maxHeight: isScrolled ? '46px' : '52px',
+                      maxWidth: '280px',
+                      width: 'auto',
+                      height: 'auto',
+                      transition: 'max-height 0.25s ease',
+                      objectFit: 'contain',
+                    }}
                   />
                 )}
               </Link>
@@ -1006,13 +994,14 @@ export default function Navbar({ sessionUser, siteLogo, siteTitle, settings }: N
 
             {/* Mobile Account & Notification Controls */}
             <div className="onlymobile-device-account-navbar navtwo">
-              <div className="onlymobile-device-account-navbar-flex" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <div className="onlymobile-device-account-navbar-flex" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 {isLoggedIn && (
                   <div ref={mobileNotifRef} className="notification-icon icon" style={{ position: 'relative' }}>
                     <button
                       type="button"
-                      onClick={() => {
-                        setIsMobileNotifOpen(!isMobileNotifOpen);
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsMobileNotifOpen((prev) => !prev);
                         setIsMobileAccountOpen(false);
                         setIsNotifOpen(false);
                       }}
@@ -1031,7 +1020,7 @@ export default function Navbar({ sessionUser, siteLogo, siteTitle, settings }: N
                       }}
                       aria-label="View notifications"
                     >
-                      <i className="las la-bell" style={{ fontSize: '22px', color: '#334155' }} />
+                      <i className="las la-bell" style={{ fontSize: '24px', color: '#334155' }} />
                       {unreadCount > 0 && (
                         <span
                           className="notification-number style-02"
@@ -1056,75 +1045,44 @@ export default function Navbar({ sessionUser, siteLogo, siteTitle, settings }: N
                         </span>
                       )}
                     </button>
-                    {isMobileNotifOpen && renderNotificationModal(true)}
                   </div>
                 )}
 
-                {/* Mobile User Avatar with Dropdown/Modal */}
+                {/* Mobile User Avatar & Account Trigger */}
                 <div ref={mobileAccountRef} className="navbar-right-inner" style={{ position: 'relative' }}>
                   <div className="login-account">
                     {isLoggedIn ? (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setIsMobileAccountOpen(!isMobileAccountOpen);
+                      <div
+                        className="info-bar-item-two"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setIsMobileAccountOpen((prev) => !prev);
                           setIsMobileNotifOpen(false);
                           setIsAccountOpen(false);
                         }}
-                        aria-label="User Account Menu"
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          padding: 0,
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          outline: 'none',
-                        }}
+                        style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                        role="button"
+                        tabIndex={0}
+                        aria-label="User account menu"
                       >
-                        <div
-                          className="author-thumb"
-                          style={{
-                            width: '34px',
-                            height: '34px',
-                            borderRadius: '50%',
-                            overflow: 'hidden',
-                            border: '2px solid var(--main-color-one)',
-                            boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                          }}
-                        >
+                        <div className="author-thumb">
                           <img
                             src={currentDisplayImage}
                             alt={currentDisplayName}
-                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                           />
                         </div>
-                      </button>
+                        <a className="accounts loggedin" href="javascript:void(0)" onClick={(e) => e.preventDefault()}>
+                          <span className="title">{currentDisplayName}</span>
+                        </a>
+                      </div>
                     ) : (
-                      <Link
-                        href="/user/login"
-                        className="accounts"
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '3px',
-                          color: 'var(--main-color-one)',
-                          fontWeight: 600,
-                          fontSize: '13px',
-                          padding: '4px 6px',
-                          textDecoration: 'none',
-                        }}
-                        aria-label="Sign in"
-                      >
-                        <i className="las la-user-circle" style={{ fontSize: '24px' }}></i>
+                      <Link href="/user/login" className="accounts">
+                        <span className="account">Sign In</span>
+                        <i className="las la-user"></i>
                       </Link>
                     )}
                   </div>
-
-                  {isMobileAccountOpen && renderAccountModal(true)}
                 </div>
               </div>
             </div>
@@ -1213,7 +1171,18 @@ export default function Navbar({ sessionUser, siteLogo, siteTitle, settings }: N
               {/* Desktop User Account & Dropdown */}
               <div ref={accountRef} className="login-account" style={{ position: 'relative', zIndex: 10000 }}>
                 {isLoggedIn ? (
-                  <div className="info-bar-item-two">
+                  <div
+                    className="info-bar-item-two"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setIsAccountOpen((prev) => !prev);
+                      setIsNotifOpen(false);
+                    }}
+                    style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                    role="button"
+                    tabIndex={0}
+                    aria-label="User account dropdown"
+                  >
                     <div className="author-thumb">
                       <img
                         src={currentDisplayImage}
@@ -1225,7 +1194,8 @@ export default function Navbar({ sessionUser, siteLogo, siteTitle, settings }: N
                       href="javascript:void(0)"
                       onClick={(e) => {
                         e.preventDefault();
-                        setIsAccountOpen(!isAccountOpen);
+                        e.stopPropagation();
+                        setIsAccountOpen((prev) => !prev);
                       }}
                     >
                       <span className="title">{currentDisplayName}</span>
@@ -1380,8 +1350,12 @@ export default function Navbar({ sessionUser, siteLogo, siteTitle, settings }: N
       {/* Mobile Notification Modal (Rendered at Header Root to prevent transform trapping) */}
       {isMobileNotifOpen && renderNotificationModal(true)}
 
+      {/* Mobile Account Modal (Rendered at Header Root to prevent transform trapping) */}
+      {isMobileAccountOpen && renderAccountModal(true)}
+
       <style jsx global>{`
-        .qixer-mobile-notif-modal {
+        .qixer-mobile-notif-modal,
+        .qixer-mobile-account-modal {
           transform: none !important;
           -webkit-transform: none !important;
         }
