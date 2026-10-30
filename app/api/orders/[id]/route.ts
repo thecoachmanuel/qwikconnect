@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
-import { getOrders, getUsers, getServices, updateOrderStatus } from '@/lib/mongodb';
+import { getOrders, getUsers, getServices, updateOrderStatus, getExtraServices } from '@/lib/mongodb';
 
 export async function GET(
   request: NextRequest,
@@ -75,6 +75,8 @@ export async function GET(
     const buyer = (allUsers as any[]).find((u: any) => Number(u.id) === Number(order.buyer_id)) || order.buyer || { name: order.name || 'Customer', email: order.email, phone: order.phone };
     const service = (allServices as any[]).find((s: any) => Number(s.id) === Number(order.service_id)) || order.service || { title: 'Service Booking', price: order.package_fee || order.total };
 
+    const extraServices = await getExtraServices(orderId);
+
     return NextResponse.json({
       order,
       service,
@@ -82,6 +84,7 @@ export async function GET(
       buyer,
       includes: order.includes || [],
       additionals: order.additionals || [],
+      extra_services: extraServices || [],
     });
   } catch (error: any) {
     console.error('Order detail fetch error:', error);

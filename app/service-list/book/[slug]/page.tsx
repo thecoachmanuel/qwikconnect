@@ -29,6 +29,11 @@ function BookingContent({ params }: BookingPageProps) {
           const data = await res.json();
           if (data.service) {
             setService(data.service);
+            const providerCity = data.service.city || data.service.seller?.service_city || 'Lagos';
+            setFormData((prev) => ({
+              ...prev,
+              city: prev.city || providerCity,
+            }));
           }
         }
       } catch (e) {
@@ -44,6 +49,9 @@ function BookingContent({ params }: BookingPageProps) {
     email: '',
     phone: '',
     address: '',
+    city: '',
+    area: '',
+    country: 'Nigeria',
     post_code: '',
     date: new Date().toISOString().split('T')[0],
     schedule: '09:00 AM - 12:00 PM',
@@ -227,6 +235,9 @@ function BookingContent({ params }: BookingPageProps) {
           email: formData.email,
           phone: formData.phone,
           address: formData.address,
+          city: formData.city || (service?.city || service?.seller?.service_city || 'Lagos'),
+          area: formData.area || '',
+          country: formData.country || 'Nigeria',
           post_code: formData.post_code,
           date: formData.date,
           schedule: formData.schedule,
@@ -446,17 +457,50 @@ function BookingContent({ params }: BookingPageProps) {
                     2. Contact Information & Service Address
                   </h4>
 
+                  {/* PHP Location Safeguard Notice */}
+                  <div
+                    className="alert alert-info d-flex align-items-center gap-3 p-3 mb-4 rounded-3"
+                    style={{ backgroundColor: '#f0f9ff', borderColor: '#bae6fd', color: '#0369a1' }}
+                  >
+                    <i className="las la-info-circle fs-3 flex-shrink-0" style={{ color: '#0284c7' }}></i>
+                    <div style={{ fontSize: '13.5px', lineHeight: 1.5 }}>
+                      <strong>Service Location Notice:</strong> This service provider operates primarily in{' '}
+                      <strong>{service?.city || service?.seller?.service_city || 'Lagos, Nigeria'}</strong>. Standard rates apply to service addresses within this coverage city.
+                    </div>
+                  </div>
+
                   <div className="row g-3">
                     <div className="col-md-6">
                       <label style={{ display: 'block', fontSize: '14px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
-                        Full Name *
+                        Country
                       </label>
                       <input
                         type="text"
-                        name="name"
-                        value={formData.name}
+                        name="country"
+                        value={formData.country}
+                        readOnly
+                        style={{
+                          width: '100%',
+                          height: '48px',
+                          padding: '0 16px',
+                          border: '1px solid #cbd5e1',
+                          borderRadius: '6px',
+                          fontSize: '14px',
+                          backgroundColor: '#f8fafc',
+                          color: '#64748b',
+                          cursor: 'not-allowed',
+                        }}
+                      />
+                    </div>
+
+                    <div className="col-md-6">
+                      <label style={{ display: 'block', fontSize: '14px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
+                        Service City / State *
+                      </label>
+                      <select
+                        name="city"
+                        value={formData.city || (service?.city || service?.seller?.service_city || 'Lagos')}
                         onChange={handleChange}
-                        placeholder="John Doe"
                         required
                         style={{
                           width: '100%',
@@ -466,43 +510,42 @@ function BookingContent({ params }: BookingPageProps) {
                           borderRadius: '6px',
                           fontSize: '14px',
                           outline: 'none',
+                          backgroundColor: '#fff',
                         }}
-                      />
+                      >
+                        <option value="Lagos">Lagos</option>
+                        <option value="Abuja">Abuja (FCT)</option>
+                        <option value="Port Harcourt">Port Harcourt (Rivers)</option>
+                        <option value="Ibadan">Ibadan (Oyo)</option>
+                        <option value="Benin City">Benin City (Edo)</option>
+                        <option value="Enugu">Enugu</option>
+                        <option value="Abeokuta">Abeokuta (Ogun)</option>
+                        <option value="Kano">Kano</option>
+                        <option value="Kaduna">Kaduna</option>
+                        <option value="Asaba">Asaba (Delta)</option>
+                        <option value="Warri">Warri (Delta)</option>
+                        <option value="Calabar">Calabar (Cross River)</option>
+                        <option value="Uyo">Uyo (Akwa Ibom)</option>
+                        <option value="Other">Other City (Cross-State)</option>
+                      </select>
+                      {formData.city && formData.city !== (service?.city || service?.seller?.service_city || 'Lagos') && (
+                        <small className="text-warning d-block mt-1" style={{ fontSize: '12px' }}>
+                          <i className="las la-exclamation-triangle me-1"></i>
+                          Provider is based in {service?.city || service?.seller?.service_city || 'Lagos'}. Booking in another city may require provider travel/logistics coordination.
+                        </small>
+                      )}
                     </div>
 
                     <div className="col-md-6">
                       <label style={{ display: 'block', fontSize: '14px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
-                        Email Address *
+                        Service Area / District / LGA *
                       </label>
                       <input
-                        type="email"
-                        name="email"
-                        value={formData.email}
+                        type="text"
+                        name="area"
+                        value={formData.area}
                         onChange={handleChange}
-                        placeholder="john@example.com"
-                        required
-                        style={{
-                          width: '100%',
-                          height: '48px',
-                          padding: '0 16px',
-                          border: '1px solid #cbd5e1',
-                          borderRadius: '6px',
-                          fontSize: '14px',
-                          outline: 'none',
-                        }}
-                      />
-                    </div>
-
-                    <div className="col-md-6">
-                      <label style={{ display: 'block', fontSize: '14px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
-                        Phone Number *
-                      </label>
-                      <input
-                        type="tel"
-                        name="phone"
-                        value={formData.phone}
-                        onChange={handleChange}
-                        placeholder="Enter phone number"
+                        placeholder="e.g. Ikeja, Lekki Phase 1, Garki, Wuse 2..."
                         required
                         style={{
                           width: '100%',
@@ -547,7 +590,7 @@ function BookingContent({ params }: BookingPageProps) {
                         name="address"
                         value={formData.address}
                         onChange={handleChange}
-                        placeholder="e.g. 15 Adeola Odeku Street, Victoria Island, Lagos"
+                        placeholder="e.g. 15 Adeola Odeku Street, Victoria Island"
                         required
                         style={{
                           width: '100%',

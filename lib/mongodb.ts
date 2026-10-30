@@ -1003,6 +1003,23 @@ const SEED_DATA = {
       created_at: new Date(Date.now() - 3600000 * 8).toISOString(),
     },
   ],
+  extra_services: [
+    {
+      id: 1,
+      order_id: 1,
+      title: 'Out-of-Zone Island Expressway Travel Surcharge',
+      quantity: 1,
+      price: 5000,
+      tax: 0,
+      sub_total: 5000,
+      total: 5000,
+      payment_gateway: 'paystack',
+      transaction_id: 'EXT-PAY-9831',
+      payment_status: 'complete',
+      status: 1,
+      created_at: new Date('2026-10-22').toISOString(),
+    },
+  ],
 };
 
 function ensureDataFile() {
@@ -1073,6 +1090,7 @@ export interface MongoStoreData {
   notifications?: any[];
   blogs?: any[];
   contact_messages?: any[];
+  extra_services?: any[];
 }
 
 function readDataFile(): MongoStoreData {
@@ -1088,6 +1106,10 @@ function readDataFile(): MongoStoreData {
     if (!parsed.seller_verifies) { parsed.seller_verifies = []; dirty = true; }
     if (!parsed.todos) { parsed.todos = SEED_DATA.todos; dirty = true; }
     if (!parsed.favorites) { parsed.favorites = SEED_DATA.favorites; dirty = true; }
+    if (!parsed.extra_services || !Array.isArray(parsed.extra_services)) {
+      parsed.extra_services = SEED_DATA.extra_services || [];
+      dirty = true;
+    }
     if (!parsed.notifications || !Array.isArray(parsed.notifications) || parsed.notifications.length === 0) {
       parsed.notifications = SEED_DATA.notifications;
       dirty = true;
@@ -1179,6 +1201,11 @@ export async function getMongoDb(): Promise<Db | null> {
     }
     if (!colNames.includes('notifications') || (await cachedDb.collection('notifications').countDocuments()) === 0) {
       await cachedDb.collection('notifications').insertMany(SEED_DATA.notifications);
+    }
+    if (!colNames.includes('extra_services') || (await cachedDb.collection('extra_services').countDocuments()) === 0) {
+      if (SEED_DATA.extra_services && SEED_DATA.extra_services.length > 0) {
+        await cachedDb.collection('extra_services').insertMany(SEED_DATA.extra_services);
+      }
     }
     if (!colNames.includes('settings') || (await cachedDb.collection('settings').countDocuments({ type: 'payment_gateways' })) === 0) {
       await cachedDb.collection('settings').insertOne({
@@ -4023,5 +4050,212 @@ export async function getContactMessages(): Promise<ContactMessageItem[]> {
 
   const data = readDataFile();
   return (data.contact_messages || []) as ContactMessageItem[];
+}
+
+// ==========================================
+// 21. EXTRA SERVICES (TRAVEL & LOGISTICS SURCHARGES)
+// ==========================================
+export interface ExtraServiceData {
+  id: number;
+  order_id: number;
+  title: string;
+  quantity: number;
+  price: number;
+  tax?: number;
+  sub_total: number;
+  total: number;
+  payment_gateway?: string;
+  transaction_id?: string;
+  payment_status: 'pending' | 'complete';
+  status: number; // 0 = pending, 1 = complete/accepted
+  created_at: string;
+  updated_at?: string;
+}
+
+export async function getExtraServices(orderId: number | string): Promise<ExtraServiceData[]> {
+  const numOrderId = Number(orderId);
+  const db = await getMongoDb();
+  if (db) {
+    try {
+      const docs = await db.collection('extra_services').find({
+        $or: [{ order_id: numOrderId }, { order_id: String(orderId) }]
+      }).sort({ id: -1 }).toArray();
+      if (docs && docs.length > 0) {
+        return docs.map(({ _id, ...rest }) => rest as ExtraServiceData);
+      }
+    } catch (e) {}
+  }
+
+  const data = readDataFile();
+  const list = data.extra_services || [];
+  return list.filter((e: any) => Number(e.order_id) === numOrderId || String(e.order_id) === String(orderId));
+}
+
+export async function createExtraService(item: {
+  order_id: number | string;
+  title: string;
+  price: number;
+  quantity?: number;
+  seller_id?: number;
+  buyer_id?: number;
+}): Promise<ExtraServiceData> {
+  const numOrderId = Number(item.order_id);
+  const qty = Number(item.quantity) || 1;
+  const unitPrice = Number(item.price) || 0;
+  const subTotal = qty * unitPrice;
+  const total = subTotal;
+  const now = new Date().toISOString();
+
+  const data = readDataFile();
+  if (!data.extra_services) data.extra_services = [];
+  const nextId = data.extra_services.length > 0 ? Math.max(...data.extra_services.map((e: any) => e.id || 0)) + 1 : Date.now();
+
+  const newExtra: ExtraServiceData = {
+    id: nextId,
+    order_id: numOrderId,
+    title: item.title.trim(),
+    quantity: qty,
+    price: unitPrice,
+    tax: 0,
+    sub_total: subTotal,
+    total: total,
+    payment_status: 'pending',
+    status: 0,
+    created_at: now,
+  };
+
+  data.extra_services.unshift(newExtra);
+  writeDataFile(data);
+
+  const db = await getMongoDb();
+  if (db) {
+    try {
+      await db.collection('extra_services').insertOne(newExtra);
+    } catch (e) {}
+  }
+
+  // Notify buyer automatically
+  try {
+    const order = await getOrderById(numOrderId);
+    const buyerId = item.buyer_id || order?.buyer_id;
+    await createNotification({
+      role: 'buyer',
+      user_id: buyerId ? Number(buyerId) : undefined,
+      order_id: numOrderId,
+      title: `Extra Service / Logistics Request on Order #${numOrderId}`,
+      message: `Your service provider requested ₦${total.toLocaleString()} for "${newExtra.title}". Click to review and pay online.`,
+      link: `/buyer/orders/${numOrderId}`,
+      icon: 'las la-receipt',
+      type: 'order',
+    });
+  } catch (err) {}
+
+  return newExtra;
+}
+
+export async function acceptAndPayExtraService(
+  extraId: number | string,
+  paymentData: { payment_gateway: string; transaction_id?: string }
+): Promise<ExtraServiceData | null> {
+  const numId = Number(extraId);
+  const now = new Date().toISOString();
+
+  const data = readDataFile();
+  if (!data.extra_services) data.extra_services = [];
+  const target = data.extra_services.find((e: any) => Number(e.id) === numId || String(e.id) === String(extraId));
+
+  if (target) {
+    target.payment_status = 'complete';
+    target.status = 1;
+    target.payment_gateway = paymentData.payment_gateway;
+    target.transaction_id = paymentData.transaction_id || `EXT-TXN-${Date.now()}`;
+    target.updated_at = now;
+
+    // Update parent order finances
+    const orderId = target.order_id;
+    const parentOrder = data.orders?.find((o: any) => Number(o.id) === Number(orderId));
+    if (parentOrder) {
+      parentOrder.extra_service = (Number(parentOrder.extra_service) || 0) + target.total;
+      parentOrder.sub_total = (Number(parentOrder.sub_total) || 0) + target.total;
+      parentOrder.total = (Number(parentOrder.total) || 0) + target.total;
+    }
+    writeDataFile(data);
+
+    const db = await getMongoDb();
+    if (db) {
+      try {
+        await db.collection('extra_services').updateOne(
+          { $or: [{ id: numId }, { id: String(extraId) }] },
+          {
+            $set: {
+              payment_status: 'complete',
+              status: 1,
+              payment_gateway: paymentData.payment_gateway,
+              transaction_id: target.transaction_id,
+              updated_at: now,
+            },
+          }
+        );
+
+        if (parentOrder) {
+          await db.collection('orders').updateOne(
+            { $or: [{ id: Number(orderId) }, { id: String(orderId) }] },
+            {
+              $set: {
+                extra_service: parentOrder.extra_service,
+                sub_total: parentOrder.sub_total,
+                total: parentOrder.total,
+                updated_at: now,
+              },
+            }
+          );
+        }
+      } catch (e) {}
+    }
+
+    // Notify seller automatically
+    try {
+      if (parentOrder) {
+        await createNotification({
+          role: 'seller',
+          user_id: parentOrder.seller_id ? Number(parentOrder.seller_id) : undefined,
+          order_id: parentOrder.id,
+          title: `Extra Service Payment Received (Order #${parentOrder.id})`,
+          message: `Buyer has paid ₦${target.total.toLocaleString()} for "${target.title}" via ${paymentData.payment_gateway.toUpperCase()}.`,
+          link: `/seller/orders/${parentOrder.id}`,
+          icon: 'las la-wallet',
+          type: 'payout',
+        });
+      }
+    } catch (err) {}
+
+    return target;
+  }
+
+  return null;
+}
+
+export async function deleteExtraService(extraId: number | string): Promise<boolean> {
+  const numId = Number(extraId);
+  const data = readDataFile();
+  if (!data.extra_services) data.extra_services = [];
+  const idx = data.extra_services.findIndex((e: any) => Number(e.id) === numId || String(e.id) === String(extraId));
+
+  if (idx > -1) {
+    data.extra_services.splice(idx, 1);
+    writeDataFile(data);
+
+    const db = await getMongoDb();
+    if (db) {
+      try {
+        await db.collection('extra_services').deleteOne({
+          $or: [{ id: numId }, { id: String(extraId) }],
+        });
+      } catch (e) {}
+    }
+    return true;
+  }
+
+  return false;
 }
 

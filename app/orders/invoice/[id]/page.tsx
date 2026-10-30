@@ -49,7 +49,7 @@ export default function OrderInvoicePage({ params }: InvoicePageProps) {
     );
   }
 
-  const { order, service, seller, buyer, includes, additionals } = data;
+  const { order, service, seller, buyer, includes, additionals, extra_services } = data;
 
   return (
     <div className="invoice-container" style={{ maxWidth: '850px', margin: '40px auto', padding: '40px', backgroundColor: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px' }}>
@@ -100,6 +100,7 @@ export default function OrderInvoicePage({ params }: InvoicePageProps) {
           <div>{order.email || buyer?.email || 'N/A'}</div>
           <div>{order.phone || buyer?.phone || 'N/A'}</div>
           <div>{order.address || 'Online Service'}</div>
+          <div>{order.city ? `${order.city}, ` : ''}{order.country || 'Nigeria'} {order.area ? `(${order.area})` : ''}</div>
           {order.post_code && <div>Postal Code: {order.post_code}</div>}
         </div>
         <div className="col-sm-6 text-sm-end">
@@ -157,6 +158,17 @@ export default function OrderInvoicePage({ params }: InvoicePageProps) {
                 <td className="ps-3">
                   <div className="fw-semibold text-dark">{item.title}</div>
                   <small className="text-muted">Extra service addon</small>
+                </td>
+                <td className="text-center">{item.quantity || 1}</td>
+                <td className="text-end">₦{Number(item.price || 0).toLocaleString()}</td>
+                <td className="text-end pe-3">₦{(Number(item.price || 0) * (item.quantity || 1)).toLocaleString()}</td>
+              </tr>
+            ))}
+            {extra_services?.filter((es: any) => es.payment_status === 'complete').map((item: any, idx: number) => (
+              <tr key={`extra-${idx}`}>
+                <td className="ps-3">
+                  <div className="fw-semibold text-dark">{item.title}</div>
+                  <small className="text-muted">Extra service / logistics surcharge</small>
                 </td>
                 <td className="text-center">{item.quantity || 1}</td>
                 <td className="text-end">₦{Number(item.price || 0).toLocaleString()}</td>

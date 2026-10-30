@@ -2157,5 +2157,23 @@
       "status": "unread",
       "created_at": "2026-10-26T17:50:49.093Z"
     }
+  ],
+  "extra_services": [
+    {
+      "id": 1,
+      "order_id": 1,
+      "title": "Out-of-Zone Island Expressway Travel Surcharge",
+      "quantity": 1,
+      "price": 5000,
+      "tax": 0,
+      "sub_total": 5000,
+      "total": 5000,
+      "payment_gateway": "paystack",
+      "transaction_id": "EXT-PAY-9831",
+      "payment_status": "complete",
+      "status": 1,
+      "created_at": "2026-10-22T00:00:00.000Z",
+      "_id": "6ae430c1175a1c6865f29f54"
+    }
   ]
 }

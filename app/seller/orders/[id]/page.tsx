@@ -19,6 +19,16 @@ export default function SellerOrderDetailPage({ params }: OrderDetailsProps) {
   const [newStatus, setNewStatus] = useState<number>(0);
   const [statusMessage, setStatusMessage] = useState({ type: '', text: '' });
 
+  // Extra Service / Logistics Request States (PHP Parity: extra_services)
+  const [isExtraModalOpen, setIsExtraModalOpen] = useState(false);
+  const [extraSubmitting, setExtraSubmitting] = useState(false);
+  const [extraError, setExtraError] = useState('');
+  const [extraForm, setExtraForm] = useState({
+    title: 'Out-of-Zone Travel & Fuel Logistics Surcharge',
+    quantity: 1,
+    price: '',
+  });
+
   const fetchOrder = async () => {
     try {
       setLoading(true);
@@ -65,6 +75,64 @@ export default function SellerOrderDetailPage({ params }: OrderDetailsProps) {
     }
   };
 
+  const handleCreateExtraService = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setExtraError('');
+    const priceNum = Number(extraForm.price);
+    if (!extraForm.title.trim()) {
+      setExtraError('Please enter a descriptive title for this extra fee.');
+      return;
+    }
+    if (isNaN(priceNum) || priceNum <= 0) {
+      setExtraError('Please enter a valid amount.');
+      return;
+    }
+
+    try {
+      setExtraSubmitting(true);
+      const res = await fetch(`/api/orders/${id}/extra-services`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: extraForm.title.trim(),
+          price: priceNum,
+          quantity: Number(extraForm.quantity) || 1,
+        }),
+      });
+
+      const json = await res.json();
+      if (!res.ok) {
+        throw new Error(json.message || 'Failed to request extra service');
+      }
+
+      setIsExtraModalOpen(false);
+      setExtraForm({
+        title: 'Out-of-Zone Travel & Fuel Logistics Surcharge',
+        quantity: 1,
+        price: '',
+      });
+      setStatusMessage({ type: 'success', text: 'Extra service fee invoice requested. Buyer has been notified to complete payment.' });
+      fetchOrder();
+    } catch (err: any) {
+      setExtraError(err.message || 'An error occurred while submitting.');
+    } finally {
+      setExtraSubmitting(false);
+    }
+  };
+
+  const handleDeleteExtraService = async (extraId: number | string) => {
+    if (!confirm('Are you sure you want to delete this extra service request?')) return;
+    try {
+      const res = await fetch(`/api/orders/${id}/extra-services/${extraId}`, {
+        method: 'DELETE',
+      });
+      if (res.ok) {
+        setStatusMessage({ type: 'info', text: 'Extra service fee request removed.' });
+        fetchOrder();
+      }
+    } catch (e) {}
+  };
+
   const getStatusBadge = (status: number) => {
     switch (status) {
       case 0:
@@ -108,7 +176,7 @@ export default function SellerOrderDetailPage({ params }: OrderDetailsProps) {
     );
   }
 
-  const { order, service, buyer, includes, additionals } = data;
+  const { order, service, buyer, includes, additionals, extra_services } = data;
 
   return (
     <DashboardLayout userRole="seller" title={`Order #${order.id}`}>
@@ -127,7 +195,16 @@ export default function SellerOrderDetailPage({ params }: OrderDetailsProps) {
             {order.invoice && <span className="text-muted fs-6 ms-2">({order.invoice})</span>}
           </h4>
         </div>
-        <div className="d-flex gap-2">
+        <div className="d-flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => setIsExtraModalOpen(true)}
+            className="btn btn-outline-success d-flex align-items-center gap-1 px-3 shadow-sm"
+            style={{ borderRadius: '8px' }}
+            title="Request additional fee for travel distance or extra work (PHP parity)"
+          >
+            <i className="las la-plus-circle fs-5"></i> Request Extra Service / Travel Fee
+          </button>
           <Link
             href={`/orders/invoice/${order.id}`}
             target="_blank"
@@ -260,6 +337,85 @@ export default function SellerOrderDetailPage({ params }: OrderDetailsProps) {
             </div>
           </div>
 
+          {/* Extra Service & Travel Logistics Surcharges (PHP Parity: order-details.blade.php:278) */}
+          <div className="card border-0 shadow-sm rounded-3 mb-4" style={{ backgroundColor: '#fff' }}>
+            <div className="card-header bg-white border-bottom py-3 px-3 px-md-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
+              <div>
+                <h5 className="fw-bold mb-0" style={{ fontSize: '16px' }}>
+                  <i className="las la-receipt me-2 text-success"></i> Extra Services & Travel Surcharges
+                </h5>
+                <small className="text-muted">Bill buyer for distance travel, fuel, or additional scope</small>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsExtraModalOpen(true)}
+                className="btn btn-sm btn-outline-success d-inline-flex align-items-center gap-1 shadow-sm"
+                style={{ borderRadius: '6px' }}
+              >
+                <i className="las la-plus-circle"></i> Request Extra Fee
+              </button>
+            </div>
+            <div className="card-body p-0">
+              {(!extra_services || extra_services.length === 0) ? (
+                <div className="text-center py-4 text-muted small px-3">
+                  <i className="las la-truck-moving fs-3 text-muted d-block mb-1"></i>
+                  No extra fees requested yet. If the buyer&apos;s location requires additional travel or fuel logistics, click <strong>&quot;Request Extra Fee&quot;</strong> to invoice them.
+                </div>
+              ) : (
+                <div className="table-responsive">
+                  <table className="table mb-0 align-middle">
+                    <thead className="table-light">
+                      <tr>
+                        <th className="ps-3 ps-md-4">Title / Reason</th>
+                        <th className="text-center">Qty</th>
+                        <th className="text-end">Amount</th>
+                        <th className="text-center">Status</th>
+                        <th className="text-end pe-3 pe-md-4">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {extra_services.map((ex: any) => (
+                        <tr key={ex.id}>
+                          <td className="ps-3 ps-md-4">
+                            <div className="fw-semibold text-dark">{ex.title}</div>
+                            <small className="text-muted">{new Date(ex.created_at).toLocaleDateString()}</small>
+                          </td>
+                          <td className="text-center">{ex.quantity}</td>
+                          <td className="text-end fw-bold text-success">₦{Number(ex.total || ex.price).toLocaleString()}</td>
+                          <td className="text-center">
+                            {ex.payment_status === 'complete' || ex.status === 1 ? (
+                              <span className="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">
+                                <i className="las la-check-circle me-1"></i> Paid & Added
+                              </span>
+                            ) : (
+                              <span className="badge bg-warning-subtle text-warning border border-warning-subtle px-2 py-1">
+                                <i className="las la-clock me-1"></i> Pending Payment
+                              </span>
+                            )}
+                          </td>
+                          <td className="text-end pe-3 pe-md-4">
+                            {ex.payment_status !== 'complete' && ex.status !== 1 ? (
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteExtraService(ex.id)}
+                                className="btn btn-outline-danger btn-xs py-1 px-2 rounded-2"
+                                title="Delete Extra Fee"
+                              >
+                                <i className="las la-trash"></i>
+                              </button>
+                            ) : (
+                              <span className="text-muted small">Settled</span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+
           {/* Customer & Location Details */}
           <div className="card border-0 shadow-sm rounded-3" style={{ backgroundColor: '#fff' }}>
             <div className="card-header bg-white border-bottom py-3 px-3 px-md-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
@@ -289,8 +445,16 @@ export default function SellerOrderDetailPage({ params }: OrderDetailsProps) {
                   <div className="fw-semibold text-dark">{order.phone || buyer?.phone || 'N/A'}</div>
                 </div>
                 <div className="col-sm-6">
-                  <div className="text-muted small">Post Code / Zip</div>
-                  <div className="fw-semibold text-dark">{order.post_code || 'N/A'}</div>
+                  <div className="text-muted small">Service City / State</div>
+                  <div className="fw-semibold text-dark text-capitalize">{order.city || 'Lagos'}</div>
+                </div>
+                <div className="col-sm-6">
+                  <div className="text-muted small">Service Area / LGA</div>
+                  <div className="fw-semibold text-dark">{order.area || order.post_code || 'N/A'}</div>
+                </div>
+                <div className="col-sm-6">
+                  <div className="text-muted small">Country</div>
+                  <div className="fw-semibold text-dark">{order.country || 'Nigeria'}</div>
                 </div>
                 <div className="col-12">
                   <div className="text-muted small">Full Service Address</div>
@@ -428,6 +592,125 @@ export default function SellerOrderDetailPage({ params }: OrderDetailsProps) {
           </div>
         </div>
       </div>
+
+      {/* Extra Service / Travel Surcharge Modal (PHP Parity: #extraServiceRequest) */}
+      {isExtraModalOpen && (
+        <div
+          className="modal fade show d-block"
+          tabIndex={-1}
+          style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)', zIndex: 1050 }}
+        >
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content border-0 shadow-lg rounded-4">
+              <div className="modal-header border-bottom py-3 px-4" style={{ backgroundColor: '#f8f9fa' }}>
+                <h5 className="modal-title fw-bold text-dark fs-5 mb-0 d-flex align-items-center gap-2">
+                  <i className="las la-car text-success fs-4"></i>
+                  Request Extra Service / Travel Fee
+                </h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={() => setIsExtraModalOpen(false)}
+                  disabled={extraSubmitting}
+                ></button>
+              </div>
+              <form onSubmit={handleCreateExtraService}>
+                <div className="modal-body p-4">
+                  <div className="alert alert-info py-2 px-3 mb-3 small d-flex align-items-start gap-2" style={{ borderRadius: '8px' }}>
+                    <i className="las la-info-circle fs-5 mt-1"></i>
+                    <div>
+                      Request an invoice adjustment or distance/travel logistics surcharge. Once submitted, the buyer will receive an alert to approve and pay.
+                    </div>
+                  </div>
+
+                  {extraError && (
+                    <div className="alert alert-danger py-2 px-3 mb-3 small" style={{ borderRadius: '8px' }}>
+                      {extraError}
+                    </div>
+                  )}
+
+                  <div className="mb-3">
+                    <label className="form-label fw-semibold text-dark small mb-1">
+                      Reason / Extra Service Description <span className="text-danger">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      placeholder="e.g., Extended Distance Travel & Fuel Surcharge"
+                      value={extraForm.title}
+                      onChange={(e) => setExtraForm({ ...extraForm, title: e.target.value })}
+                      required
+                    />
+                  </div>
+
+                  <div className="row g-3">
+                    <div className="col-sm-6">
+                      <label className="form-label fw-semibold text-dark small mb-1">
+                        Quantity <span className="text-danger">*</span>
+                      </label>
+                      <input
+                        type="number"
+                        min="1"
+                        className="form-control"
+                        value={extraForm.quantity}
+                        onChange={(e) => setExtraForm({ ...extraForm, quantity: Math.max(1, parseInt(e.target.value) || 1) })}
+                        required
+                      />
+                    </div>
+                    <div className="col-sm-6">
+                      <label className="form-label fw-semibold text-dark small mb-1">
+                        Amount (₦) <span className="text-danger">*</span>
+                      </label>
+                      <div className="input-group">
+                        <span className="input-group-text bg-light text-muted fw-bold">₦</span>
+                        <input
+                          type="number"
+                          min="1"
+                          step="any"
+                          className="form-control"
+                          placeholder="e.g. 5000"
+                          value={extraForm.price}
+                          onChange={(e) => setExtraForm({ ...extraForm, price: e.target.value })}
+                          required
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="modal-footer bg-light border-top py-3 px-4 d-flex justify-content-end gap-2">
+                  <button
+                    type="button"
+                    className="btn btn-outline-secondary px-3 py-2"
+                    style={{ borderRadius: '8px' }}
+                    onClick={() => setIsExtraModalOpen(false)}
+                    disabled={extraSubmitting}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn btn-success px-4 py-2 d-inline-flex align-items-center gap-2"
+                    style={{ backgroundColor: 'var(--main-color-one)', borderColor: 'var(--main-color-one)', borderRadius: '8px' }}
+                    disabled={extraSubmitting}
+                  >
+                    {extraSubmitting ? (
+                      <>
+                        <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                        <span>Sending Request...</span>
+                      </>
+                    ) : (
+                      <>
+                        <i className="las la-paper-plane fs-5"></i>
+                        <span>Send Request to Buyer</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
     </DashboardLayout>
   );
 }
