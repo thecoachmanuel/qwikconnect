@@ -390,10 +390,10 @@ export default function MobileBookingModal({
       )}
 
       {/* 3. Step Body */}
-      <div className="px-4 py-3 flex-grow-1" style={{ paddingBottom: '90px' }}>
+      <div className="px-4 py-3 flex-grow-1" style={{ paddingBottom: '90px', maxWidth: '100%', overflowX: 'hidden', boxSizing: 'border-box' }}>
         {/* Flutter Steps Component Parity (Circular Step Progress + Service Header) */}
         {currentStep < 5 && (
-          <div className="mb-4">
+          <div className="mb-4 w-100" style={{ maxWidth: '100%', overflowX: 'hidden' }}>
             <div className="d-flex align-items-center gap-3 mb-3">
               {/* 68x68 Circular Step Progress Indicator */}
               <div
@@ -424,8 +424,8 @@ export default function MobileBookingModal({
                 </div>
               </div>
 
-              <div className="min-w-0">
-                <h5 className="fw-bold mb-1" style={{ color: '#101828', fontSize: '18px' }}>
+              <div className="min-w-0 flex-grow-1" style={{ minWidth: 0 }}>
+                <h5 className="fw-bold mb-1" style={{ color: '#101828', fontSize: '18px', wordBreak: 'break-word' }}>
                   {currentStep === 1 && 'Personalize'}
                   {currentStep === 2 && 'Schedule'}
                   {currentStep === 3 && 'Delivery Address'}
@@ -447,7 +447,7 @@ export default function MobileBookingModal({
             </div>
 
             {/* Service Header Row (Flutter Parity) */}
-            <div className="d-flex align-items-center gap-3 pb-3 border-bottom">
+            <div className="d-flex align-items-center gap-3 pb-3 border-bottom w-100" style={{ minWidth: 0, maxWidth: '100%' }}>
               <div style={{ width: '56px', height: '56px', borderRadius: '8px', overflow: 'hidden', flexShrink: 0 }}>
                 <img
                   src={service?.image || '/assets/uploads/media-uploader/banner11638279446.png'}
@@ -458,14 +458,23 @@ export default function MobileBookingModal({
                   }}
                 />
               </div>
-              <div className="min-w-0 flex-grow-1">
+              <div className="min-w-0 flex-grow-1" style={{ minWidth: 0 }}>
                 <strong
-                  className="d-block text-truncate"
-                  style={{ color: '#101828', fontSize: '15px', fontWeight: 700, lineHeight: 1.3 }}
+                  className="d-block"
+                  style={{
+                    color: '#101828',
+                    fontSize: '15px',
+                    fontWeight: 700,
+                    lineHeight: 1.3,
+                    wordBreak: 'break-word',
+                    overflowWrap: 'break-word',
+                  }}
                 >
                   {service?.title}
                 </strong>
-                <span className="text-muted small">Standard Package • ₦{basePrice.toLocaleString()}</span>
+                <span className="text-muted small d-block" style={{ wordBreak: 'break-word' }}>
+                  Standard Package • ₦{basePrice.toLocaleString()}
+                </span>
               </div>
             </div>
           </div>
@@ -473,18 +482,18 @@ export default function MobileBookingModal({
 
         {/* STEP 1: Packages & Extras */}
         {currentStep === 1 && (
-          <div>
+          <div className="w-100" style={{ maxWidth: '100%', overflowX: 'hidden' }}>
 
             {/* Quantity Selector */}
-            <div className="d-flex align-items-center justify-content-between p-3 rounded-3 border mb-4">
-              <div>
-                <strong className="d-block" style={{ color: '#101828', fontSize: '14.5px' }}>
+            <div className="d-flex align-items-center justify-content-between p-3 rounded-3 border mb-4 w-100 gap-2" style={{ maxWidth: '100%', boxSizing: 'border-box' }}>
+              <div className="min-w-0 flex-grow-1" style={{ minWidth: 0 }}>
+                <strong className="d-block" style={{ color: '#101828', fontSize: '14.5px', wordBreak: 'break-word' }}>
                   Package Quantity
                 </strong>
-                <span className="text-muted small">Select number of units / rooms</span>
+                <span className="text-muted small d-block" style={{ wordBreak: 'break-word' }}>Select number of units / rooms</span>
               </div>
 
-              <div className="d-flex align-items-center gap-3">
+              <div className="d-flex align-items-center gap-3 flex-shrink-0">
                 <button
                   type="button"
                   onClick={() => setQuantity((q) => Math.max(1, q - 1))}
@@ -515,7 +524,7 @@ export default function MobileBookingModal({
             <h6 className="fw-bold text-dark mb-2.5" style={{ fontSize: '15px' }}>
               Select Extra Add-ons (Optional)
             </h6>
-            <div className="d-flex flex-column gap-2 mb-4">
+            <div className="d-flex flex-column gap-2 mb-4 w-100" style={{ maxWidth: '100%', boxSizing: 'border-box' }}>
               {extraServicesList.map((extra: any, idx: number) => {
                 const extraId = extra.id || idx;
                 const isChecked = selectedExtras.has(extraId);
@@ -523,16 +532,19 @@ export default function MobileBookingModal({
                   <div
                     key={extraId}
                     onClick={() => toggleExtra(extraId)}
-                    className="p-3 rounded-3 border d-flex align-items-center justify-content-between cursor-pointer"
+                    className="p-3 rounded-3 border d-flex align-items-center justify-content-between cursor-pointer gap-2 w-100"
                     style={{
                       backgroundColor: isChecked ? 'rgba(29, 191, 115, 0.05)' : '#FFFFFF',
                       borderColor: isChecked ? 'var(--main-color-one, #1DBF73)' : '#EAECF0',
                       cursor: 'pointer',
+                      minWidth: 0,
+                      maxWidth: '100%',
+                      boxSizing: 'border-box',
                     }}
                   >
-                    <div className="d-flex align-items-center gap-3">
+                    <div className="d-flex align-items-center gap-2.5 min-w-0 flex-grow-1" style={{ minWidth: 0 }}>
                       <div
-                        className="rounded d-flex align-items-center justify-content-center"
+                        className="rounded d-flex align-items-center justify-content-center flex-shrink-0"
                         style={{
                           width: '20px',
                           height: '20px',
@@ -544,12 +556,27 @@ export default function MobileBookingModal({
                       >
                         {isChecked && '✓'}
                       </div>
-                      <span className="fw-medium text-dark" style={{ fontSize: '14px' }}>
+                      <span
+                        className="fw-medium text-dark min-w-0"
+                        style={{
+                          fontSize: '14px',
+                          wordBreak: 'break-word',
+                          overflowWrap: 'break-word',
+                          lineHeight: 1.35,
+                        }}
+                      >
                         {extra.title}
                       </span>
                     </div>
 
-                    <strong style={{ color: 'var(--main-color-one, #1DBF73)', fontSize: '13.5px' }}>
+                    <strong
+                      className="flex-shrink-0 text-end"
+                      style={{
+                        color: 'var(--main-color-one, #1DBF73)',
+                        fontSize: '13.5px',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
                       +₦{Number(extra.price || 0).toLocaleString()}
                     </strong>
                   </div>

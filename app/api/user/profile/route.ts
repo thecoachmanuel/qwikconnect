@@ -142,3 +142,8 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
   }
 }
+
+export async function POST(request: NextRequest) {
+  return PUT(request);
+}
+

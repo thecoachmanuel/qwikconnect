@@ -46,16 +46,10 @@ export async function POST(request: NextRequest) {
     const isAdmin = (session?.user as any)?.role === 'admin' || (session?.user as any)?.guard === 'admin' || (session?.user as any)?.email === 'admin@qixer.com';
     const isSeller = !isAdmin && ((session?.user as any)?.user_type === 2 || (session?.user as any)?.role === 'seller');
 
-    let defaultUserId = 2;
-    if (session?.user?.id) {
-      defaultUserId = parseInt(session.user.id, 10);
-    } else if (body.role === 'buyer') {
-      defaultUserId = 4;
-    }
-
-    const userId = body.user_id ? parseInt(body.user_id, 10) : defaultUserId;
+    const sessionUserId = session?.user?.id ? parseInt(session.user.id, 10) : undefined;
+    const userId = body.user_id ? parseInt(body.user_id, 10) : sessionUserId;
     const senderRole = isAdmin ? 'admin' : (body.role || (isSeller ? 'seller' : 'buyer'));
-    const senderName = session?.user?.name || (userId === 2 ? 'Chioma Adebayo' : userId === 4 ? 'Emma Watson' : 'Client');
+    const senderName = session?.user?.name || body.sender_name || (senderRole === 'admin' ? 'Support Team' : 'Customer');
 
     const newTicket = await createTicket({
       user_id: userId,

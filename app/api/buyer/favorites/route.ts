@@ -7,7 +7,11 @@ export async function GET(request: NextRequest) {
     const session = await auth();
     const { searchParams } = new URL(request.url);
     const userParam = searchParams.get('user_id');
-    const userId = userParam ? parseInt(userParam, 10) : session?.user?.id ? parseInt(session.user.id, 10) : 4;
+    const userId = userParam ? parseInt(userParam, 10) : session?.user?.id ? parseInt(session.user.id, 10) : null;
+
+    if (!userId) {
+      return NextResponse.json({ success: true, favorites: [] });
+    }
 
     const favorites = await getFavorites(userId);
     return NextResponse.json({ success: true, favorites });
@@ -24,7 +28,12 @@ export async function POST(request: NextRequest) {
   try {
     const session = await auth();
     const body = await request.json();
-    const userId = body.user_id ? parseInt(body.user_id, 10) : session?.user?.id ? parseInt(session.user.id, 10) : 4;
+    const userId = body.user_id ? parseInt(body.user_id, 10) : session?.user?.id ? parseInt(session.user.id, 10) : null;
+
+    if (!userId) {
+      return NextResponse.json({ success: false, message: 'Please sign in to save favorites' }, { status: 401 });
+    }
+
     const serviceId = parseInt(body.service_id, 10);
 
     if (!serviceId) {

@@ -5,7 +5,10 @@ import { deductWallet } from '@/lib/mongodb';
 export async function POST(request: Request) {
   try {
     const session = await auth();
-    const userId = session?.user?.id ? parseInt(session.user.id, 10) : 4;
+    if (!session?.user?.id) {
+      return NextResponse.json({ success: false, message: 'Unauthorized. Please sign in to pay with wallet.' }, { status: 401 });
+    }
+    const userId = parseInt(session.user.id, 10);
     const body = await request.json();
 
     const amount = Number(body.amount);

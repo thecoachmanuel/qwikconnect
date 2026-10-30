@@ -11,20 +11,37 @@ export default function MobileProfileEditModal({
   onClose,
   onProfileUpdated,
 }: MobileProfileEditModalProps) {
-  const [name, setName] = useState('Emma Watson');
-  const [email, setEmail] = useState('emma@example.com');
-  const [phone, setPhone] = useState('+234 801 234 5678');
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [postCode, setPostCode] = useState('');
   const [country, setCountry] = useState('Nigeria');
   const [city, setCity] = useState('Lagos');
-  const [address, setAddress] = useState('Lekki Phase 1, Lagos');
-  const [about, setAbout] = useState('Lover of clean homes and verified artisans in Lagos.');
-  const [image, setImage] = useState('/assets/flutter/images/avatar.png');
+  const [address, setAddress] = useState('');
+  const [about, setAbout] = useState('');
+  const [image, setImage] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    // First try localStorage
+    try {
+      const saved = localStorage.getItem('qixer_user_profile');
+      if (saved) {
+        const u = JSON.parse(saved);
+        if (u.name) setName(u.name);
+        if (u.email) setEmail(u.email);
+        if (u.phone) setPhone(u.phone);
+        if (u.post_code) setPostCode(u.post_code);
+        if (u.country) setCountry(u.country);
+        if (u.service_city) setCity(u.service_city);
+        if (u.address) setAddress(u.address);
+        if (u.about) setAbout(u.about);
+        if (u.image) setImage(u.image);
+      }
+    } catch (e) {}
+
     fetch('/api/user/profile')
       .then((res) => res.json())
       .then((data) => {

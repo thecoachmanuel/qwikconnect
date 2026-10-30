@@ -7,7 +7,12 @@ export const dynamic = 'force-dynamic';
 export async function GET(request: Request) {
   try {
     const session = await auth();
-    const userId = session?.user?.id ? Number(session.user.id) : 4;
+    if (!session?.user) {
+      return NextResponse.json({ success: true, orders: [] });
+    }
+
+    const userId = session.user.id ? Number(session.user.id) : null;
+    const userEmail = session.user.email ? session.user.email.toLowerCase().trim() : '';
     const userRole = (session?.user as any)?.role || (session?.user as any)?.user_type;
 
     const [allOrders, allServices, allUsers] = await Promise.all([
@@ -16,18 +21,25 @@ export async function GET(request: Request) {
       getUsers(),
     ]);
 
-    // Role-based filtering:
+    // Role-based filtering strictly for authenticated user:
     // If admin: all orders
-    // If seller: orders where seller_id === userId
-    // If buyer: orders where buyer_id === userId or buyer_id === 4 or guest
-    let userOrders = allOrders as any[];
+    // If seller: orders where seller_id === userId or seller_email === userEmail
+    // If buyer: orders where buyer_id === userId or email === userEmail
+    let userOrders: any[] = [];
     if (userRole === 'admin') {
       userOrders = allOrders as any[];
-    } else if (userRole === 'seller' || userRole === '1') {
-      userOrders = (allOrders as any[]).filter((o: any) => Number(o.seller_id) === userId);
+    } else if (userRole === 'seller' || userRole === '1' || userRole === 1 || userRole === '2' || userRole === 2) {
+      userOrders = (allOrders as any[]).filter(
+        (o: any) => (userId && Number(o.seller_id) === userId) || (userEmail && o.seller_email && o.seller_email.toLowerCase().trim() === userEmail)
+      );
     } else {
       userOrders = (allOrders as any[]).filter(
-        (o: any) => Number(o.buyer_id) === userId || Number(o.buyer_id) === 4 || !o.buyer_id
+        (o: any) =>
+          (userId && Number(o.buyer_id) === userId) ||
+          (userEmail && (
+            (o.email && o.email.toLowerCase().trim() === userEmail) ||
+            (o.buyer_email && o.buyer_email.toLowerCase().trim() === userEmail)
+          ))
       );
     }
 

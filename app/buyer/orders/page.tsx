@@ -8,19 +8,26 @@ import BuyerReviewModal from '@/components/reviews/BuyerReviewModal';
 
 export default async function BuyerOrdersPage() {
   const session = await auth();
-  const buyerId = session?.user?.id ? parseInt(session.user.id, 10) : 4;
+  const buyerId = session?.user?.id ? parseInt(session.user.id, 10) : undefined;
+  const buyerEmail = session?.user?.email ? session.user.email.toLowerCase().trim() : undefined;
 
   let orders: any[] = [];
   let userReviews: any[] = [];
-  try {
-    const [fetchedOrders, fetchedReviews] = await Promise.all([
-      getOrders({ buyer_id: buyerId }),
-      getReviews({ buyer_id: buyerId }),
-    ]);
-    orders = fetchedOrders || [];
-    userReviews = fetchedReviews || [];
-  } catch (error) {
-    console.warn('Failed to load buyer orders or reviews from MongoDB:', error);
+  if (buyerId || buyerEmail) {
+    try {
+      const [fetchedOrders, fetchedReviews] = await Promise.all([
+        getOrders({ buyer_id: buyerId }),
+        buyerId ? getReviews({ buyer_id: buyerId }) : Promise.resolve([]),
+      ]);
+      orders = (fetchedOrders || []).filter((o: any) => {
+        if (buyerId && Number(o.buyer_id) === buyerId) return true;
+        if (buyerEmail && ((o.email && o.email.toLowerCase().trim() === buyerEmail) || (o.buyer_email && o.buyer_email.toLowerCase().trim() === buyerEmail))) return true;
+        return false;
+      });
+      userReviews = fetchedReviews || [];
+    } catch (error) {
+      console.warn('Failed to load buyer orders or reviews from MongoDB:', error);
+    }
   }
 
   const getStatusBadge = (status: number) => {

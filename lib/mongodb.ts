@@ -2342,7 +2342,19 @@ export async function updateTicket(
 
   const data = readDataFile();
   if (!data.tickets) data.tickets = [];
-  const target = data.tickets.find((t: any) => Number(t.id) === Number(id));
+  let target = data.tickets.find((t: any) => Number(t.id) === Number(id));
+
+  const db = await getMongoDb();
+  if (!target && db) {
+    try {
+      const doc = await db.collection('tickets').findOne({ $or: [{ id: Number(id) }, { id: String(id) }] });
+      if (doc) {
+        const { _id, ...rest } = doc;
+        target = rest;
+        data.tickets.push(target);
+      }
+    } catch (e) {}
+  }
 
   if (target) {
     if (!target.messages) {
@@ -3103,7 +3115,7 @@ export async function getReports(filter: { seller_id?: number; buyer_id?: number
 }
 
 export async function createReport(report: {
-  order_id: string;
+  order_id: string | number;
   service_name?: string;
   seller_name?: string;
   buyer_name?: string;
@@ -3118,14 +3130,29 @@ export async function createReport(report: {
   if (!data.reports) data.reports = [];
   const nextId = data.reports.length > 0 ? Math.max(...data.reports.map((r: any) => r.id || 0)) + 1 : 1;
 
+  const rawOrderId = String(report.order_id || '').trim();
+  const cleanId = rawOrderId.replace('#', '');
+  let orderData: any = null;
+  if (cleanId && (!report.service_name || !report.seller_name || !report.buyer_name || !report.seller_id || !report.buyer_id)) {
+    try {
+      orderData = await getOrderById(Number(cleanId) || cleanId);
+    } catch (e) {}
+  }
+
+  const serviceName = report.service_name || orderData?.service_title || orderData?.service?.title || (orderData ? `Order #${cleanId}` : 'Booked Service');
+  const sellerName = report.seller_name || orderData?.seller_name || orderData?.seller?.name || 'Seller';
+  const buyerName = report.buyer_name || orderData?.name || orderData?.buyer_name || orderData?.buyer?.name || 'Buyer';
+  const sellerId = report.seller_id ? Number(report.seller_id) : (orderData?.seller_id ? Number(orderData.seller_id) : undefined);
+  const buyerId = report.buyer_id ? Number(report.buyer_id) : (orderData?.buyer_id ? Number(orderData.buyer_id) : undefined);
+
   const newReport = {
     id: nextId,
-    order_id: report.order_id.startsWith('#') ? report.order_id : `#${report.order_id}`,
-    service_name: report.service_name || 'Booked Service',
-    seller_name: report.seller_name || 'Seller',
-    buyer_name: report.buyer_name || 'Buyer',
-    seller_id: report.seller_id ? Number(report.seller_id) : undefined,
-    buyer_id: report.buyer_id ? Number(report.buyer_id) : undefined,
+    order_id: rawOrderId.startsWith('#') ? rawOrderId : `#${rawOrderId}`,
+    service_name: serviceName,
+    seller_name: sellerName,
+    buyer_name: buyerName,
+    seller_id: sellerId,
+    buyer_id: buyerId,
     report_from: report.report_from || 'buyer',
     report_to: report.report_to || 'seller',
     reason: report.reason,
@@ -3148,26 +3175,42 @@ export async function createReport(report: {
 }
 
 export async function updateReportStatus(id: number, status: 'under_review' | 'mediation' | 'resolved', admin_decision?: string) {
+  const data = readDataFile();
+  if (!data.reports) data.reports = [];
+  let target = data.reports.find((r: any) => Number(r.id) === Number(id));
+
   const db = await getMongoDb();
-  if (db) {
+  if (!target && db) {
     try {
-      const updateData: any = { status };
-      if (admin_decision !== undefined) updateData.admin_decision = admin_decision;
-      await db.collection('reports').updateOne({ id: Number(id) }, { $set: updateData });
+      const doc = await db.collection('reports').findOne({ $or: [{ id: Number(id) }, { id: String(id) }] });
+      if (doc) {
+        const { _id, ...rest } = doc;
+        target = rest;
+        data.reports.push(target);
+      }
     } catch (e) {}
   }
 
-  const data = readDataFile();
-  if (!data.reports) return null;
-  const target = data.reports.find((r: any) => Number(r.id) === Number(id));
-  if (!target) return null;
+  const now = new Date().toISOString();
+  if (target) {
+    target.status = status;
+    if (admin_decision !== undefined) target.admin_decision = admin_decision;
+    target.updated_at = now;
+    writeDataFile(data);
+  }
 
-  target.status = status;
-  if (admin_decision !== undefined) target.admin_decision = admin_decision;
-  target.updated_at = new Date().toISOString();
+  if (db) {
+    try {
+      const updateData: any = { status, updated_at: now };
+      if (admin_decision !== undefined) updateData.admin_decision = admin_decision;
+      await db.collection('reports').updateOne(
+        { $or: [{ id: Number(id) }, { id: String(id) }] },
+        { $set: updateData }
+      );
+    } catch (e) {}
+  }
 
-  writeDataFile(data);
-  return target;
+  return target || null;
 }
 
 export async function deleteReport(id: number) {

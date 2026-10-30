@@ -29,7 +29,7 @@ export default function BuyerWalletPage() {
       }
       if (histRes.ok) {
         const histData = await histRes.json();
-        setHistory(histData.history || []);
+        setHistory(histData.transactions || histData.history || []);
       }
     } catch (e) {
       console.error('Failed to load wallet data:', e);

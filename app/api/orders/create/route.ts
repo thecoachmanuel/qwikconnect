@@ -59,8 +59,8 @@ export async function POST(request: Request) {
 
     const data = createOrderSchema.parse(body);
 
-    const rawBuyerId = session?.user?.id ? parseInt(session.user.id, 10) : 4;
-    const buyerId = isNaN(rawBuyerId) ? 4 : rawBuyerId;
+    const parsedId = session?.user?.id ? parseInt(session.user.id, 10) : null;
+    const buyerId = parsedId && !isNaN(parsedId) ? parsedId : null;
     const invoiceNumber = `INV-${Date.now().toString().slice(-6)}-${Math.floor(1000 + Math.random() * 9000)}`;
     const subTotal = data.package_fee + data.extra_service;
     const isCashOrManual = data.payment_gateway === 'cash_on_delivery' || data.payment_gateway === 'cod' || data.payment_gateway === 'manual_payment';

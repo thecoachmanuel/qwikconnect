@@ -5,7 +5,14 @@ import { getWalletBalance } from '@/lib/mongodb';
 export async function GET() {
   try {
     const session = await auth();
-    const userId = session?.user?.id ? parseInt(session.user.id, 10) : 4;
+    if (!session?.user?.id) {
+      return NextResponse.json({
+        success: true,
+        balance: 0,
+        currency: '₦',
+      });
+    }
+    const userId = parseInt(session.user.id, 10);
     const balance = await getWalletBalance(userId);
 
     return NextResponse.json({

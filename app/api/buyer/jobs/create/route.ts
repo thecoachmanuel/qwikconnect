@@ -5,7 +5,10 @@ import { createJob } from '@/lib/mongodb';
 export async function POST(request: Request) {
   try {
     const session = await auth();
-    const userId = session?.user?.id ? parseInt(session.user.id, 10) : 4;
+    if (!session?.user?.id) {
+      return NextResponse.json({ success: false, message: 'Please sign in to post a custom job.' }, { status: 401 });
+    }
+    const userId = parseInt(session.user.id, 10);
     const body = await request.json();
 
     if (!body.title || body.title.trim().length < 5) {

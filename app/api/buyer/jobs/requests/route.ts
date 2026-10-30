@@ -5,7 +5,17 @@ import { getBuyerJobRequests } from '@/lib/mongodb';
 export async function GET() {
   try {
     const session = await auth();
-    const userId = session?.user?.id ? parseInt(session.user.id, 10) : 4;
+    if (!session?.user?.id) {
+      return NextResponse.json({
+        success: true,
+        all_job_request: {
+          data: [],
+          total: 0,
+        },
+        requests: [],
+      });
+    }
+    const userId = parseInt(session.user.id, 10);
     const requests = await getBuyerJobRequests(userId);
 
     return NextResponse.json({

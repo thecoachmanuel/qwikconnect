@@ -17,7 +17,7 @@ export default function MobileTopBar({
   onSelectCity,
   onOpenNotifications,
   onOpenMenu,
-  userName = 'Emma Watson',
+  userName = 'Guest',
   userAvatar = '/assets/flutter/images/avatar.png',
   unreadCount = 0,
 }: MobileTopBarProps) {
@@ -108,7 +108,7 @@ export default function MobileTopBar({
                   lineHeight: 1.2,
                 }}
               >
-                {userName || 'Emma Watson'}
+                {userName || 'Guest'}
               </strong>
             </div>
           </div>

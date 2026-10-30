@@ -29,7 +29,7 @@ export default function MobileWalletModal({ onClose }: MobileWalletModalProps) {
       }
       if (histRes.ok) {
         const histData = await histRes.json();
-        setHistory(histData.history || []);
+        setHistory(histData.transactions || histData.history || []);
       }
     } catch (e) {
     } finally {

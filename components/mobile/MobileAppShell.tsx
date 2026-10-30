@@ -22,6 +22,7 @@ import MobileReportsModal from './MobileReportsModal';
 import MobileProfileEditModal from './MobileProfileEditModal';
 import MobileChangePasswordModal from './MobileChangePasswordModal';
 import MobileWriteReviewModal from './MobileWriteReviewModal';
+import MobileAuthModal from './MobileAuthModal';
 
 import MobileHomeScreen from './screens/MobileHomeScreen';
 import MobileOrdersScreen from './screens/MobileOrdersScreen';
@@ -50,6 +51,8 @@ export default function MobileAppShell({ children }: { children?: React.ReactNod
   const [showProfileEdit, setShowProfileEdit] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [showLiveChatModal, setShowLiveChatModal] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authModalMode, setAuthModalMode] = useState<'login' | 'signup'>('login');
 
   // Flow states
   const [activeServiceDetails, setActiveServiceDetails] = useState<any>(null);
@@ -82,10 +85,15 @@ export default function MobileAppShell({ children }: { children?: React.ReactNod
     showReports ||
     showProfileEdit ||
     showChangePassword ||
-    showMapView
+    showMapView ||
+    showAuthModal
   );
 
   const handleDismissTopModal = () => {
+    if (showAuthModal) {
+      setShowAuthModal(false);
+      return true;
+    }
     if (activeReviewServiceId) {
       setActiveReviewServiceId(null);
       setActiveReviewOrderId(undefined);
@@ -239,6 +247,16 @@ export default function MobileAppShell({ children }: { children?: React.ReactNod
         }
       })
       .catch(() => {});
+
+    // Listen for custom open-auth events from anywhere in mobile screens
+    const handleOpenAuth = (e: any) => {
+      setAuthModalMode(e.detail?.mode || 'login');
+      setShowAuthModal(true);
+    };
+    window.addEventListener('qixer-open-auth', handleOpenAuth);
+    return () => {
+      window.removeEventListener('qixer-open-auth', handleOpenAuth);
+    };
   }, [permissions.Onboarding]);
 
   // Real-time Push Notifications & Minimized Background Wakeup
@@ -400,7 +418,7 @@ export default function MobileAppShell({ children }: { children?: React.ReactNod
         onSelectCity={(city) => setSelectedCity(city)}
         onOpenNotifications={() => setShowNotifications(true)}
         onOpenMenu={() => setCurrentTab(4)}
-        userName={(session?.user as any)?.name || 'Emma Watson'}
+        userName={(session?.user as any)?.name || 'Guest'}
         userAvatar={(session?.user as any)?.image || '/assets/flutter/images/avatar.png'}
         unreadCount={unreadCount}
       />
@@ -447,6 +465,10 @@ export default function MobileAppShell({ children }: { children?: React.ReactNod
             onOpenProfileEdit={() => setShowProfileEdit(true)}
             onOpenChangePassword={() => setShowChangePassword(true)}
             onOpenLiveChat={() => handleChatClick(null)}
+            onOpenAuth={(mode) => {
+              setAuthModalMode(mode || 'login');
+              setShowAuthModal(true);
+            }}
           />
         )}
       </main>
@@ -561,6 +583,16 @@ export default function MobileAppShell({ children }: { children?: React.ReactNod
           }}
         />
       )}
+
+      {/* Mobile Authentication Modal (Flutter login.dart & signup.dart Parity) */}
+      {showAuthModal && (
+        <MobileAuthModal
+          initialMode={authModalMode}
+          onClose={() => setShowAuthModal(false)}
+          onSuccess={() => setShowAuthModal(false)}
+        />
+      )}
+
       {/* Floating Install App Banner (shown when previewing on web mobile before installation) */}
       <InstallPromptBanner />
     </div>

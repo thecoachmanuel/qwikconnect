@@ -44,31 +44,46 @@ export default function MobileOrdersScreen({
     };
   }, []);
 
+  const getCategory = (order: any): 'pending' | 'active' | 'completed' | 'cancelled' => {
+    const s = (order.order_status !== undefined && order.order_status !== null ? order.order_status : order.status ?? '').toString().toLowerCase();
+    if (s === '0' || s === 'pending') return 'pending';
+    if (s === '1' || s === 'active' || s === 'in_progress' || s === 'progress' || s === 'revision_requested' || s === 'revision') return 'active';
+    if (s === '2' || s === 'completed' || s === 'complete' || s === 'delivered') return 'completed';
+    if (s === '3' || s === '4' || s === 'cancelled' || s === 'canceled' || s === 'declined' || s === 'rejected') return 'cancelled';
+    return 'pending';
+  };
+
   const filteredOrders = orders.filter((order) => {
     if (filter === 'all') return true;
-    const status = (order.order_status || order.status || '').toString().toLowerCase();
-    if (filter === 'pending') return status === '0' || status === 'pending';
-    if (filter === 'active') return status === '1' || status === 'active' || status === 'in_progress';
-    if (filter === 'completed') return status === '2' || status === 'completed';
-    if (filter === 'cancelled') return status === '3' || status === 'cancelled';
-    return true;
+    return getCategory(order) === filter;
   });
 
+  const counts = {
+    all: orders.length,
+    pending: orders.filter((o) => getCategory(o) === 'pending').length,
+    active: orders.filter((o) => getCategory(o) === 'active').length,
+    completed: orders.filter((o) => getCategory(o) === 'completed').length,
+    cancelled: orders.filter((o) => getCategory(o) === 'cancelled').length,
+  };
+
   const getStatusBadge = (order: any) => {
-    const s = (order.order_status || order.status || '').toString().toLowerCase();
+    const s = (order.order_status !== undefined && order.order_status !== null ? order.order_status : order.status ?? '').toString().toLowerCase();
     if (s === '0' || s === 'pending') {
       return { text: 'Pending', color: '#FFC300', bg: 'rgba(255, 195, 0, 0.1)' };
     }
-    if (s === '1' || s === 'active' || s === 'in_progress') {
+    if (s === '1' || s === 'active' || s === 'in_progress' || s === 'progress') {
       return { text: 'In Progress', color: 'var(--main-color-one, #1DBF73)', bg: 'rgba(29, 191, 115, 0.1)' };
     }
-    if (s === '2' || s === 'completed') {
+    if (s === 'revision_requested' || s === 'revision') {
+      return { text: 'Revision Requested', color: '#854D0E', bg: '#FEF9C3' };
+    }
+    if (s === '2' || s === 'completed' || s === 'complete' || s === 'delivered') {
       return { text: 'Completed', color: '#65C18C', bg: 'rgba(101, 193, 140, 0.1)' };
     }
-    if (s === '3' || s === 'cancelled') {
+    if (s === '3' || s === '4' || s === 'cancelled' || s === 'canceled' || s === 'declined' || s === 'rejected') {
       return { text: 'Cancelled', color: '#F05454', bg: 'rgba(240, 84, 84, 0.1)' };
     }
-    return { text: 'Active', color: 'var(--main-color-one, #1DBF73)', bg: 'rgba(29, 191, 115, 0.1)' };
+    return { text: 'Pending', color: '#FFC300', bg: 'rgba(255, 195, 0, 0.1)' };
   };
 
   return (
@@ -85,12 +100,13 @@ export default function MobileOrdersScreen({
       >
         {(['all', 'pending', 'active', 'completed', 'cancelled'] as const).map((tab) => {
           const isActive = filter === tab;
+          const count = counts[tab];
           return (
             <button
               key={tab}
               type="button"
               onClick={() => setFilter(tab)}
-              className="mobile-horizontal-card btn btn-sm text-capitalize px-3 py-1.5"
+              className="mobile-horizontal-card btn btn-sm text-capitalize px-3 py-1.5 d-inline-flex align-items-center gap-1.5"
               style={{
                 borderRadius: '20px',
                 border: `1px solid ${isActive ? 'var(--main-color-one, #1DBF73)' : '#EAECF0'}`,
@@ -99,9 +115,23 @@ export default function MobileOrdersScreen({
                 fontSize: '13px',
                 fontWeight: isActive ? 600 : 400,
                 transition: 'all 0.15s ease',
+                whiteSpace: 'nowrap',
+                flexShrink: 0,
               }}
             >
-              {tab}
+              <span>{tab}</span>
+              <span
+                style={{
+                  fontSize: '11px',
+                  padding: '1px 6px',
+                  borderRadius: '10px',
+                  backgroundColor: isActive ? 'rgba(255,255,255,0.25)' : '#F2F4F7',
+                  color: isActive ? '#FFFFFF' : '#667085',
+                  fontWeight: 600,
+                }}
+              >
+                {count}
+              </span>
             </button>
           );
         })}

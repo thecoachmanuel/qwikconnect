@@ -19,6 +19,7 @@ interface MobileMenuScreenProps {
   onOpenProfileEdit?: () => void;
   onOpenChangePassword?: () => void;
   onOpenLiveChat?: () => void;
+  onOpenAuth?: (mode?: 'login' | 'signup') => void;
 }
 
 export default function MobileMenuScreen({
@@ -30,6 +31,7 @@ export default function MobileMenuScreen({
   onOpenProfileEdit,
   onOpenChangePassword,
   onOpenLiveChat,
+  onOpenAuth,
 }: MobileMenuScreenProps) {
   const { data: session } = useSession();
   const [profile, setProfile] = useState<{
@@ -39,10 +41,10 @@ export default function MobileMenuScreen({
     about: string;
     image: string | null;
   }>({
-    name: 'Emma Watson',
-    email: 'emma@example.com',
-    phone: '+234 801 234 5678',
-    about: 'Lover of clean homes and verified artisans in Lagos.',
+    name: '',
+    email: '',
+    phone: '',
+    about: '',
     image: '/assets/flutter/images/avatar.png',
   });
 
@@ -79,16 +81,26 @@ export default function MobileMenuScreen({
   };
 
   const loadProfile = () => {
+    if (!session?.user) {
+      setProfile({
+        name: '',
+        email: '',
+        phone: '',
+        about: '',
+        image: '/assets/flutter/images/avatar.png',
+      });
+      return;
+    }
     fetch('/api/user/profile')
       .then((res) => res.json())
       .then((data) => {
         if (data?.user) {
           setProfile({
-            name: data.user.name || 'Emma Watson',
-            email: data.user.email || 'emma@example.com',
-            phone: data.user.phone || '+234 801 234 5678',
+            name: data.user.name || session?.user?.name || 'User',
+            email: data.user.email || session?.user?.email || '',
+            phone: data.user.phone || '',
             about: data.user.about || '',
-            image: data.user.image || '/assets/flutter/images/avatar.png',
+            image: data.user.image || session?.user?.image || '/assets/flutter/images/avatar.png',
           });
         }
       })
@@ -116,13 +128,32 @@ export default function MobileMenuScreen({
       window.removeEventListener('qixer-orders-changed', handleOrdersChanged);
       window.removeEventListener('qixer-profile-changed', handleProfileChanged);
     };
-  }, []);
+  }, [session]);
 
   const handleLogout = async () => {
+    setShowLogoutModal(false);
     if (typeof window !== 'undefined') {
       localStorage.removeItem('qixer_user_profile');
+      localStorage.removeItem('qixer_remember_user');
     }
-    await signOut({ callbackUrl: '/user/login' });
+    await signOut({ redirect: false });
+    setProfile({
+      name: '',
+      email: '',
+      phone: '',
+      about: '',
+      image: '/assets/flutter/images/avatar.png',
+    });
+    setOrderCounts({ pending: 0, active: 0, completed: 0, total: 0 });
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('qixer-profile-changed'));
+      window.dispatchEvent(new CustomEvent('qixer-orders-changed'));
+    }
+    if (onOpenAuth) {
+      onOpenAuth('login');
+    } else if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('qixer-open-auth', { detail: { mode: 'login' } }));
+    }
   };
 
   const handleDeleteAccount = async () => {
@@ -139,7 +170,13 @@ export default function MobileMenuScreen({
         body: JSON.stringify({ password: deletePassword }),
       });
       alert('Your account and personal data have been scheduled for permanent deletion.');
-      await signOut({ callbackUrl: '/' });
+      setShowDeleteModal(false);
+      await signOut({ redirect: false });
+      if (onOpenAuth) {
+        onOpenAuth('login');
+      } else if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('qixer-open-auth', { detail: { mode: 'login' } }));
+      }
     } catch (e) {
       alert('Account deletion failed. Please verify your password.');
     } finally {
@@ -150,149 +187,196 @@ export default function MobileMenuScreen({
   return (
     <div className="mobile-menu-screen bg-white pb-5" style={{ backgroundColor: '#FFFFFF' }}>
       {/* 1. MenuNameImageSection (Flutter Parity) */}
-      <div className="px-4 pt-4 pb-2 text-center">
-        {/* Avatar 62x62 with 8px radius */}
-        <div
-          className="mx-auto"
-          style={{
-            width: '62px',
-            height: '62px',
-            borderRadius: '8px',
-            overflow: 'hidden',
-            backgroundColor: '#f1f5f9',
-            border: '1px solid #EAECF0',
-          }}
-        >
-          <img
-            src={profile.image || '/assets/flutter/images/avatar.png'}
-            alt={profile.name}
-            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-            onError={(e) => {
-              (e.target as HTMLImageElement).src = '/assets/flutter/images/avatar.png';
+      {!session?.user ? (
+        <div className="px-4 pt-4 pb-3 text-center">
+          <div
+            className="mx-auto d-flex align-items-center justify-content-center shadow-sm"
+            style={{
+              width: '68px',
+              height: '68px',
+              borderRadius: '50%',
+              backgroundColor: 'rgba(29, 191, 115, 0.1)',
+              color: 'var(--main-color-one, #1DBF73)',
+              fontSize: '28px',
+              marginBottom: '12px',
             }}
-          />
-        </div>
-
-        {/* User name & phone */}
-        <h4 className="fw-bold mt-2.5 mb-1" style={{ color: '#101828', fontSize: '19px' }}>
-          {profile.name}
-        </h4>
-        <p className="text-muted small mb-1" style={{ color: '#667085', fontSize: '13.5px' }}>
-          {profile.phone}
-        </p>
-        {profile.about && (
-          <p className="text-muted small mb-0 px-3" style={{ color: '#667085', fontSize: '13px' }}>
-            {profile.about}
+          >
+            <i className="las la-user"></i>
+          </div>
+          <h4 className="fw-bold mb-1" style={{ color: '#101828', fontSize: '19px' }}>
+            Welcome to QwikConnect
+          </h4>
+          <p className="text-muted small mb-3" style={{ color: '#667085', fontSize: '13.5px' }}>
+            Sign in to track orders, manage your wallet, and chat directly with verified artisans.
           </p>
-        )}
-
-        {/* 2. SettingsPageGrid (2x2 Orders Stat Cards from Flutter) */}
-        <div className="row g-3 mt-3 text-start">
-          <div className="col-6">
-            <div
-              className="d-flex align-items-center gap-2.5 p-2.5"
+          <div className="d-flex gap-2 justify-content-center">
+            <button
+              type="button"
+              onClick={() => onOpenAuth ? onOpenAuth('login') : (typeof window !== 'undefined' && window.dispatchEvent(new CustomEvent('qixer-open-auth', { detail: { mode: 'login' } })))}
+              className="btn text-white fw-bold px-4 py-2"
               style={{
-                height: '76px',
-                border: '1px solid #EAECF0',
+                backgroundColor: 'var(--main-color-one, #1DBF73)',
                 borderRadius: '8px',
-                backgroundColor: '#FFFFFF',
+                fontSize: '14px',
               }}
             >
-              <img
-                src="/assets/flutter/svg/pending-circle.svg"
-                alt="Pending"
-                style={{ width: '35px', height: '35px', flexShrink: 0 }}
-              />
-              <div className="min-w-0">
-                <strong className="d-block" style={{ color: '#101828', fontSize: '17px', lineHeight: 1.1 }}>
-                  {orderCounts.pending}
-                </strong>
-                <span className="text-truncate d-block" style={{ color: '#667085', fontSize: '13px' }}>
-                  Pending orders
-                </span>
-              </div>
-            </div>
+              Sign In
+            </button>
+            <button
+              type="button"
+              onClick={() => onOpenAuth ? onOpenAuth('signup') : (typeof window !== 'undefined' && window.dispatchEvent(new CustomEvent('qixer-open-auth', { detail: { mode: 'signup' } })))}
+              className="btn btn-outline-secondary fw-semibold px-3.5 py-2"
+              style={{ borderRadius: '8px', fontSize: '14px' }}
+            >
+              Register
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="px-4 pt-4 pb-2 text-center">
+          {/* Avatar 62x62 with 8px radius */}
+          <div
+            className="mx-auto"
+            style={{
+              width: '62px',
+              height: '62px',
+              borderRadius: '8px',
+              overflow: 'hidden',
+              backgroundColor: '#f1f5f9',
+              border: '1px solid #EAECF0',
+            }}
+          >
+            <img
+              src={profile.image || '/assets/flutter/images/avatar.png'}
+              alt={profile.name || 'User'}
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = '/assets/flutter/images/avatar.png';
+              }}
+            />
           </div>
 
-          <div className="col-6">
-            <div
-              className="d-flex align-items-center gap-2.5 p-2.5"
-              style={{
-                height: '76px',
-                border: '1px solid #EAECF0',
-                borderRadius: '8px',
-                backgroundColor: '#FFFFFF',
-              }}
-            >
-              <img
-                src="/assets/flutter/svg/active-circle.svg"
-                alt="Active"
-                style={{ width: '35px', height: '35px', flexShrink: 0 }}
-              />
-              <div className="min-w-0">
-                <strong className="d-block" style={{ color: '#101828', fontSize: '17px', lineHeight: 1.1 }}>
-                  {orderCounts.active}
-                </strong>
-                <span className="text-truncate d-block" style={{ color: '#667085', fontSize: '13px' }}>
-                  Active orders
-                </span>
+          {/* User name & phone */}
+          <h4 className="fw-bold mt-2.5 mb-1" style={{ color: '#101828', fontSize: '19px' }}>
+            {profile.name || session?.user?.name || 'Customer'}
+          </h4>
+          <p className="text-muted small mb-1" style={{ color: '#667085', fontSize: '13.5px' }}>
+            {profile.phone || profile.email || session?.user?.email || ''}
+          </p>
+          {profile.about && (
+            <p className="text-muted small mb-0 px-3" style={{ color: '#667085', fontSize: '13px' }}>
+              {profile.about}
+            </p>
+          )}
+
+          {/* 2. SettingsPageGrid (2x2 Orders Stat Cards from Flutter) */}
+          <div className="row g-3 mt-3 text-start">
+            <div className="col-6">
+              <div
+                className="d-flex align-items-center gap-2.5 p-2.5"
+                style={{
+                  height: '76px',
+                  border: '1px solid #EAECF0',
+                  borderRadius: '8px',
+                  backgroundColor: '#FFFFFF',
+                }}
+              >
+                <img
+                  src="/assets/flutter/svg/pending-circle.svg"
+                  alt="Pending"
+                  style={{ width: '35px', height: '35px', flexShrink: 0 }}
+                />
+                <div className="min-w-0">
+                  <strong className="d-block" style={{ color: '#101828', fontSize: '17px', lineHeight: 1.1 }}>
+                    {orderCounts.pending}
+                  </strong>
+                  <span className="text-truncate d-block" style={{ color: '#667085', fontSize: '13px' }}>
+                    Pending orders
+                  </span>
+                </div>
               </div>
             </div>
-          </div>
 
-          <div className="col-6">
-            <div
-              className="d-flex align-items-center gap-2.5 p-2.5"
-              style={{
-                height: '76px',
-                border: '1px solid #EAECF0',
-                borderRadius: '8px',
-                backgroundColor: '#FFFFFF',
-              }}
-            >
-              <img
-                src="/assets/flutter/svg/completed-circle.svg"
-                alt="Completed"
-                style={{ width: '35px', height: '35px', flexShrink: 0 }}
-              />
-              <div className="min-w-0">
-                <strong className="d-block" style={{ color: '#101828', fontSize: '17px', lineHeight: 1.1 }}>
-                  {orderCounts.completed}
-                </strong>
-                <span className="text-truncate d-block" style={{ color: '#667085', fontSize: '13px' }}>
-                  Completed orders
-                </span>
+            <div className="col-6">
+              <div
+                className="d-flex align-items-center gap-2.5 p-2.5"
+                style={{
+                  height: '76px',
+                  border: '1px solid #EAECF0',
+                  borderRadius: '8px',
+                  backgroundColor: '#FFFFFF',
+                }}
+              >
+                <img
+                  src="/assets/flutter/svg/active-circle.svg"
+                  alt="Active"
+                  style={{ width: '35px', height: '35px', flexShrink: 0 }}
+                />
+                <div className="min-w-0">
+                  <strong className="d-block" style={{ color: '#101828', fontSize: '17px', lineHeight: 1.1 }}>
+                    {orderCounts.active}
+                  </strong>
+                  <span className="text-truncate d-block" style={{ color: '#667085', fontSize: '13px' }}>
+                    Active orders
+                  </span>
+                </div>
               </div>
             </div>
-          </div>
 
-          <div className="col-6">
-            <div
-              className="d-flex align-items-center gap-2.5 p-2.5"
-              style={{
-                height: '76px',
-                border: '1px solid #EAECF0',
-                borderRadius: '8px',
-                backgroundColor: '#FFFFFF',
-              }}
-            >
-              <img
-                src="/assets/flutter/svg/receipt-circle.svg"
-                alt="Total"
-                style={{ width: '35px', height: '35px', flexShrink: 0 }}
-              />
-              <div className="min-w-0">
-                <strong className="d-block" style={{ color: '#101828', fontSize: '17px', lineHeight: 1.1 }}>
-                  {orderCounts.total}
-                </strong>
-                <span className="text-truncate d-block" style={{ color: '#667085', fontSize: '13px' }}>
-                  Total orders
-                </span>
+            <div className="col-6">
+              <div
+                className="d-flex align-items-center gap-2.5 p-2.5"
+                style={{
+                  height: '76px',
+                  border: '1px solid #EAECF0',
+                  borderRadius: '8px',
+                  backgroundColor: '#FFFFFF',
+                }}
+              >
+                <img
+                  src="/assets/flutter/svg/completed-circle.svg"
+                  alt="Completed"
+                  style={{ width: '35px', height: '35px', flexShrink: 0 }}
+                />
+                <div className="min-w-0">
+                  <strong className="d-block" style={{ color: '#101828', fontSize: '17px', lineHeight: 1.1 }}>
+                    {orderCounts.completed}
+                  </strong>
+                  <span className="text-truncate d-block" style={{ color: '#667085', fontSize: '13px' }}>
+                    Completed orders
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="col-6">
+              <div
+                className="d-flex align-items-center gap-2.5 p-2.5"
+                style={{
+                  height: '76px',
+                  border: '1px solid #EAECF0',
+                  borderRadius: '8px',
+                  backgroundColor: '#FFFFFF',
+                }}
+              >
+                <img
+                  src="/assets/flutter/svg/receipt-circle.svg"
+                  alt="Total"
+                  style={{ width: '35px', height: '35px', flexShrink: 0 }}
+                />
+                <div className="min-w-0">
+                  <strong className="d-block" style={{ color: '#101828', fontSize: '17px', lineHeight: 1.1 }}>
+                    {orderCounts.total}
+                  </strong>
+                  <span className="text-truncate d-block" style={{ color: '#667085', fontSize: '13px' }}>
+                    Total orders
+                  </span>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Flutter Bold Divider: thickness 4px, color: #EAECF0 */}
       <div style={{ height: '4px', backgroundColor: '#EAECF0', width: '100%', margin: '20px 0 10px 0' }} />
@@ -454,46 +538,78 @@ export default function MobileMenuScreen({
 
       {/* 4. Delete Account & Logout Options */}
       <div className="px-2">
-        {/* Delete Account (Google Play / App Store compliance) */}
-        <div
-          onClick={() => setShowDeleteModal(true)}
-          className="d-flex align-items-center justify-content-between px-3 py-2.5 cursor-pointer"
-          style={{ cursor: 'pointer' }}
-        >
-          <div className="d-flex align-items-center gap-3">
-            <img
-              src="/assets/flutter/svg/menu_delete_account.svg"
-              alt="Delete Account"
-              style={{ width: '35px', height: '35px' }}
-            />
-            <span style={{ color: '#F05454', fontSize: '14.5px', fontWeight: 500 }}>
-              Delete Account
-            </span>
-          </div>
-          <i className="las la-angle-right" style={{ color: '#F05454', fontSize: '17px' }}></i>
-        </div>
+        {session?.user ? (
+          <>
+            {/* Delete Account (Google Play / App Store compliance) */}
+            <div
+              onClick={() => setShowDeleteModal(true)}
+              className="d-flex align-items-center justify-content-between px-3 py-2.5 cursor-pointer"
+              style={{ cursor: 'pointer' }}
+            >
+              <div className="d-flex align-items-center gap-3">
+                <img
+                  src="/assets/flutter/svg/menu_delete_account.svg"
+                  alt="Delete Account"
+                  style={{ width: '35px', height: '35px' }}
+                />
+                <span style={{ color: '#F05454', fontSize: '14.5px', fontWeight: 500 }}>
+                  Delete Account
+                </span>
+              </div>
+              <i className="las la-angle-right" style={{ color: '#F05454', fontSize: '17px' }}></i>
+            </div>
 
-        {/* 1px Divider */}
-        <div style={{ height: '1px', backgroundColor: '#F0F0F0', margin: '4px 16px' }} />
+            {/* 1px Divider */}
+            <div style={{ height: '1px', backgroundColor: '#F0F0F0', margin: '4px 16px' }} />
 
-        {/* Logout */}
-        <div
-          onClick={() => setShowLogoutModal(true)}
-          className="d-flex align-items-center justify-content-between px-3 py-2.5 cursor-pointer"
-          style={{ cursor: 'pointer' }}
-        >
-          <div className="d-flex align-items-center gap-3">
-            <img
-              src="/assets/flutter/svg/logout-circle.svg"
-              alt="Logout"
-              style={{ width: '35px', height: '35px' }}
-            />
-            <span style={{ color: '#475467', fontSize: '14.5px', fontWeight: 500 }}>
-              Logout
-            </span>
+            {/* Logout */}
+            <div
+              onClick={() => setShowLogoutModal(true)}
+              className="d-flex align-items-center justify-content-between px-3 py-2.5 cursor-pointer"
+              style={{ cursor: 'pointer' }}
+            >
+              <div className="d-flex align-items-center gap-3">
+                <img
+                  src="/assets/flutter/svg/logout-circle.svg"
+                  alt="Logout"
+                  style={{ width: '35px', height: '35px' }}
+                />
+                <span style={{ color: '#475467', fontSize: '14.5px', fontWeight: 500 }}>
+                  Logout
+                </span>
+              </div>
+              <i className="las la-angle-right" style={{ color: '#94a3b8', fontSize: '17px' }}></i>
+            </div>
+          </>
+        ) : (
+          <div
+            onClick={() => onOpenAuth ? onOpenAuth('login') : (typeof window !== 'undefined' && window.dispatchEvent(new CustomEvent('qixer-open-auth', { detail: { mode: 'login' } })))}
+            className="d-flex align-items-center justify-content-between px-3 py-2.5 cursor-pointer"
+            style={{ cursor: 'pointer' }}
+          >
+            <div className="d-flex align-items-center gap-3">
+              <div
+                style={{
+                  width: '35px',
+                  height: '35px',
+                  borderRadius: '50%',
+                  backgroundColor: 'rgba(29, 191, 115, 0.1)',
+                  color: 'var(--main-color-one, #1DBF73)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '20px',
+                }}
+              >
+                <i className="las la-sign-in-alt"></i>
+              </div>
+              <span style={{ color: 'var(--main-color-one, #1DBF73)', fontSize: '14.5px', fontWeight: 600 }}>
+                Sign In / Register
+              </span>
+            </div>
+            <i className="las la-angle-right" style={{ color: 'var(--main-color-one, #1DBF73)', fontSize: '17px' }}></i>
           </div>
-          <i className="las la-angle-right" style={{ color: '#94a3b8', fontSize: '17px' }}></i>
-        </div>
+        )}
       </div>
 
       {/* Logout Confirmation Dialog (Flutter Alert parity) */}
