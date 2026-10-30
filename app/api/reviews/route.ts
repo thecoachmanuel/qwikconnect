@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
-import { getReviews, createReview, updateReview, deleteReview } from '@/lib/mongodb';
+import { getReviews, createReview, updateReview, deleteReview, getOrderById } from '@/lib/mongodb';
 
 export async function GET(request: NextRequest) {
   try {
@@ -44,9 +44,11 @@ export async function POST(request: NextRequest) {
     }
 
     const reviewType = type !== undefined ? Number(type) : 1; // 1 = Buyer to Seller, 0 = Seller to Buyer
+    let orderData: any = null;
 
     // Prevent duplicate review on same order
     if (order_id) {
+      orderData = await getOrderById(order_id).catch(() => null);
       const existing = await getReviews({ order_id, type: reviewType });
       if (existing && existing.length > 0) {
         return NextResponse.json(
@@ -59,11 +61,15 @@ export async function POST(request: NextRequest) {
     const reviewerName = name?.trim() || session?.user?.name || (reviewType === 1 ? 'Client' : 'Service Provider');
     const reviewerEmail = email?.trim() || session?.user?.email || '';
 
+    const resolvedServiceId = service_id ? Number(service_id) : (orderData?.service_id || 0);
+    const resolvedSellerId = seller_id ? Number(seller_id) : (orderData?.seller_id || 2);
+    const resolvedBuyerId = buyer_id ? Number(buyer_id) : (orderData?.buyer_id || (session?.user as any)?.id || 4);
+
     const newRev = await createReview({
       order_id: order_id || null,
-      service_id: service_id ? Number(service_id) : 0,
-      seller_id: seller_id ? Number(seller_id) : 2,
-      buyer_id: buyer_id ? Number(buyer_id) : 4,
+      service_id: resolvedServiceId,
+      seller_id: resolvedSellerId,
+      buyer_id: resolvedBuyerId,
       name: reviewerName,
       email: reviewerEmail,
       rating: Number(rating),

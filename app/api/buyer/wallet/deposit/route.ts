@@ -18,8 +18,8 @@ export async function POST(request: Request) {
     const gateway = body.gateway || 'paystack';
     const transactionId = body.transaction_id || `WAL_${Date.now()}_${Math.floor(1000 + Math.random() * 9000)}`;
 
-    // If payment was completed through Paystack popup or direct confirmation
-    if (body.confirmed || body.payment_reference || body.simulate) {
+    // If payment was completed through Paystack popup or direct verification
+    if (body.confirmed || body.payment_reference) {
       const result = await creditWallet(userId, amount, gateway, body.payment_reference || transactionId);
       return NextResponse.json({
         success: true,
@@ -34,46 +34,69 @@ export async function POST(request: Request) {
     const gateways = await getPaymentGateways();
     const pstk = (gateways as any[]).find((g: any) => g.id === 'paystack');
     const { secretKey, publicKey, isConfigured } = getPaystackCredentials(pstk);
+    const isLive = pstk?.sandbox === false;
 
-    // If real Paystack key is available (either configured by admin or in environment variables)
+    // If Paystack key is configured
     if (isConfigured && secretKey.startsWith('sk_')) {
-      try {
-        const origin = request.headers.get('origin') || process.env.NEXTAUTH_URL || 'http://localhost:3000';
-        const pstkRes = await fetch('https://api.paystack.co/transaction/initialize', {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${secretKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            email: userEmail,
-            amount: Math.round(amount * 100), // kobo
-            reference: transactionId,
-            callback_url: `${origin}/buyer/wallet?verify_deposit=1&reference=${transactionId}`,
-            metadata: {
-              user_id: userId,
-              amount: amount,
-              type: 'wallet_deposit',
-            },
-          }),
-        });
+      const origin = request.headers.get('origin') || process.env.NEXTAUTH_URL || 'http://localhost:3000';
+      const referer = request.headers.get('referer') || '';
+      const isPwa = referer.includes('pwa=1');
+      const callbackUrl = isPwa
+        ? `${origin}/?pwa=1&verify_deposit=1&reference=${transactionId}`
+        : `${origin}/buyer/wallet?verify_deposit=1&reference=${transactionId}`;
 
-        const pstkData = await pstkRes.json();
-        if (pstkData?.status && pstkData?.data?.authorization_url) {
-          return NextResponse.json({
-            success: true,
-            paystack: true,
-            authorization_url: pstkData.data.authorization_url,
-            reference: transactionId,
-            public_key: publicKey,
-          });
-        }
-      } catch (err) {
-        console.warn('Paystack initialize failed, falling back to instant credit:', err);
+      const pstkRes = await fetch('https://api.paystack.co/transaction/initialize', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${secretKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: userEmail,
+          amount: Math.round(amount * 100), // kobo
+          reference: transactionId,
+          callback_url: callbackUrl,
+          metadata: {
+            user_id: userId,
+            amount: amount,
+            type: 'wallet_deposit',
+          },
+        }),
+      });
+
+      const pstkData = await pstkRes.json();
+      if (pstkData?.status && pstkData?.data?.authorization_url) {
+        return NextResponse.json({
+          success: true,
+          paystack: true,
+          authorization_url: pstkData.data.authorization_url,
+          reference: transactionId,
+          public_key: publicKey,
+        });
+      }
+
+      if (isLive) {
+        return NextResponse.json(
+          {
+            success: false,
+            message: pstkData.message || 'Paystack live payment initialization failed. Please check credentials or customer email.',
+          },
+          { status: 400 }
+        );
       }
     }
 
-    // Direct sandbox/test deposit fallback
+    if (isLive) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: 'Paystack is in Live Mode but secret key is not configured. Please enter live keys in Admin Payment Settings.',
+        },
+        { status: 400 }
+      );
+    }
+
+    // Sandbox fallback
     const result = await creditWallet(userId, amount, gateway, transactionId);
     return NextResponse.json({
       success: true,

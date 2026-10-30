@@ -1,36 +1,53 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 interface MobileOnboardingModalProps {
   onClose: () => void;
 }
 
+const DEFAULT_SLIDES = [
+  {
+    image: '/assets/flutter/images/intro1.png',
+    title: 'Find Trusted Artisans',
+    subtitle: 'Easily book verified, background-checked professionals in Lagos, Abuja, and nationwide.',
+  },
+  {
+    image: '/assets/flutter/images/intro2.png',
+    title: 'Transparent Pricing in Naira (₦)',
+    subtitle: 'Zero hidden fees with secure escrow buyer protection and instant wallet payments.',
+  },
+  {
+    image: '/assets/flutter/images/intro3.png',
+    title: 'Real-time Tracking & Live Chat',
+    subtitle: 'Chat directly with your artisan and track every stage of your order step-by-step.',
+  },
+];
+
 export default function MobileOnboardingModal({ onClose }: MobileOnboardingModalProps) {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [slides, setSlides] = useState(DEFAULT_SLIDES);
 
-  const slides = [
-    {
-      image: '/assets/flutter/images/intro1.png',
-      title: 'Find Trusted Artisans',
-      subtitle: 'Easily book verified, background-checked professionals in Lagos, Abuja, and nationwide.',
-    },
-    {
-      image: '/assets/flutter/images/intro2.png',
-      title: 'Transparent Pricing in Naira (₦)',
-      subtitle: 'Zero hidden fees with secure escrow buyer protection and instant wallet payments.',
-    },
-    {
-      image: '/assets/flutter/images/intro3.png',
-      title: 'Real-time Tracking & Live Chat',
-      subtitle: 'Chat directly with your artisan and track every stage of your order step-by-step.',
-    },
-  ];
+  useEffect(() => {
+    fetch('/api/mobile/settings')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data && Array.isArray(data.slides) && data.slides.length > 0) {
+          const dynamicSlides = data.slides.map((s: any, idx: number) => ({
+            image: s.image || DEFAULT_SLIDES[idx % DEFAULT_SLIDES.length].image,
+            title: s.title || DEFAULT_SLIDES[idx % DEFAULT_SLIDES.length].title,
+            subtitle: s.subtitle || s.description || DEFAULT_SLIDES[idx % DEFAULT_SLIDES.length].subtitle,
+          }));
+          setSlides(dynamicSlides);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const handleFinish = () => {
     try {
       localStorage.setItem('qixer_intro_completed', '1');
-    } catch (e) { }
+    } catch (e) {}
     onClose();
   };
 
@@ -42,7 +59,7 @@ export default function MobileOnboardingModal({ onClose }: MobileOnboardingModal
     }
   };
 
-  const active = slides[currentSlide];
+  const active = slides[currentSlide] || DEFAULT_SLIDES[0];
 
   return (
     <div
@@ -53,7 +70,7 @@ export default function MobileOnboardingModal({ onClose }: MobileOnboardingModal
       }}
     >
       <div className="flex-grow-1 d-flex flex-column align-items-center justify-content-center text-center pt-4">
-        {/* Intro Illustration from Flutter (assets/images/intro*.png) */}
+        {/* Intro Illustration featuring authentic Nigerian professionals */}
         <div
           className="mb-4 d-flex align-items-center justify-content-center"
           style={{
@@ -77,7 +94,7 @@ export default function MobileOnboardingModal({ onClose }: MobileOnboardingModal
           {active.title}
         </h4>
 
-        {/* Subtitle: paragraphCommon, #667085 */}
+        {/* Subtitle: #667085 */}
         <p className="small px-4 mb-4" style={{ color: '#667085', fontSize: '14px', lineHeight: 1.45 }}>
           {active.subtitle}
         </p>
@@ -100,7 +117,8 @@ export default function MobileOnboardingModal({ onClose }: MobileOnboardingModal
                   width: '10px',
                   height: '10px',
                   borderRadius: '50%',
-                  backgroundColor: currentSlide === idx ? 'var(--main-color-one, #1DBF73)' : '#D0D5DD',
+                  backgroundColor:
+                    currentSlide === idx ? 'var(--main-color-one, #1DBF73)' : '#D0D5DD',
                 }}
               />
             </div>
@@ -108,35 +126,45 @@ export default function MobileOnboardingModal({ onClose }: MobileOnboardingModal
         </div>
       </div>
 
-      {/* Buttons (Flutter IntroductionPage parity: Skip & Continue) */}
-      <div className="d-flex gap-3 pb-3">
-        <button
-          type="button"
-          onClick={handleFinish}
-          className="btn flex-fill py-3 fw-semibold"
-          style={{
-            border: '1.5px solid var(--main-color-one, #1DBF73)',
-            borderRadius: '7px',
-            color: 'var(--main-color-one, #1DBF73)',
-            backgroundColor: '#FFFFFF',
-            fontSize: '15px',
-          }}
-        >
-          Skip
-        </button>
-
-        <button
-          type="button"
-          onClick={handleNext}
-          className="btn flex-fill py-3 fw-semibold text-white"
-          style={{
-            backgroundColor: 'var(--main-color-one, #1DBF73)',
-            borderRadius: '8px',
-            fontSize: '15px',
-          }}
-        >
-          {currentSlide === slides.length - 1 ? 'Get Started' : 'Continue'}
-        </button>
+      {/* Bottom Button Row */}
+      <div className="pt-2 pb-3">
+        {currentSlide < slides.length - 1 ? (
+          <div className="d-flex align-items-center justify-content-between gap-3">
+            <button
+              type="button"
+              onClick={handleFinish}
+              className="btn btn-link text-muted text-decoration-none fw-semibold"
+              style={{ fontSize: '15px' }}
+            >
+              Skip
+            </button>
+            <button
+              type="button"
+              onClick={handleNext}
+              className="btn text-white px-4 py-2.5 fw-semibold d-flex align-items-center gap-2"
+              style={{
+                backgroundColor: 'var(--main-color-one, #1DBF73)',
+                borderRadius: '8px',
+                fontSize: '15px',
+              }}
+            >
+              Next <i className="las la-arrow-right"></i>
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={handleFinish}
+            className="btn text-white w-100 py-3 fw-semibold"
+            style={{
+              backgroundColor: 'var(--main-color-one, #1DBF73)',
+              borderRadius: '8px',
+              fontSize: '16px',
+            }}
+          >
+            Get Started
+          </button>
+        )}
       </div>
     </div>
   );

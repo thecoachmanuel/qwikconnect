@@ -25,25 +25,41 @@ export default function MobileOrderDetailsModal({
 
   const orderId = order?.id || liveOrder?.id || 1024;
 
+  const refreshOrder = () => {
+    if (!orderId) return;
+    fetch(`/api/orders/${orderId}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.order) {
+          setLiveOrder((prev: any) => ({
+            ...prev,
+            ...data.order,
+            service: data.service || prev?.service,
+            seller: data.seller || prev?.seller,
+            buyer: data.buyer || prev?.buyer,
+            extra_services: data.extra_services || prev?.extra_services,
+          }));
+        }
+      })
+      .catch((e) => console.warn('Failed to load live order details:', e))
+      .finally(() => setLoading(false));
+  };
+
   useEffect(() => {
     if (orderId) {
       setLoading(true);
-      fetch(`/api/orders/${orderId}`)
-        .then((res) => res.json())
-        .then((data) => {
-          if (data?.order) {
-            setLiveOrder((prev: any) => ({
-              ...prev,
-              ...data.order,
-              service: data.service || prev?.service,
-              seller: data.seller || prev?.seller,
-              buyer: data.buyer || prev?.buyer,
-              extra_services: data.extra_services || prev?.extra_services,
-            }));
-          }
-        })
-        .catch((e) => console.warn('Failed to load live order details:', e))
-        .finally(() => setLoading(false));
+      refreshOrder();
+
+      // Realtime polling and event listeners for immediate sync when admin or seller updates status
+      const interval = setInterval(refreshOrder, 4000);
+      window.addEventListener('qixer-orders-changed', refreshOrder);
+      window.addEventListener('qixer-refresh-active-screen', refreshOrder);
+
+      return () => {
+        clearInterval(interval);
+        window.removeEventListener('qixer-orders-changed', refreshOrder);
+        window.removeEventListener('qixer-refresh-active-screen', refreshOrder);
+      };
     }
   }, [orderId]);
 

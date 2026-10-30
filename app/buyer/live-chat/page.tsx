@@ -132,11 +132,24 @@ function BuyerLiveChatContent() {
                           />
                         </div>
                         <div className="flex-grow-1 overflow-hidden">
-                          <h6 className="mb-0 fw-bold text-dark text-truncate" style={{ fontSize: '14px' }}>
-                            {selectedUser.name}
-                          </h6>
-                          <small className="text-muted text-truncate d-block" style={{ fontSize: '12px' }}>
-                            Service Provider
+                          <div className="d-flex align-items-center justify-content-between">
+                            <h6 className="mb-0 fw-bold text-dark text-truncate" style={{ fontSize: '14px' }}>
+                              {selectedUser.name}
+                            </h6>
+                            <span
+                              className={`badge ${
+                                selectedUser.isOnline ? 'bg-success-subtle text-success' : 'bg-light text-muted border'
+                              } px-1.5 py-0.5`}
+                              style={{ fontSize: '10px' }}
+                            >
+                              {selectedUser.isOnline ? 'Online' : 'Offline'}
+                            </span>
+                          </div>
+                          <small
+                            className="text-truncate d-block"
+                            style={{ fontSize: '12px', color: selectedUser.isOnline ? '#16a34a' : '#64748b' }}
+                          >
+                            {selectedUser.isOnline ? 'Online • Service Provider' : 'Offline • Service Provider'}
                           </small>
                         </div>
                       </div>
@@ -185,11 +198,21 @@ function BuyerLiveChatContent() {
                               <h6 className="mb-0 fw-semibold text-dark text-truncate" style={{ fontSize: '14px' }}>
                                 {c.user.name}
                               </h6>
-                              {c.lastMessageTime && (
-                                <small className="text-muted" style={{ fontSize: '11px' }}>
-                                  {new Date(c.lastMessageTime).toLocaleDateString([], { month: 'short', day: 'numeric' })}
-                                </small>
-                              )}
+                              <div className="d-flex align-items-center gap-1.5 flex-shrink-0">
+                                <span
+                                  className={`badge ${
+                                    c.user.isOnline ? 'bg-success-subtle text-success' : 'bg-light text-muted border'
+                                  } px-1.5 py-0.5`}
+                                  style={{ fontSize: '10px' }}
+                                >
+                                  {c.user.isOnline ? 'Online' : 'Offline'}
+                                </span>
+                                {c.lastMessageTime && (
+                                  <small className="text-muted" style={{ fontSize: '11px' }}>
+                                    {new Date(c.lastMessageTime).toLocaleDateString([], { month: 'short', day: 'numeric' })}
+                                  </small>
+                                )}
+                              </div>
                             </div>
                             <small className="text-muted text-truncate d-block mt-1" style={{ fontSize: '12px' }}>
                               {c.lastMessage || 'Sent a message'}

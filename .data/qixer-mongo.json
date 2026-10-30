@@ -2175,5 +2175,63 @@
       "created_at": "2026-10-22T00:00:00.000Z",
       "_id": "6ae430c1175a1c6865f29f54"
     }
+  ],
+  "mobile_banners": [
+    {
+      "id": 1,
+      "title": "Special 20% Off Home Cleaning",
+      "subtitle": "Valid across Lagos & Abuja this week",
+      "image": "/assets/uploads/media-uploader/banner11638279446.png",
+      "link": "cleaning",
+      "service_id": 1,
+      "active": true,
+      "created_at": "2026-10-30T12:23:36.945Z"
+    },
+    {
+      "id": 2,
+      "title": "Certified Inverter & Solar Repairs",
+      "subtitle": "24/7 Verified Nigerian Electricians",
+      "image": "/assets/uploads/media-uploader/service_electrical_nigerian.jpg",
+      "link": "electrical-repair",
+      "service_id": 2,
+      "active": true,
+      "created_at": "2026-10-30T12:23:36.959Z"
+    },
+    {
+      "id": 3,
+      "title": "Emergency Plumbing Response",
+      "subtitle": "Quick pipe leakage & pump servicing",
+      "image": "/assets/uploads/media-uploader/service_plumbing_nigerian.jpg",
+      "link": "plumbing-solutions",
+      "service_id": 3,
+      "active": true,
+      "created_at": "2026-10-30T12:23:36.959Z"
+    }
+  ],
+  "onboarding_slides": [
+    {
+      "id": 1,
+      "title": "Find Trusted Artisans",
+      "subtitle": "Easily book verified, background-checked professionals in Lagos, Abuja, and nationwide.",
+      "description": "Every artisan is background-checked and identity-verified for quality work.",
+      "image": "/assets/flutter/images/intro1.png",
+      "icon": "las la-user-check"
+    },
+    {
+      "id": 2,
+      "title": "Transparent Pricing in Naira (₦)",
+      "subtitle": "Zero hidden fees with secure escrow buyer protection and instant wallet payments.",
+      "description": "Pay safely using your Naira wallet, Paystack debit card, or bank transfer.",
+      "image": "/assets/flutter/images/intro2.png",
+      "icon": "las la-shield-alt"
+    },
+    {
+      "id": 3,
+      "title": "Real-Time Tracking & Chat",
+      "subtitle": "Stay connected with direct messaging, appointment schedules, and live milestone updates.",
+      "description": "Communicate smoothly with your artisan and track job progress in real-time.",
+      "image": "/assets/flutter/images/intro3.png",
+      "icon": "las la-comments"
+    }
   ]
 }

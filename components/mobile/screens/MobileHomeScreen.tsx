@@ -183,6 +183,36 @@ export default function MobileHomeScreen({
       .catch(() => {});
   }, [selectedCity]);
 
+  // Listen to screen refresh event (e.g. pull-to-refresh)
+  useEffect(() => {
+    const handleRefresh = () => {
+      fetch('/api/categories')
+        .then((res) => res.json())
+        .then((data) => {
+          if (data && Array.isArray(data.categories)) setCategories(data.categories);
+        })
+        .catch(() => {});
+
+      fetch('/api/mobile/settings')
+        .then((res) => res.json())
+        .then((data) => {
+          if (data && Array.isArray(data.banners)) setBanners(data.banners);
+        })
+        .catch(() => {});
+
+      const url = selectedCity ? `/api/services?city=${encodeURIComponent(selectedCity)}` : '/api/services';
+      fetch(url)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data && Array.isArray(data.services)) setServices(data.services);
+        })
+        .catch(() => {});
+    };
+
+    window.addEventListener('qixer-refresh-active-screen', handleRefresh);
+    return () => window.removeEventListener('qixer-refresh-active-screen', handleRefresh);
+  }, [selectedCity]);
+
   // Auto rotate banner carousel
   useEffect(() => {
     if (banners.length <= 1) return;
@@ -317,7 +347,16 @@ export default function MobileHomeScreen({
                   transition: 'opacity 0.5s ease-in-out',
                   pointerEvents: activeBannerIdx === idx ? 'auto' : 'none',
                 }}
-                onClick={() => onGoToSearch('', banner.link)}
+                onClick={() => {
+                  if (banner.service_id) {
+                    const matched = services.find((s) => Number(s.id) === Number(banner.service_id));
+                    if (matched && onSelectService) {
+                      onSelectService(matched);
+                      return;
+                    }
+                  }
+                  onGoToSearch('', banner.link);
+                }}
               >
                 <img
                   src={banner.image || '/assets/uploads/media-uploader/banner11638279446.png'}

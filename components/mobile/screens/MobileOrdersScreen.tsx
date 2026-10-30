@@ -37,8 +37,10 @@ export default function MobileOrdersScreen({
     };
 
     window.addEventListener('qixer-orders-changed', handleOrdersChanged);
+    window.addEventListener('qixer-refresh-active-screen', handleOrdersChanged);
     return () => {
       window.removeEventListener('qixer-orders-changed', handleOrdersChanged);
+      window.removeEventListener('qixer-refresh-active-screen', handleOrdersChanged);
     };
   }, []);
 

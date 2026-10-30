@@ -41,6 +41,17 @@ export default function BuyerOrderDetailPage({ params }: OrderDetailsProps) {
 
   useEffect(() => {
     fetchOrder();
+
+    const interval = setInterval(fetchOrder, 5000);
+    const handleFocus = () => fetchOrder();
+    window.addEventListener('focus', handleFocus);
+    window.addEventListener('qixer-orders-changed', handleFocus);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', handleFocus);
+      window.removeEventListener('qixer-orders-changed', handleFocus);
+    };
   }, [id]);
 
   const handleCancelOrder = async () => {

@@ -15,9 +15,13 @@ export async function initializePaystack(options: PaymentIntentOptions): Promise
     if (err.message?.includes('disabled')) throw err;
   }
 
-  const { secretKey, isConfigured } = getPaystackCredentials(pstkConfig);
+  const { secretKey, publicKey, isConfigured } = getPaystackCredentials(pstkConfig);
+  const isLive = pstkConfig?.sandbox === false;
 
   if (!isConfigured) {
+    if (isLive) {
+      throw new Error('Paystack live payment credentials not configured. Please enter your live Public & Secret keys in Admin Payment Settings.');
+    }
     return {
       redirectUrl: `${options.successUrl}&demo_paid=1&gateway=paystack`,
       isDirectSuccess: true,
@@ -33,20 +37,31 @@ export async function initializePaystack(options: PaymentIntentOptions): Promise
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        email: options.customerEmail,
+        email: options.customerEmail || 'customer@qwikconnect.ng',
         amount: Math.round(options.amount * 100), // in kobo
         reference: `order_${options.orderId}_${Date.now()}`,
         callback_url: options.successUrl,
         metadata: {
           order_id: options.orderId,
           customer_name: options.customerName,
+          custom_fields: [
+            {
+              display_name: 'Order ID',
+              variable_name: 'order_id',
+              value: options.orderId,
+            },
+          ],
         },
       }),
     });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      console.warn('Paystack API error, falling back to simulated completion:', errorData);
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok || !data.status) {
+      if (isLive) {
+        throw new Error(data.message || 'Paystack live payment initialization failed. Please check credentials or customer details.');
+      }
+      console.warn('Paystack API error in sandbox, falling back to simulated completion:', data);
       return {
         redirectUrl: `${options.successUrl}&demo_paid=1&gateway=paystack`,
         isDirectSuccess: true,
@@ -54,13 +69,15 @@ export async function initializePaystack(options: PaymentIntentOptions): Promise
       };
     }
 
-    const data = await response.json();
     return {
       redirectUrl: data.data?.authorization_url || options.successUrl,
       gatewayOrderId: data.data?.reference,
     };
   } catch (error: any) {
-    console.warn('Paystack network error, falling back to demo completion:', error.message);
+    if (isLive) {
+      throw error;
+    }
+    console.warn('Paystack network error in sandbox:', error.message);
     return {
       redirectUrl: `${options.successUrl}&demo_paid=1&gateway=paystack`,
       isDirectSuccess: true,

@@ -62,6 +62,164 @@ export default function MobileAppShell({ children }: { children?: React.ReactNod
   // Search parameters passed from Home to Search tab
   const [searchParams, setSearchParams] = useState<{ query?: string; category?: string }>({});
 
+  // Gesture Handling: Pull-to-refresh & Horizontal Swipe Navigation
+  const [pullY, setPullY] = useState(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const touchStartRef = React.useRef<{ x: number; y: number; time: number; scrollY: number } | null>(null);
+
+  // Check if any modal is currently active
+  const hasActiveModal = Boolean(
+    activeServiceDetails ||
+    activeBookingService ||
+    selectedOrder ||
+    showLiveChatModal ||
+    activeChatSeller ||
+    activeReviewServiceId ||
+    showNotifications ||
+    showWallet ||
+    showJobs ||
+    showTickets ||
+    showReports ||
+    showProfileEdit ||
+    showChangePassword ||
+    showMapView
+  );
+
+  const handleDismissTopModal = () => {
+    if (activeReviewServiceId) {
+      setActiveReviewServiceId(null);
+      setActiveReviewOrderId(undefined);
+      return true;
+    }
+    if (activeBookingService) {
+      setActiveBookingService(null);
+      return true;
+    }
+    if (activeServiceDetails) {
+      setActiveServiceDetails(null);
+      return true;
+    }
+    if (selectedOrder) {
+      setSelectedOrder(null);
+      return true;
+    }
+    if (showLiveChatModal || activeChatSeller) {
+      setActiveChatSeller(null);
+      setShowLiveChatModal(false);
+      return true;
+    }
+    if (showNotifications) {
+      setShowNotifications(false);
+      return true;
+    }
+    if (showWallet) {
+      setShowWallet(false);
+      return true;
+    }
+    if (showJobs) {
+      setShowJobs(false);
+      return true;
+    }
+    if (showTickets) {
+      setShowTickets(false);
+      return true;
+    }
+    if (showReports) {
+      setShowReports(false);
+      return true;
+    }
+    if (showProfileEdit) {
+      setShowProfileEdit(false);
+      return true;
+    }
+    if (showChangePassword) {
+      setShowChangePassword(false);
+      return true;
+    }
+    if (showMapView) {
+      setShowMapView(false);
+      return true;
+    }
+    return false;
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    touchStartRef.current = {
+      x: touch.clientX,
+      y: touch.clientY,
+      time: Date.now(),
+      scrollY: typeof window !== 'undefined' ? window.scrollY || document.documentElement.scrollTop || 0 : 0,
+    };
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!touchStartRef.current || isRefreshing) return;
+    const touch = e.touches[0];
+    const deltaY = touch.clientY - touchStartRef.current.y;
+    const deltaX = touch.clientX - touchStartRef.current.x;
+
+    // Pull to refresh only when at top of page and dragging downwards
+    if (touchStartRef.current.scrollY <= 5 && deltaY > 0 && Math.abs(deltaY) > Math.abs(deltaX)) {
+      const distance = Math.min(deltaY * 0.45, 80);
+      setPullY(distance);
+    }
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (!touchStartRef.current) return;
+    const touch = e.changedTouches[0];
+    const deltaX = touch.clientX - touchStartRef.current.x;
+    const deltaY = touch.clientY - touchStartRef.current.y;
+    const duration = Date.now() - touchStartRef.current.time;
+    const startX = touchStartRef.current.x;
+
+    // 1. Pull-to-refresh trigger
+    if (pullY >= 50 && !isRefreshing) {
+      setIsRefreshing(true);
+      setPullY(55);
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('qixer-refresh-active-screen'));
+      }
+
+      fetch('/api/notifications')
+        .then((res) => res.json())
+        .then((data) => {
+          if (data && Array.isArray(data.notifications)) {
+            const unread = data.notifications.filter((n: any) => !n.read && n.status === 0).length;
+            setUnreadCount(unread);
+          }
+        })
+        .catch(() => {});
+
+      setTimeout(() => {
+        setIsRefreshing(false);
+        setPullY(0);
+      }, 700);
+    } else {
+      setPullY(0);
+    }
+
+    // 2. Horizontal Swipe Navigation (iOS back gesture & tab switching)
+    if (Math.abs(deltaX) > 60 && Math.abs(deltaY) < 55 && duration < 600) {
+      if (hasActiveModal) {
+        // Left-edge swipe right (iOS back gesture) dismisses the open modal
+        if (startX < 45 && deltaX > 60) {
+          handleDismissTopModal();
+        }
+      } else {
+        // Swipe between main tabs
+        if (deltaX < -70 && currentTab < 4) {
+          setCurrentTab((prev) => Math.min(prev + 1, 4));
+        } else if (deltaX > 70 && currentTab > 0) {
+          setCurrentTab((prev) => Math.max(prev - 1, 0));
+        }
+      }
+    }
+
+    touchStartRef.current = null;
+  };
+
   useEffect(() => {
     // Check if first-time onboarding completed
     if (typeof window !== 'undefined' && permissions.Onboarding) {
@@ -82,6 +240,85 @@ export default function MobileAppShell({ children }: { children?: React.ReactNod
       })
       .catch(() => {});
   }, [permissions.Onboarding]);
+
+  // Real-time Push Notifications & Minimized Background Wakeup
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    // 1. Request notification permission & register push subscription
+    if ('Notification' in window && 'serviceWorker' in navigator) {
+      if (Notification.permission === 'default') {
+        Notification.requestPermission()
+          .then((permission) => {
+            if (permission === 'granted') {
+              registerPush();
+            }
+          })
+          .catch(() => {});
+      } else if (Notification.permission === 'granted') {
+        registerPush();
+      }
+    }
+
+    async function registerPush() {
+      try {
+        const reg = await navigator.serviceWorker.ready;
+        if (reg.pushManager) {
+          let sub = await reg.pushManager.getSubscription();
+          if (!sub) {
+            sub = await reg.pushManager
+              .subscribe({
+                userVisibleOnly: true,
+                applicationServerKey: 'BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjBJuBkr3qBUYIHBQFLXYp5Nksh8U',
+              })
+              .catch(() => null);
+          }
+          if (sub) {
+            fetch('/api/push/subscribe', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ subscription: sub }),
+            }).catch(() => {});
+          }
+        }
+      } catch (e) {}
+    }
+
+    // 2. Background Notification Dispatcher: fires system notification even when app is minimized
+    let lastNotifiedId = 0;
+    const checkBackgroundNotifications = async () => {
+      try {
+        const res = await fetch('/api/notifications');
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data && Array.isArray(data.notifications)) {
+          const unread = data.notifications.filter((n: any) => !n.read && n.status === 0);
+          setUnreadCount(unread.length);
+
+          if (document.visibilityState === 'hidden' && unread.length > 0) {
+            const latest = unread[0];
+            const numId = Number(latest.id) || Date.now();
+            if (numId !== lastNotifiedId) {
+              lastNotifiedId = numId;
+              if ('serviceWorker' in navigator && Notification.permission === 'granted') {
+                const reg = await navigator.serviceWorker.ready;
+                reg.showNotification(latest.title || 'QwikConnect Service Alert', {
+                  body: latest.message || 'You have an update on your service order.',
+                  icon: '/assets/frontend/img/static/mobile_app_icon_192.png',
+                  badge: '/assets/frontend/img/static/mobile_app_icon_192.png',
+                  vibrate: [200, 100, 200],
+                  data: { url: latest.link || '/buyer/orders' },
+                } as any);
+              }
+            }
+          }
+        }
+      } catch (e) {}
+    };
+
+    const notifInterval = setInterval(checkBackgroundNotifications, 5000);
+    return () => clearInterval(notifInterval);
+  }, []);
 
   const handleGoToSearch = (query?: string, category?: string) => {
     setSearchParams({ query, category });
@@ -118,13 +355,45 @@ export default function MobileAppShell({ children }: { children?: React.ReactNod
   return (
     <div
       className="mobile-pwa-shell bg-white text-dark min-vh-100 d-flex flex-column"
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
       style={{
         maxWidth: '100vw',
-        overflowX: 'clip',
+        overflowX: 'hidden',
         paddingBottom: 'calc(75px + env(safe-area-inset-bottom, 0px))',
         backgroundColor: '#FFFFFF',
       }}
     >
+      {/* Pull-to-Refresh Indicator */}
+      {(pullY > 0 || isRefreshing) && (
+        <div
+          className="d-flex align-items-center justify-content-center w-100"
+          style={{
+            height: `${pullY}px`,
+            transition: isRefreshing ? 'height 0.2s ease' : 'none',
+            overflow: 'hidden',
+            backgroundColor: '#F8FAFC',
+            borderBottom: '1px solid #E2E8F0',
+          }}
+        >
+          <div className="d-flex align-items-center gap-2 text-muted small fw-semibold">
+            <i
+              className={`las ${
+                isRefreshing ? 'la-spinner pwa-refresh-spinner text-success' : 'la-arrow-down text-muted'
+              } fs-5`}
+            ></i>
+            <span>
+              {isRefreshing
+                ? 'Refreshing screen...'
+                : pullY >= 50
+                ? 'Release to refresh'
+                : 'Pull down to refresh'}
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* 1. Native Mobile Top Bar (Flutter HomeAppBar Parity) */}
       <MobileTopBar
         selectedCity={selectedCity}

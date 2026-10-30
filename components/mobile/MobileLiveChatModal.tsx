@@ -272,7 +272,7 @@ export default function MobileLiveChatModal({
                       className="d-flex align-items-center gap-3 py-3 border-bottom cursor-pointer"
                       style={{ cursor: 'pointer' }}
                     >
-                      {/* Avatar with Online Badge */}
+                      {/* Avatar with Online/Offline Badge */}
                       <div className="position-relative flex-shrink-0">
                         <div
                           style={{
@@ -293,12 +293,16 @@ export default function MobileLiveChatModal({
                             }}
                           />
                         </div>
-                        {isOnline && (
-                          <span
-                            className="position-absolute bottom-0 end-0 rounded-circle border border-white"
-                            style={{ width: '12px', height: '12px', backgroundColor: '#1DBF73' }}
-                          />
-                        )}
+                        <span
+                          className="position-absolute bottom-0 end-0 rounded-circle border border-white"
+                          style={{
+                            width: '12px',
+                            height: '12px',
+                            backgroundColor: isOnline ? '#1DBF73' : '#94a3b8',
+                            boxShadow: isOnline ? '0 0 4px #1DBF73' : 'none',
+                          }}
+                          title={isOnline ? 'Online' : 'Offline'}
+                        />
                       </div>
 
                       {/* Info & Last message */}
@@ -307,9 +311,19 @@ export default function MobileLiveChatModal({
                           <strong className="text-dark text-truncate" style={{ fontSize: '15px' }}>
                             {partner.name || 'Verified Artisan'}
                           </strong>
-                          <span className="text-muted" style={{ fontSize: '11px' }}>
-                            {conv.lastMessageTime ? new Date(conv.lastMessageTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Recent'}
-                          </span>
+                          <div className="d-flex align-items-center gap-1.5 flex-shrink-0">
+                            <span
+                              className={`badge ${
+                                isOnline ? 'bg-success-subtle text-success' : 'bg-light text-muted border'
+                              } px-1.5 py-0.5`}
+                              style={{ fontSize: '10px' }}
+                            >
+                              {isOnline ? 'Online' : 'Offline'}
+                            </span>
+                            <span className="text-muted" style={{ fontSize: '11px' }}>
+                              {conv.lastMessageTime ? new Date(conv.lastMessageTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Recent'}
+                            </span>
+                          </div>
                         </div>
                         <p
                           className="text-muted mb-0 text-truncate"
@@ -376,7 +390,12 @@ export default function MobileLiveChatModal({
                 </div>
                 <span
                   className="position-absolute bottom-0 end-0 rounded-circle border border-white"
-                  style={{ width: '11px', height: '11px', backgroundColor: '#1DBF73' }}
+                  style={{
+                    width: '11px',
+                    height: '11px',
+                    backgroundColor: selectedSeller.isOnline !== false ? '#1DBF73' : '#94a3b8',
+                    boxShadow: selectedSeller.isOnline !== false ? '0 0 4px #1DBF73' : 'none',
+                  }}
                 />
               </div>
 
@@ -384,8 +403,14 @@ export default function MobileLiveChatModal({
                 <strong className="d-block text-dark text-truncate" style={{ fontSize: '15px', lineHeight: 1.2 }}>
                   {selectedSeller.name || 'Verified Artisan'}
                 </strong>
-                <span className="small d-block text-truncate" style={{ fontSize: '11.5px', color: '#1DBF73' }}>
-                  Online • Verified Provider
+                <span
+                  className="small d-block text-truncate"
+                  style={{
+                    fontSize: '11.5px',
+                    color: selectedSeller.isOnline !== false ? '#1DBF73' : '#64748b',
+                  }}
+                >
+                  {selectedSeller.isOnline !== false ? 'Online • Verified Provider' : 'Offline • Active recently'}
                 </span>
               </div>
             </div>

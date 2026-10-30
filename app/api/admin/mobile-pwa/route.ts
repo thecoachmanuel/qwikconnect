@@ -4,19 +4,22 @@ import {
   updateMobilePwaSettings,
   getMobileBanners,
   createMobileBanner,
+  updateMobileBanner,
   deleteMobileBanner,
   getOnboardingSlides,
   updateOnboardingSlides,
   getPushSubscriptions,
+  getServices,
 } from '@/lib/mongodb';
 
 export async function GET() {
   try {
-    const [settings, banners, slides, subscriptions] = await Promise.all([
+    const [settings, banners, slides, subscriptions, services] = await Promise.all([
       getMobilePwaSettings(),
       getMobileBanners(),
       getOnboardingSlides(),
       getPushSubscriptions().catch(() => []),
+      getServices().catch(() => []),
     ]);
 
     return NextResponse.json({
@@ -25,6 +28,13 @@ export async function GET() {
       banners,
       slides,
       subscriberCount: subscriptions.length,
+      services: (services || []).map((s: any) => ({
+        id: s.id,
+        title: s.title,
+        price: s.price,
+        slug: s.slug,
+        category: s.category,
+      })),
     });
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
@@ -44,6 +54,11 @@ export async function POST(request: Request) {
     if (action === 'create_banner') {
       const newBanner = await createMobileBanner(body.banner);
       return NextResponse.json({ success: true, message: 'Mobile banner created successfully!', banner: newBanner });
+    }
+
+    if (action === 'update_banner') {
+      const updatedBanner = await updateMobileBanner(body.banner);
+      return NextResponse.json({ success: true, message: 'Mobile banner updated successfully!', banner: updatedBanner });
     }
 
     if (action === 'delete_banner') {

@@ -35,6 +35,14 @@ export default function MobileSavedScreen({
 
   useEffect(() => {
     loadFavorites();
+
+    const handleRefresh = () => {
+      loadFavorites();
+    };
+    window.addEventListener('qixer-refresh-active-screen', handleRefresh);
+    return () => {
+      window.removeEventListener('qixer-refresh-active-screen', handleRefresh);
+    };
   }, []);
 
   const handleRemove = async (serviceId: number) => {

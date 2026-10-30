@@ -5114,6 +5114,7 @@ export async function getMobileBanners(): Promise<any[]> {
         subtitle: 'Valid across Lagos & Abuja this week',
         image: '/assets/uploads/media-uploader/banner11638279446.png',
         link: 'cleaning',
+        service_id: 1,
         active: true,
       },
       {
@@ -5122,6 +5123,7 @@ export async function getMobileBanners(): Promise<any[]> {
         subtitle: '24/7 Verified Nigerian Electricians',
         image: '/assets/uploads/media-uploader/service_electrical_nigerian.jpg',
         link: 'electrical-repair',
+        service_id: 2,
         active: true,
       },
       {
@@ -5130,6 +5132,7 @@ export async function getMobileBanners(): Promise<any[]> {
         subtitle: 'Quick pipe leakage & pump servicing',
         image: '/assets/uploads/media-uploader/service_plumbing_nigerian.jpg',
         link: 'plumbing-solutions',
+        service_id: 3,
         active: true,
       },
     ]
@@ -5146,6 +5149,7 @@ export async function createMobileBanner(bannerData: any): Promise<any> {
     subtitle: bannerData.subtitle || '',
     image: bannerData.image || '/assets/uploads/media-uploader/banner11638279446.png',
     link: bannerData.link || '',
+    service_id: bannerData.service_id ? Number(bannerData.service_id) : undefined,
     active: bannerData.active !== undefined ? bannerData.active : true,
     created_at: new Date().toISOString(),
   };
@@ -5161,6 +5165,37 @@ export async function createMobileBanner(bannerData: any): Promise<any> {
   }
 
   return newBanner;
+}
+
+export async function updateMobileBanner(bannerData: any): Promise<any> {
+  const numId = Number(bannerData.id);
+  const data = readDataFile();
+  if (!data.mobile_banners) data.mobile_banners = [];
+
+  const updateFields: any = {
+    title: bannerData.title,
+    subtitle: bannerData.subtitle || '',
+    image: bannerData.image,
+    link: bannerData.link || '',
+    service_id: bannerData.service_id ? Number(bannerData.service_id) : undefined,
+    active: bannerData.active !== undefined ? bannerData.active : true,
+    updated_at: new Date().toISOString(),
+  };
+
+  const idx = data.mobile_banners.findIndex((b: any) => Number(b.id) === numId);
+  if (idx !== -1) {
+    data.mobile_banners[idx] = { ...data.mobile_banners[idx], ...updateFields };
+    writeDataFile(data);
+  }
+
+  const db = await getMongoDb();
+  if (db) {
+    try {
+      await db.collection('mobile_banners').updateOne({ id: numId }, { $set: updateFields });
+    } catch (e) {}
+  }
+
+  return data.mobile_banners[idx] || updateFields;
 }
 
 export async function deleteMobileBanner(id: number | string): Promise<boolean> {
@@ -5197,23 +5232,26 @@ export async function getOnboardingSlides(): Promise<any[]> {
     data.onboarding_slides || [
       {
         id: 1,
-        title: 'Verified Artisans at Your Doorstep',
-        subtitle: 'Find trusted local professionals in Lagos, Abuja & nationwide',
+        title: 'Find Trusted Artisans',
+        subtitle: 'Easily book verified, background-checked professionals in Lagos, Abuja, and nationwide.',
         description: 'Every artisan is background-checked and identity-verified for quality work.',
+        image: '/assets/flutter/images/intro1.png',
         icon: 'las la-user-check',
       },
       {
         id: 2,
         title: 'Transparent Pricing in Naira (₦)',
-        subtitle: 'Zero hidden fees with escrow buyer protection',
+        subtitle: 'Zero hidden fees with secure escrow buyer protection and instant wallet payments.',
         description: 'Pay safely using your Naira wallet, Paystack debit card, or bank transfer.',
+        image: '/assets/flutter/images/intro2.png',
         icon: 'las la-shield-alt',
       },
       {
         id: 3,
         title: 'Real-time Tracking & Live Chat',
-        subtitle: 'Direct messaging and milestone updates',
+        subtitle: 'Chat directly with your artisan and track every stage of your order step-by-step.',
         description: 'Track orders step-by-step and chat with artisans right from your phone.',
+        image: '/assets/flutter/images/intro3.png',
         icon: 'las la-clock',
       },
     ]

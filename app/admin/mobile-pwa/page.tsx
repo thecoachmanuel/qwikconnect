@@ -28,17 +28,23 @@ export default function AdminMobilePwaPage() {
   // Banners & Slides state
   const [banners, setBanners] = useState<any[]>([]);
   const [slides, setSlides] = useState<any[]>([]);
+  const [services, setServices] = useState<any[]>([]);
   const [subscriberCount, setSubscriberCount] = useState<number>(0);
 
   // New banner form modal
   const [showAddBanner, setShowAddBanner] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState<string | null>(null);
   const [newBanner, setNewBanner] = useState({
     title: '',
     subtitle: '',
     image: '/assets/uploads/media-uploader/banner11638279446.png',
     link: '',
+    service_id: '',
     active: true,
   });
+
+  // Edit banner state
+  const [editingBanner, setEditingBanner] = useState<any | null>(null);
 
   // Broadcast push notification form
   const [pushForm, setPushForm] = useState({
@@ -58,6 +64,7 @@ export default function AdminMobilePwaPage() {
         if (data.settings) setSettings(data.settings);
         if (Array.isArray(data.banners)) setBanners(data.banners);
         if (Array.isArray(data.slides)) setSlides(data.slides);
+        if (Array.isArray(data.services)) setServices(data.services);
         if (data.subscriberCount !== undefined) setSubscriberCount(data.subscriberCount);
       }
     } catch (e) {
@@ -74,6 +81,38 @@ export default function AdminMobilePwaPage() {
   const showToast = (text: string, type: 'success' | 'danger' = 'success') => {
     setMessage({ text, type });
     setTimeout(() => setMessage(null), 4000);
+  };
+
+  // Helper to upload local image via /api/upload
+  const handleFileUpload = async (file: File, target: 'new_banner' | 'edit_banner' | number) => {
+    try {
+      setUploadingImage(typeof target === 'number' ? `slide_${target}` : target);
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await res.json();
+      if (res.ok && data.url) {
+        if (target === 'new_banner') {
+          setNewBanner((prev) => ({ ...prev, image: data.url }));
+        } else if (target === 'edit_banner') {
+          setEditingBanner((prev: any) => ({ ...prev, image: data.url }));
+        } else if (typeof target === 'number') {
+          const updated = [...slides];
+          updated[target] = { ...updated[target], image: data.url };
+          setSlides(updated);
+        }
+        showToast('Image uploaded successfully!');
+      } else {
+        showToast(data.message || 'Image upload failed', 'danger');
+      }
+    } catch (e: any) {
+      showToast(e.message || 'Upload failed', 'danger');
+    } finally {
+      setUploadingImage(null);
+    }
   };
 
   // Toggle Module Permission
@@ -132,11 +171,43 @@ export default function AdminMobilePwaPage() {
           subtitle: '',
           image: '/assets/uploads/media-uploader/banner11638279446.png',
           link: '',
+          service_id: '',
           active: true,
         });
         loadData();
       } else {
         showToast(data.message || 'Failed to add banner', 'danger');
+      }
+    } catch (err: any) {
+      showToast(err.message, 'danger');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Update Banner
+  const handleUpdateBanner = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingBanner || !editingBanner.title) {
+      alert('Please enter a banner title');
+      return;
+    }
+    setSaving(true);
+    try {
+      const res = await fetch('/api/admin/mobile-pwa', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'update_banner', banner: editingBanner }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        showToast('Mobile banner updated successfully!');
+        setBanners((prev) =>
+          prev.map((b) => (b.id === editingBanner.id ? { ...b, ...editingBanner } : b))
+        );
+        setEditingBanner(null);
+      } else {
+        showToast(data.message || 'Failed to update banner', 'danger');
       }
     } catch (err: any) {
       showToast(err.message, 'danger');
@@ -528,12 +599,15 @@ export default function AdminMobilePwaPage() {
               <div>
                 <h5 className="fw-bold text-dark mb-1">Mobile Home Promo Carousel</h5>
                 <p className="text-muted small mb-0">
-                  Swipeable banners displayed at the top of the mobile home tab (lib/view/home/home.dart parity).
+                  Swipeable banners displayed at the top of the mobile home tab (lib/view/home/home.dart parity). You can link banners directly to marketplace services or custom URLs.
                 </p>
               </div>
               <button
                 type="button"
-                onClick={() => setShowAddBanner(true)}
+                onClick={() => {
+                  setEditingBanner(null);
+                  setShowAddBanner(true);
+                }}
                 className="btn btn-success btn-sm px-3 fw-semibold d-inline-flex align-items-center gap-1"
                 style={{ backgroundColor: 'var(--main-color-one, #1DBF73)' }}
               >
@@ -541,77 +615,153 @@ export default function AdminMobilePwaPage() {
               </button>
             </div>
 
-            {banners.length === 0 ? (
-              <div className="text-center py-5 border rounded-3 bg-light">
-                <i className="las la-images text-muted fs-1 mb-2"></i>
-                <p className="text-muted fw-semibold">No banners created yet</p>
-                <button
-                  type="button"
-                  onClick={() => setShowAddBanner(true)}
-                  className="btn btn-outline-success btn-sm"
-                >
-                  Create First Banner
-                </button>
-              </div>
-            ) : (
-              <div className="table-responsive border rounded-3">
-                <table className="table table-hover align-middle mb-0">
-                  <thead className="table-light">
-                    <tr>
-                      <th style={{ width: '90px' }}>Preview</th>
-                      <th>Title</th>
-                      <th>Subtitle / Tag</th>
-                      <th>Destination Link</th>
-                      <th>Status</th>
-                      <th style={{ width: '80px' }} className="text-end">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {banners.map((b) => (
-                      <tr key={b.id}>
-                        <td>
-                          <div style={{ width: 72, height: 42, borderRadius: 6, overflow: 'hidden', backgroundColor: '#f1f5f9' }}>
+            {/* Edit Banner Card */}
+            {editingBanner && (
+              <div className="card mb-4 border-2 border-primary shadow-sm">
+                <div className="card-header bg-primary text-white d-flex align-items-center justify-content-between py-2.5">
+                  <strong className="small d-flex align-items-center gap-2">
+                    <i className="las la-edit fs-5"></i> Edit Promo Banner #{editingBanner.id}
+                  </strong>
+                  <button
+                    type="button"
+                    onClick={() => setEditingBanner(null)}
+                    className="btn-close btn-close-white btn-sm"
+                  ></button>
+                </div>
+                <div className="card-body p-3.5">
+                  <form onSubmit={handleUpdateBanner}>
+                    <div className="row g-3">
+                      <div className="col-12 col-md-6">
+                        <label className="form-label fw-semibold small text-dark">Banner Title *</label>
+                        <input
+                          type="text"
+                          required
+                          className="form-control form-control-sm"
+                          placeholder="e.g. 20% Off Home Deep Cleaning"
+                          value={editingBanner.title || ''}
+                          onChange={(e) => setEditingBanner({ ...editingBanner, title: e.target.value })}
+                        />
+                      </div>
+                      <div className="col-12 col-md-6">
+                        <label className="form-label fw-semibold small text-dark">Subtitle / Promo Tag</label>
+                        <input
+                          type="text"
+                          className="form-control form-control-sm"
+                          placeholder="e.g. Code: QWIK20 | Lagos & Abuja"
+                          value={editingBanner.subtitle || ''}
+                          onChange={(e) => setEditingBanner({ ...editingBanner, subtitle: e.target.value })}
+                        />
+                      </div>
+
+                      {/* Image Upload & Preview */}
+                      <div className="col-12 col-md-6">
+                        <label className="form-label fw-semibold small text-dark">Banner Image</label>
+                        <div className="d-flex align-items-center gap-2 mb-2">
+                          <div style={{ width: 64, height: 40, borderRadius: 6, overflow: 'hidden', backgroundColor: '#e2e8f0', flexShrink: 0 }}>
                             <img
-                              src={b.image || '/assets/uploads/media-uploader/banner11638279446.png'}
-                              alt={b.title}
+                              src={editingBanner.image || '/assets/uploads/media-uploader/banner11638279446.png'}
+                              alt="Banner"
                               style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                             />
                           </div>
-                        </td>
-                        <td>
-                          <strong className="d-block text-dark">{b.title}</strong>
-                        </td>
-                        <td>
-                          <span className="badge bg-light text-muted border">{b.subtitle || 'General Promo'}</span>
-                        </td>
-                        <td>
-                          <code className="text-dark small">{b.link || '/services'}</code>
-                        </td>
-                        <td>
-                          <span className="badge bg-success-subtle text-success">Active</span>
-                        </td>
-                        <td className="text-end">
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteBanner(b.id)}
-                            className="btn btn-outline-danger btn-sm p-1.5"
-                            title="Delete Banner"
-                          >
-                            <i className="las la-trash-alt fs-5"></i>
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="form-control form-control-sm"
+                            onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'edit_banner')}
+                            disabled={uploadingImage === 'edit_banner'}
+                          />
+                        </div>
+                        {uploadingImage === 'edit_banner' && (
+                          <span className="text-primary small d-flex align-items-center gap-1">
+                            <span className="spinner-border spinner-border-sm" role="status"></span> Uploading image...
+                          </span>
+                        )}
+                        <input
+                          type="text"
+                          className="form-control form-control-sm mt-1"
+                          placeholder="Image URL path"
+                          value={editingBanner.image || ''}
+                          onChange={(e) => setEditingBanner({ ...editingBanner, image: e.target.value })}
+                        />
+                      </div>
+
+                      {/* Link to Marketplace Service */}
+                      <div className="col-12 col-md-6">
+                        <label className="form-label fw-semibold small text-dark">Optionally Link to Service</label>
+                        <select
+                          className="form-select form-select-sm"
+                          value={editingBanner.service_id ? String(editingBanner.service_id) : ''}
+                          onChange={(e) => setEditingBanner({ ...editingBanner, service_id: e.target.value })}
+                        >
+                          <option value="">-- No linked service (General category/URL) --</option>
+                          {services.map((s) => (
+                            <option key={s.id} value={s.id}>
+                              #{s.id} - {s.title} (₦{Number(s.price).toLocaleString()})
+                            </option>
+                          ))}
+                        </select>
+                        <span className="text-muted small mt-1 d-block" style={{ fontSize: '11px' }}>
+                          If selected, tapping this banner in the PWA immediately opens this service details modal.
+                        </span>
+                      </div>
+
+                      <div className="col-12 col-md-6">
+                        <label className="form-label fw-semibold small text-dark">Destination Category/URL Fallback</label>
+                        <input
+                          type="text"
+                          className="form-control form-control-sm"
+                          placeholder="cleaning or /services"
+                          value={editingBanner.link || ''}
+                          onChange={(e) => setEditingBanner({ ...editingBanner, link: e.target.value })}
+                        />
+                      </div>
+
+                      <div className="col-12 col-md-6 d-flex align-items-center">
+                        <div className="form-check form-switch mt-3">
+                          <input
+                            className="form-check-input"
+                            type="checkbox"
+                            role="switch"
+                            id="editBannerActive"
+                            checked={editingBanner.active !== false}
+                            onChange={(e) => setEditingBanner({ ...editingBanner, active: e.target.checked })}
+                          />
+                          <label className="form-check-label fw-semibold small text-dark" htmlFor="editBannerActive">
+                            Active in PWA Slider
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="d-flex justify-content-end gap-2 mt-3">
+                      <button
+                        type="button"
+                        onClick={() => setEditingBanner(null)}
+                        className="btn btn-light btn-sm"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={saving}
+                        className="btn btn-primary btn-sm px-3 fw-semibold"
+                      >
+                        {saving ? 'Saving...' : 'Save Changes'}
+                      </button>
+                    </div>
+                  </form>
+                </div>
               </div>
             )}
 
             {/* Add Banner Form */}
-            {showAddBanner && (
-              <div className="card mt-4 border-2 border-success shadow-sm">
+            {showAddBanner && !editingBanner && (
+              <div className="card mb-4 border-2 border-success shadow-sm">
                 <div className="card-header bg-success text-white d-flex align-items-center justify-content-between py-2.5">
-                  <strong className="small">Add New Mobile Promo Banner</strong>
+                  <strong className="small d-flex align-items-center gap-2">
+                    <i className="las la-plus-circle fs-5"></i> Add New Mobile Promo Banner
+                  </strong>
                   <button
                     type="button"
                     onClick={() => setShowAddBanner(false)}
@@ -642,27 +792,88 @@ export default function AdminMobilePwaPage() {
                           onChange={(e) => setNewBanner({ ...newBanner, subtitle: e.target.value })}
                         />
                       </div>
+
+                      {/* Image Upload & Preview */}
                       <div className="col-12 col-md-6">
-                        <label className="form-label fw-semibold small text-dark">Image URL Path</label>
+                        <label className="form-label fw-semibold small text-dark">Banner Image</label>
+                        <div className="d-flex align-items-center gap-2 mb-2">
+                          <div style={{ width: 64, height: 40, borderRadius: 6, overflow: 'hidden', backgroundColor: '#e2e8f0', flexShrink: 0 }}>
+                            <img
+                              src={newBanner.image || '/assets/uploads/media-uploader/banner11638279446.png'}
+                              alt="Banner Preview"
+                              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                            />
+                          </div>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="form-control form-control-sm"
+                            onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'new_banner')}
+                            disabled={uploadingImage === 'new_banner'}
+                          />
+                        </div>
+                        {uploadingImage === 'new_banner' && (
+                          <span className="text-success small d-flex align-items-center gap-1">
+                            <span className="spinner-border spinner-border-sm" role="status"></span> Uploading image...
+                          </span>
+                        )}
                         <input
                           type="text"
-                          className="form-control form-control-sm"
-                          placeholder="/assets/uploads/media-uploader/banner11638279446.png"
+                          className="form-control form-control-sm mt-1"
+                          placeholder="Image URL path"
                           value={newBanner.image}
                           onChange={(e) => setNewBanner({ ...newBanner, image: e.target.value })}
                         />
                       </div>
+
+                      {/* Link to Service */}
                       <div className="col-12 col-md-6">
-                        <label className="form-label fw-semibold small text-dark">Destination Category/URL</label>
+                        <label className="form-label fw-semibold small text-dark">Optionally Link to Service</label>
+                        <select
+                          className="form-select form-select-sm"
+                          value={newBanner.service_id || ''}
+                          onChange={(e) => setNewBanner({ ...newBanner, service_id: e.target.value })}
+                        >
+                          <option value="">-- No linked service (General category/URL) --</option>
+                          {services.map((s) => (
+                            <option key={s.id} value={s.id}>
+                              #{s.id} - {s.title} (₦{Number(s.price).toLocaleString()})
+                            </option>
+                          ))}
+                        </select>
+                        <span className="text-muted small mt-1 d-block" style={{ fontSize: '11px' }}>
+                          Directly opens service details on tap.
+                        </span>
+                      </div>
+
+                      <div className="col-12 col-md-6">
+                        <label className="form-label fw-semibold small text-dark">Destination Category/URL Fallback</label>
                         <input
                           type="text"
                           className="form-control form-control-sm"
-                          placeholder="cleaning or /service-list"
+                          placeholder="cleaning or /services"
                           value={newBanner.link}
                           onChange={(e) => setNewBanner({ ...newBanner, link: e.target.value })}
                         />
                       </div>
+
+                      <div className="col-12 col-md-6 d-flex align-items-center">
+                        <div className="form-check form-switch mt-3">
+                          <input
+                            className="form-check-input"
+                            type="checkbox"
+                            role="switch"
+                            id="newBannerActive"
+                            checked={newBanner.active}
+                            onChange={(e) => setNewBanner({ ...newBanner, active: e.target.checked })}
+                          />
+                          <label className="form-check-label fw-semibold small text-dark" htmlFor="newBannerActive">
+                            Active in PWA Slider
+                          </label>
+                        </div>
+                      </div>
                     </div>
+
                     <div className="d-flex justify-content-end gap-2 mt-3">
                       <button
                         type="button"
@@ -674,7 +885,7 @@ export default function AdminMobilePwaPage() {
                       <button
                         type="submit"
                         disabled={saving}
-                        className="btn btn-success btn-sm px-3"
+                        className="btn btn-success btn-sm px-3 fw-semibold"
                         style={{ backgroundColor: 'var(--main-color-one, #1DBF73)' }}
                       >
                         {saving ? 'Saving...' : 'Add Banner'}
@@ -684,72 +895,245 @@ export default function AdminMobilePwaPage() {
                 </div>
               </div>
             )}
+
+            {banners.length === 0 ? (
+              <div className="text-center py-5 border rounded-3 bg-light">
+                <i className="las la-images text-muted fs-1 mb-2"></i>
+                <p className="text-muted fw-semibold">No banners created yet</p>
+                <button
+                  type="button"
+                  onClick={() => setShowAddBanner(true)}
+                  className="btn btn-outline-success btn-sm"
+                >
+                  Create First Banner
+                </button>
+              </div>
+            ) : (
+              <div className="table-responsive border rounded-3">
+                <table className="table table-hover align-middle mb-0">
+                  <thead className="table-light">
+                    <tr>
+                      <th style={{ width: '90px' }}>Preview</th>
+                      <th>Title & Subtitle</th>
+                      <th>Linked Service</th>
+                      <th>Destination Link</th>
+                      <th>Status</th>
+                      <th style={{ width: '110px' }} className="text-end">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {banners.map((b) => {
+                      const matchedService = b.service_id
+                        ? services.find((s) => Number(s.id) === Number(b.service_id))
+                        : null;
+
+                      return (
+                        <tr key={b.id}>
+                          <td>
+                            <div style={{ width: 72, height: 42, borderRadius: 6, overflow: 'hidden', backgroundColor: '#f1f5f9' }}>
+                              <img
+                                src={b.image || '/assets/uploads/media-uploader/banner11638279446.png'}
+                                alt={b.title}
+                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).src = '/assets/uploads/media-uploader/banner11638279446.png';
+                                }}
+                              />
+                            </div>
+                          </td>
+                          <td>
+                            <strong className="d-block text-dark">{b.title}</strong>
+                            <small className="text-muted">{b.subtitle || 'General Promo'}</small>
+                          </td>
+                          <td>
+                            {matchedService ? (
+                              <span className="badge bg-primary-subtle text-primary border border-primary-subtle">
+                                <i className="las la-link me-1"></i>
+                                #{matchedService.id} {matchedService.title.slice(0, 24)}...
+                              </span>
+                            ) : b.service_id ? (
+                              <span className="badge bg-secondary-subtle text-secondary">
+                                Service #{b.service_id}
+                              </span>
+                            ) : (
+                              <span className="text-muted small">None (General)</span>
+                            )}
+                          </td>
+                          <td>
+                            <code className="text-dark small">{b.link || '/services'}</code>
+                          </td>
+                          <td>
+                            <span className={`badge ${b.active !== false ? 'bg-success-subtle text-success' : 'bg-secondary-subtle text-secondary'}`}>
+                              {b.active !== false ? 'Active' : 'Inactive'}
+                            </span>
+                          </td>
+                          <td className="text-end">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setShowAddBanner(false);
+                                setEditingBanner({ ...b, service_id: b.service_id ? String(b.service_id) : '' });
+                              }}
+                              className="btn btn-outline-primary btn-sm p-1.5 me-1"
+                              title="Edit Banner"
+                            >
+                              <i className="las la-pen fs-5"></i>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteBanner(b.id)}
+                              className="btn btn-outline-danger btn-sm p-1.5"
+                              title="Delete Banner"
+                            >
+                              <i className="las la-trash-alt fs-5"></i>
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         )}
 
         {/* Tab 3: Onboarding Slides */}
         {activeTab === 'slides' && (
           <div className="card-body p-4">
-            <div className="mb-3">
-              <h5 className="fw-bold text-dark mb-1">First-Launch Onboarding Walkthrough</h5>
-              <p className="text-muted small">
-                Customize the 3 intro screens that greet new mobile users when they open the app for the first time.
-              </p>
+            <div className="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+              <div>
+                <h5 className="fw-bold text-dark mb-1">First-Launch Onboarding Walkthrough</h5>
+                <p className="text-muted small mb-0">
+                  Customize the 3 intro screens that greet new mobile users when they open the app for the first time. Real Nigerian models cloned from Flutter assets.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleSaveSlides}
+                disabled={saving}
+                className="btn btn-success btn-sm px-3 fw-semibold d-inline-flex align-items-center gap-2"
+                style={{ backgroundColor: 'var(--main-color-one, #1DBF73)' }}
+              >
+                {saving ? 'Saving...' : <><i className="las la-save fs-5"></i> Save Walkthrough Slides</>}
+              </button>
             </div>
 
-            <div className="row g-3 mb-4">
-              {slides.map((slide, index) => (
-                <div key={slide.id || index} className="col-12 col-md-4">
-                  <div className="card h-100 border rounded-3 p-3 bg-light">
-                    <div className="d-flex align-items-center justify-content-between mb-2">
-                      <span className="badge bg-success small">Slide {index + 1}</span>
-                      <i className={`${slide.icon || 'las la-tools'} fs-4 text-success`}></i>
-                    </div>
+            <div className="row g-4 mb-4">
+              {slides.map((slide, index) => {
+                const fallbackImg = `/assets/flutter/images/intro${index + 1}.png`;
+                const isUploading = uploadingImage === `slide_${index}`;
 
-                    <div className="mb-2">
-                      <label className="form-label fw-semibold small text-dark mb-1">Headline Title</label>
-                      <input
-                        type="text"
-                        className="form-control form-control-sm bg-white"
-                        value={slide.title || ''}
-                        onChange={(e) => {
-                          const updated = [...slides];
-                          updated[index] = { ...updated[index], title: e.target.value };
-                          setSlides(updated);
-                        }}
-                      />
-                    </div>
+                return (
+                  <div key={slide.id || index} className="col-12 col-md-4">
+                    <div className="card h-100 border rounded-3 p-3 bg-white shadow-sm">
+                      <div className="d-flex align-items-center justify-content-between mb-2">
+                        <span className="badge bg-success small fw-semibold">Slide {index + 1}</span>
+                        <i className={`${slide.icon || 'las la-tools'} fs-4 text-success`}></i>
+                      </div>
 
-                    <div className="mb-2">
-                      <label className="form-label fw-semibold small text-dark mb-1">Subtitle</label>
-                      <input
-                        type="text"
-                        className="form-control form-control-sm bg-white"
-                        value={slide.subtitle || ''}
-                        onChange={(e) => {
-                          const updated = [...slides];
-                          updated[index] = { ...updated[index], subtitle: e.target.value };
-                          setSlides(updated);
-                        }}
-                      />
-                    </div>
+                      {/* Image Preview & Upload */}
+                      <div className="mb-3">
+                        <label className="form-label fw-semibold small text-dark mb-1">Nigerian Model Illustration</label>
+                        <div
+                          style={{
+                            height: 180,
+                            borderRadius: 10,
+                            overflow: 'hidden',
+                            backgroundColor: '#f8fafc',
+                            border: '1px solid #e2e8f0',
+                            position: 'relative',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}
+                        >
+                          <img
+                            src={slide.image || fallbackImg}
+                            alt={slide.title}
+                            style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = fallbackImg;
+                            }}
+                          />
+                        </div>
 
-                    <div className="mb-0">
-                      <label className="form-label fw-semibold small text-dark mb-1">Description</label>
-                      <textarea
-                        rows={3}
-                        className="form-control form-control-sm bg-white"
-                        value={slide.description || ''}
-                        onChange={(e) => {
-                          const updated = [...slides];
-                          updated[index] = { ...updated[index], description: e.target.value };
-                          setSlides(updated);
-                        }}
-                      />
+                        {/* Local File Upload Button */}
+                        <div className="mt-2">
+                          <label className="form-label small text-muted mb-1 d-flex align-items-center justify-content-between">
+                            <span>Upload Local Image</span>
+                            {isUploading && (
+                              <span className="text-primary small">
+                                <span className="spinner-border spinner-border-sm" role="status"></span> Uploading...
+                              </span>
+                            )}
+                          </label>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="form-control form-control-sm"
+                            onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], index)}
+                            disabled={isUploading}
+                          />
+                          <input
+                            type="text"
+                            className="form-control form-control-sm mt-1"
+                            placeholder="Image URL or Path"
+                            value={slide.image || ''}
+                            onChange={(e) => {
+                              const updated = [...slides];
+                              updated[index] = { ...updated[index], image: e.target.value };
+                              setSlides(updated);
+                            }}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="mb-2">
+                        <label className="form-label fw-semibold small text-dark mb-1">Headline Title</label>
+                        <input
+                          type="text"
+                          className="form-control form-control-sm bg-white"
+                          value={slide.title || ''}
+                          onChange={(e) => {
+                            const updated = [...slides];
+                            updated[index] = { ...updated[index], title: e.target.value };
+                            setSlides(updated);
+                          }}
+                        />
+                      </div>
+
+                      <div className="mb-2">
+                        <label className="form-label fw-semibold small text-dark mb-1">Subtitle</label>
+                        <input
+                          type="text"
+                          className="form-control form-control-sm bg-white"
+                          value={slide.subtitle || ''}
+                          onChange={(e) => {
+                            const updated = [...slides];
+                            updated[index] = { ...updated[index], subtitle: e.target.value };
+                            setSlides(updated);
+                          }}
+                        />
+                      </div>
+
+                      <div className="mb-3">
+                        <label className="form-label fw-semibold small text-dark mb-1">Description</label>
+                        <textarea
+                          rows={3}
+                          className="form-control form-control-sm bg-white"
+                          value={slide.description || ''}
+                          onChange={(e) => {
+                            const updated = [...slides];
+                            updated[index] = { ...updated[index], description: e.target.value };
+                            setSlides(updated);
+                          }}
+                        />
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             <div className="d-flex justify-content-end">
