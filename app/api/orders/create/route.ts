@@ -34,10 +34,33 @@ const createOrderSchema = z.object({
 export async function POST(request: Request) {
   try {
     const session = await auth();
-    const body = await request.json();
+    const rawBody = await request.json();
+
+    // Fall back to authenticated session details if not explicitly specified in payload
+    const sessionUser = session?.user as any;
+    const resolvedName = (rawBody.name && typeof rawBody.name === 'string' && rawBody.name.trim().length > 0)
+      ? rawBody.name.trim()
+      : (sessionUser?.name || sessionUser?.username || '');
+
+    const resolvedEmail = (rawBody.email && typeof rawBody.email === 'string' && rawBody.email.trim().length > 0)
+      ? rawBody.email.trim()
+      : (sessionUser?.email || '');
+
+    const resolvedPhone = (rawBody.phone && typeof rawBody.phone === 'string' && rawBody.phone.trim().length > 0)
+      ? rawBody.phone.trim()
+      : (sessionUser?.phone || '');
+
+    const body = {
+      ...rawBody,
+      name: resolvedName,
+      email: resolvedEmail,
+      phone: resolvedPhone,
+    };
+
     const data = createOrderSchema.parse(body);
 
-    const buyerId = session?.user?.id ? parseInt(session.user.id, 10) : 4;
+    const rawBuyerId = session?.user?.id ? parseInt(session.user.id, 10) : 4;
+    const buyerId = isNaN(rawBuyerId) ? 4 : rawBuyerId;
     const invoiceNumber = `INV-${Date.now().toString().slice(-6)}-${Math.floor(1000 + Math.random() * 9000)}`;
     const subTotal = data.package_fee + data.extra_service;
     const isCashOrManual = data.payment_gateway === 'cash_on_delivery' || data.payment_gateway === 'cod' || data.payment_gateway === 'manual_payment';

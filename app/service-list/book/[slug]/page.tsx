@@ -3,6 +3,7 @@
 import React, { useState, useEffect, use, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import FrontendLayout from '@/components/layout/FrontendLayout';
 import { formatNaira } from '@/lib/currency';
 import PaystackIcon from '@/components/icons/PaystackIcon';
@@ -17,6 +18,7 @@ function BookingContent({ params }: BookingPageProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { slug } = use(params);
+  const { data: session } = useSession();
 
   // Dynamic Service State
   const [service, setService] = useState<any>(null);
@@ -43,21 +45,67 @@ function BookingContent({ params }: BookingPageProps) {
     loadService();
   }, [slug]);
 
-  // Form states
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    address: '',
-    city: '',
-    area: '',
-    country: 'Nigeria',
-    post_code: '',
-    date: new Date().toISOString().split('T')[0],
-    schedule: '09:00 AM - 12:00 PM',
-    payment_gateway: 'paystack',
-    order_note: '',
+  // Form states initialized synchronously from localStorage cache
+  const [formData, setFormData] = useState(() => {
+    let initialName = '';
+    let initialEmail = '';
+    let initialPhone = '';
+    let initialAddress = '';
+    let initialCity = '';
+    let initialArea = '';
+    let initialPostCode = '';
+
+    if (typeof window !== 'undefined') {
+      try {
+        const cachedStr =
+          localStorage.getItem('qixer_user_profile') ||
+          localStorage.getItem('qixer_profile_buyer') ||
+          localStorage.getItem('qixer_profile_seller') ||
+          localStorage.getItem('qixer_profile_admin') ||
+          localStorage.getItem('qixer_user');
+        if (cachedStr) {
+          const cached = JSON.parse(cachedStr);
+          if (cached && typeof cached === 'object') {
+            initialName = cached.name || cached.username || '';
+            initialEmail = cached.email || '';
+            initialPhone = cached.phone || '';
+            initialAddress = cached.address || '';
+            initialCity = cached.city || cached.service_city || '';
+            initialArea = cached.area || '';
+            initialPostCode = cached.post_code || '';
+          }
+        }
+      } catch (e) {}
+    }
+
+    return {
+      name: initialName,
+      email: initialEmail,
+      phone: initialPhone,
+      address: initialAddress,
+      city: initialCity,
+      area: initialArea,
+      country: 'Nigeria',
+      post_code: initialPostCode,
+      date: new Date().toISOString().split('T')[0],
+      schedule: '09:00 AM - 12:00 PM',
+      payment_gateway: 'paystack',
+      order_note: '',
+    };
   });
+
+  // Sync profile data from active session if empty
+  useEffect(() => {
+    if (session?.user) {
+      setFormData((prev) => ({
+        ...prev,
+        name: prev.name || session.user?.name || (session.user as any)?.username || '',
+        email: prev.email || session.user?.email || '',
+        phone: prev.phone || (session.user as any)?.phone || '',
+        address: prev.address || (session.user as any)?.address || '',
+      }));
+    }
+  }, [session]);
 
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -224,6 +272,57 @@ function BookingContent({ params }: BookingPageProps) {
     setIsLoading(true);
     setErrorMessage('');
 
+    // Pre-flight client-side validations
+    if (!formData.name || formData.name.trim().length < 2) {
+      setErrorMessage('Please enter your full name (at least 2 characters).');
+      setIsLoading(false);
+      const nameInput = document.getElementById('name');
+      if (nameInput) {
+        nameInput.focus();
+        nameInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      return;
+    }
+
+    if (!formData.email || !formData.email.includes('@')) {
+      setErrorMessage('Please enter a valid email address.');
+      setIsLoading(false);
+      const emailInput = document.getElementById('email');
+      if (emailInput) {
+        emailInput.focus();
+        emailInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      return;
+    }
+
+    if (!formData.phone || formData.phone.trim().length < 5) {
+      setErrorMessage('Please enter a valid contact phone number (at least 5 digits).');
+      setIsLoading(false);
+      const phoneInput = document.getElementById('phone');
+      if (phoneInput) {
+        phoneInput.focus();
+        phoneInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      return;
+    }
+
+    if (!formData.address || formData.address.trim().length < 3) {
+      setErrorMessage('Please enter your full service street address.');
+      setIsLoading(false);
+      const addressInput = document.getElementById('address');
+      if (addressInput) {
+        addressInput.focus();
+        addressInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      return;
+    }
+
+    if (!formData.schedule) {
+      setErrorMessage('Please select an available service time slot.');
+      setIsLoading(false);
+      return;
+    }
+
     try {
       const res = await fetch('/api/orders/create', {
         method: 'POST',
@@ -231,10 +330,10 @@ function BookingContent({ params }: BookingPageProps) {
         body: JSON.stringify({
           service_id: serviceId,
           seller_id: sellerId,
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone,
-          address: formData.address,
+          name: formData.name.trim(),
+          email: formData.email.trim(),
+          phone: formData.phone.trim(),
+          address: formData.address.trim(),
           city: formData.city || (service?.city || service?.seller?.service_city || 'Lagos'),
           area: formData.area || '',
           country: formData.country || 'Nigeria',
@@ -326,6 +425,11 @@ function BookingContent({ params }: BookingPageProps) {
                 position: static !important;
                 top: auto !important;
                 margin-top: 24px;
+              }
+            }
+            @media (max-width: 768px) {
+              .booking-area input, .booking-area select, .booking-area textarea {
+                font-size: 16px !important;
               }
             }
           `}} />
@@ -470,6 +574,82 @@ function BookingContent({ params }: BookingPageProps) {
                   </div>
 
                   <div className="row g-3">
+                    {/* Full Name */}
+                    <div className="col-md-6">
+                      <label style={{ display: 'block', fontSize: '14px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
+                        Your Full Name <span className="text-danger">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        name="name"
+                        id="name"
+                        value={formData.name}
+                        onChange={handleChange}
+                        placeholder="e.g. Adebayo Johnson"
+                        required
+                        style={{
+                          width: '100%',
+                          height: '48px',
+                          padding: '0 16px',
+                          border: '1px solid #cbd5e1',
+                          borderRadius: '6px',
+                          fontSize: '14px',
+                          outline: 'none',
+                        }}
+                      />
+                    </div>
+
+                    {/* Email Address */}
+                    <div className="col-md-6">
+                      <label style={{ display: 'block', fontSize: '14px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
+                        Your Email Address <span className="text-danger">*</span>
+                      </label>
+                      <input
+                        type="email"
+                        name="email"
+                        id="email"
+                        value={formData.email}
+                        onChange={handleChange}
+                        placeholder="e.g. adebayo@example.com"
+                        required
+                        style={{
+                          width: '100%',
+                          height: '48px',
+                          padding: '0 16px',
+                          border: '1px solid #cbd5e1',
+                          borderRadius: '6px',
+                          fontSize: '14px',
+                          outline: 'none',
+                        }}
+                      />
+                    </div>
+
+                    {/* Phone Number */}
+                    <div className="col-md-6">
+                      <label style={{ display: 'block', fontSize: '14px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
+                        Phone Number <span className="text-danger">*</span>
+                      </label>
+                      <input
+                        type="tel"
+                        name="phone"
+                        id="phone"
+                        value={formData.phone}
+                        onChange={handleChange}
+                        placeholder="e.g. 08012345678"
+                        required
+                        style={{
+                          width: '100%',
+                          height: '48px',
+                          padding: '0 16px',
+                          border: '1px solid #cbd5e1',
+                          borderRadius: '6px',
+                          fontSize: '14px',
+                          outline: 'none',
+                        }}
+                      />
+                    </div>
+
+                    {/* Country */}
                     <div className="col-md-6">
                       <label style={{ display: 'block', fontSize: '14px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
                         Country
@@ -588,6 +768,7 @@ function BookingContent({ params }: BookingPageProps) {
                       <input
                         type="text"
                         name="address"
+                        id="address"
                         value={formData.address}
                         onChange={handleChange}
                         placeholder="e.g. 15 Adeola Odeku Street, Victoria Island"

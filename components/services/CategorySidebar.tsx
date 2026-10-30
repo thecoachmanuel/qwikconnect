@@ -36,6 +36,7 @@ export default function CategorySidebar({
 }: CategorySidebarProps) {
   // Check if user is actively on a search page with a query or category filter
   const isSearchPage = Boolean(query.trim() || categorySlug);
+  const isSearchActive = isSearchPage;
 
   // Always collapsed by default on mobile unless on an active search page
   const [isOpen, setIsOpen] = useState(isSearchPage);
@@ -56,7 +57,7 @@ export default function CategorySidebar({
           setAvailableLocations(data.locations.map((l: any) => l.service_city));
         }
       })
-      .catch(() => {});
+      .catch(() => { });
     return () => {
       isMounted = false;
     };
@@ -161,7 +162,7 @@ export default function CategorySidebar({
       </div>
 
       {/* Selected Filters Pill on Mobile when collapsed */}
-      {!isOpen && isSearchPage && (
+      {!isOpen && isSearchActive && (
         <div
           className="d-lg-none mt-2 pt-2 border-top d-flex align-items-center justify-content-between flex-wrap gap-2"
           style={{ fontSize: '13px' }}
