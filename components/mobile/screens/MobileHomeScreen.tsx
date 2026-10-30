@@ -130,6 +130,21 @@ export default function MobileHomeScreen({
   });
   const [savedServiceIds, setSavedServiceIds] = useState<Set<number>>(new Set());
 
+  // 2. Fetch mobile promo banners (silent background sync)
+  const fetchBanners = () => {
+    fetch(`/api/mobile/settings?t=${Date.now()}`, { cache: 'no-store' })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data && Array.isArray(data.banners) && data.banners.length > 0) {
+          setBanners(data.banners);
+          try {
+            localStorage.setItem('qixer_cached_banners', JSON.stringify(data.banners));
+          } catch (e) {}
+        }
+      })
+      .catch(() => {});
+  };
+
   useEffect(() => {
     // 1. Fetch categories
     fetch('/api/categories')
@@ -144,19 +159,51 @@ export default function MobileHomeScreen({
       })
       .catch(() => {});
 
-    // 2. Fetch mobile banners
-    fetch('/api/mobile/settings')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data && Array.isArray(data.banners) && data.banners.length > 0) {
-          setBanners(data.banners);
-          try {
-            localStorage.setItem('qixer_cached_banners', JSON.stringify(data.banners));
-          } catch (e) {}
-        }
-      })
-      .catch(() => {});
+    // Initial banners fetch
+    fetchBanners();
 
+    // Real-time banner update listeners (BroadcastChannel, storage, custom events, visibility)
+    let bc: BroadcastChannel | null = null;
+    if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+      bc = new BroadcastChannel('qixer_pwa_channel');
+      bc.onmessage = (event) => {
+        if (event.data?.type === 'SETTINGS_UPDATED') {
+          fetchBanners();
+        }
+      };
+    }
+
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === 'qixer_pwa_settings_version') {
+        fetchBanners();
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+
+    const handleCustomChange = () => {
+      fetchBanners();
+    };
+    window.addEventListener('qixer-pwa-settings-changed', handleCustomChange);
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        fetchBanners();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    const syncInterval = setInterval(fetchBanners, 12000);
+
+    return () => {
+      window.removeEventListener('storage', handleStorage);
+      window.removeEventListener('qixer-pwa-settings-changed', handleCustomChange);
+      document.removeEventListener('visibilitychange', handleVisibility);
+      clearInterval(syncInterval);
+      if (bc) bc.close();
+    };
+  }, []);
+
+  useEffect(() => {
     // 3. Fetch services filtered by city (silent background revalidation without flicker)
     const url = selectedCity ? `/api/services?city=${encodeURIComponent(selectedCity)}` : '/api/services';
     fetch(url)

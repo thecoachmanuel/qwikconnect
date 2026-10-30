@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 export interface MobilePwaPermissions {
   Wallet: boolean;
@@ -24,6 +24,17 @@ export function useMobilePWA() {
     MapView: true,
     Onboarding: true,
   });
+
+  const fetchSettings = useCallback(() => {
+    fetch(`/api/mobile/settings?t=${Date.now()}`, { cache: 'no-store' })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data && data.permissions) {
+          setPermissions(data.permissions);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -76,21 +87,57 @@ export function useMobilePWA() {
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstall);
 
-    // Fetch live module permissions and settings
-    fetch('/api/mobile/settings')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data && data.permissions) {
-          setPermissions(data.permissions);
+    // Initial fetch of live module permissions and settings
+    fetchSettings();
+
+    // 1. BroadcastChannel real-time sync across tabs & PWAs
+    let bc: BroadcastChannel | null = null;
+    if ('BroadcastChannel' in window) {
+      bc = new BroadcastChannel('qixer_pwa_channel');
+      bc.onmessage = (event) => {
+        if (event.data?.type === 'SETTINGS_UPDATED') {
+          fetchSettings();
         }
-      })
-      .catch(() => {});
+      };
+    }
+
+    // 2. Storage event listener (fires when admin updates localStorage in another window/tab)
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === 'qixer_pwa_settings_version') {
+        fetchSettings();
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+
+    // 3. Custom window event listener
+    const handleCustomChange = () => {
+      fetchSettings();
+    };
+    window.addEventListener('qixer-pwa-settings-changed', handleCustomChange);
+
+    // 4. Document visibility & window focus revalidation
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        fetchSettings();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    window.addEventListener('focus', fetchSettings);
+
+    // 5. Silent background periodic sync (every 10 seconds)
+    const syncInterval = setInterval(fetchSettings, 10000);
 
     return () => {
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
+      window.removeEventListener('storage', handleStorage);
+      window.removeEventListener('qixer-pwa-settings-changed', handleCustomChange);
+      document.removeEventListener('visibilitychange', handleVisibility);
+      window.removeEventListener('focus', fetchSettings);
+      clearInterval(syncInterval);
+      if (bc) bc.close();
     };
-  }, []);
+  }, [fetchSettings]);
 
   const promptInstall = async () => {
     if (!deferredPrompt) return false;
@@ -111,4 +158,3 @@ export function useMobilePWA() {
     permissions,
   };
 }
-

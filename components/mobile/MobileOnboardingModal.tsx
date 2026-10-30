@@ -28,8 +28,8 @@ export default function MobileOnboardingModal({ onClose }: MobileOnboardingModal
   const [currentSlide, setCurrentSlide] = useState(0);
   const [slides, setSlides] = useState(DEFAULT_SLIDES);
 
-  useEffect(() => {
-    fetch('/api/mobile/settings')
+  const fetchSlides = () => {
+    fetch(`/api/mobile/settings?t=${Date.now()}`, { cache: 'no-store' })
       .then((res) => res.json())
       .then((data) => {
         if (data && Array.isArray(data.slides) && data.slides.length > 0) {
@@ -42,6 +42,34 @@ export default function MobileOnboardingModal({ onClose }: MobileOnboardingModal
         }
       })
       .catch(() => {});
+  };
+
+  useEffect(() => {
+    fetchSlides();
+
+    let bc: BroadcastChannel | null = null;
+    if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+      bc = new BroadcastChannel('qixer_pwa_channel');
+      bc.onmessage = (event) => {
+        if (event.data?.type === 'SETTINGS_UPDATED') {
+          fetchSlides();
+        }
+      };
+    }
+
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === 'qixer_pwa_settings_version') {
+        fetchSlides();
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+    window.addEventListener('qixer-pwa-settings-changed', fetchSlides);
+
+    return () => {
+      window.removeEventListener('storage', handleStorage);
+      window.removeEventListener('qixer-pwa-settings-changed', fetchSlides);
+      if (bc) bc.close();
+    };
   }, []);
 
   const handleFinish = () => {
