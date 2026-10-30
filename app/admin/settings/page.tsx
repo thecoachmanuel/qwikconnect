@@ -10,34 +10,73 @@ export default function AdminSettingsPage() {
   const [saved, setSaved] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
-  const [settings, setSettings] = useState({
-    siteTitle: 'QwikConnect - Service Marketplace & Finder',
-    siteTagline: 'Connect with top-rated local professionals',
-    siteLogo: '',
-    siteFavicon: '',
-    contactEmail: 'admin@qixer.ng',
-    contactPhone: '+234 800 123 4567',
-    siteAddress: '14 Broad Street, Lagos Island, Lagos, Nigeria',
-    currencySymbol: '₦',
-    currencyCode: 'NGN',
-    usdExchangeRate: '1500',
-    commissionType: 'percentage',
-    commissionRate: '10',
-    autoApproveServices: false,
-    enableLiveChat: true,
-    maintenanceMode: false,
-    copyrightText: '© 2026 QwikConnect Nigeria. All Rights Reserved.',
+  // Synchronously initialize from localStorage to eliminate form input flicker on mount
+  const [settings, setSettings] = useState(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem('qixer_settings');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (parsed && typeof parsed === 'object') {
+            return {
+              siteTitle: parsed.siteTitle || 'QwikConnect - Service Marketplace & Finder',
+              siteTagline: parsed.siteTagline || 'Connect with top-rated local professionals',
+              siteLogo: parsed.siteLogo || '',
+              siteFavicon: parsed.siteFavicon || '',
+              contactEmail: parsed.contactEmail || 'admin@qixer.ng',
+              contactPhone: parsed.contactPhone || '+234 800 123 4567',
+              siteAddress: parsed.siteAddress || '14 Broad Street, Lagos Island, Lagos, Nigeria',
+              currencySymbol: parsed.currencySymbol || '₦',
+              currencyCode: parsed.currencyCode || 'NGN',
+              usdExchangeRate: parsed.usdExchangeRate || '1500',
+              commissionType: parsed.commissionType || 'percentage',
+              commissionRate: parsed.commissionRate || '10',
+              autoApproveServices: Boolean(parsed.autoApproveServices),
+              enableLiveChat: parsed.enableLiveChat !== undefined ? Boolean(parsed.enableLiveChat) : true,
+              maintenanceMode: Boolean(parsed.maintenanceMode),
+              copyrightText: parsed.copyrightText || '© 2026 QwikConnect Nigeria. All Rights Reserved.',
+            };
+          }
+        }
+      } catch (e) {}
+    }
+    return {
+      siteTitle: 'QwikConnect - Service Marketplace & Finder',
+      siteTagline: 'Connect with top-rated local professionals',
+      siteLogo: '',
+      siteFavicon: '',
+      contactEmail: 'admin@qixer.ng',
+      contactPhone: '+234 800 123 4567',
+      siteAddress: '14 Broad Street, Lagos Island, Lagos, Nigeria',
+      currencySymbol: '₦',
+      currencyCode: 'NGN',
+      usdExchangeRate: '1500',
+      commissionType: 'percentage',
+      commissionRate: '10',
+      autoApproveServices: false,
+      enableLiveChat: true,
+      maintenanceMode: false,
+      copyrightText: '© 2026 QwikConnect Nigeria. All Rights Reserved.',
+    };
   });
 
   useEffect(() => {
     async function loadSettings() {
       try {
-        setLoading(true);
         const res = await fetch(`/api/admin/settings?t=${Date.now()}`, { cache: 'no-store' });
         if (res.ok) {
           const data = await res.json();
           if (data.settings) {
-            setSettings((prev) => ({ ...prev, ...data.settings }));
+            setSettings((prev) => {
+              const next = { ...prev, ...data.settings };
+              if (JSON.stringify(prev) === JSON.stringify(next)) {
+                return prev; // Prevent re-render flicker
+              }
+              return next;
+            });
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('qixer_settings', JSON.stringify(data.settings));
+            }
           }
         }
       } catch (err) {
@@ -74,8 +113,9 @@ export default function AdminSettingsPage() {
         setSettings(data.settings);
       }
       if (typeof window !== 'undefined') {
-        localStorage.setItem('qixer_settings', JSON.stringify(data.settings || settings));
-        window.dispatchEvent(new Event('settings-updated'));
+        const toSave = data.settings || settings;
+        localStorage.setItem('qixer_settings', JSON.stringify(toSave));
+        window.dispatchEvent(new CustomEvent('settings-updated', { detail: toSave }));
         window.dispatchEvent(new Event('storage'));
       }
       setSaved(true);

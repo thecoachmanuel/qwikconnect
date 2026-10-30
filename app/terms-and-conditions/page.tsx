@@ -5,7 +5,7 @@ import { getPolicyBySlug } from '@/lib/data/policies';
 
 export const metadata = {
   title: 'Terms and Conditions - QwikConnect Service Marketplace',
-  description: 'Review the official terms and conditions, user agreement, and marketplace guidelines for QwikConnect buyers and sellers.',
+  description: 'Review the official terms and conditions, user agreement, escrow rules, and marketplace guidelines for QwikConnect Nigeria buyers and sellers.',
 };
 
 export default async function TermsAndConditionsPage() {

@@ -41,7 +41,18 @@ export default function ServiceSearchFilterBar({
   const router = useRouter();
   const [query, setQuery] = useState(initialQuery);
   const [location, setLocation] = useState(initialLocation);
-  const [availableCities, setAvailableCities] = useState<string[]>(['Lagos', 'Abuja']);
+  const [availableCities, setAvailableCities] = useState<string[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem('qixer_available_cities');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        }
+      } catch (e) {}
+    }
+    return ['Lagos', 'Abuja'];
+  });
   const [rating, setRating] = useState(initialRating);
   const [sortBy, setSortBy] = useState(initialSortBy);
 
@@ -52,7 +63,14 @@ export default function ServiceSearchFilterBar({
       .then((res) => res.json())
       .then((data) => {
         if (isMounted && data.locations && Array.isArray(data.locations) && data.locations.length > 0) {
-          setAvailableCities(data.locations.map((l: any) => l.service_city));
+          const cities = data.locations.map((l: any) => l.service_city);
+          setAvailableCities((prev) => {
+            if (JSON.stringify(prev) === JSON.stringify(cities)) return prev;
+            return cities;
+          });
+          try {
+            localStorage.setItem('qixer_available_cities', JSON.stringify(cities));
+          } catch (e) {}
         }
       })
       .catch(() => {});

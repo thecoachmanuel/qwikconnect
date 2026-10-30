@@ -4,7 +4,7 @@ import FrontendLayout from '@/components/layout/FrontendLayout';
 import ServiceCard from '@/components/services/ServiceCard';
 import CategoryCard from '@/components/categories/CategoryCard';
 import HeroLocationSearch from '@/components/home/HeroLocationSearch';
-import { getCategories, getServices } from '@/lib/mongodb';
+import { getCategories, getServices, getPlatformSettings } from '@/lib/mongodb';
 import { getAttachmentUrlById } from '@/lib/media';
 
 export const dynamic = 'force-dynamic';
@@ -13,11 +13,13 @@ export const revalidate = 0;
 export default async function HomePage() {
   let categories: any[] = [];
   let services: any[] = [];
+  let settings: any = null;
 
   try {
-    [categories, services] = await Promise.all([
+    [categories, services, settings] = await Promise.all([
       getCategories(),
       getServices({ status: 1 }),
+      getPlatformSettings(),
     ]);
   } catch (error) {
     console.warn('Failed to load categories or services from MongoDB:', error);
@@ -69,7 +71,7 @@ export default async function HomePage() {
   }
 
   return (
-    <FrontendLayout>
+    <FrontendLayout siteLogo={settings?.siteLogo} siteTitle={settings?.siteTitle} copyrightText={settings?.copyrightText}>
       {/* 1. HERO BANNER AREA (header-five.blade.php) */}
       <div className="new_banner_area new-section-bg padding-top-100 padding-bottom-100" style={{ backgroundColor: '#f8fafc' }}>
         <div className="container container-two">

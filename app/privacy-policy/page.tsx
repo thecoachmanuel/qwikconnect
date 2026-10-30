@@ -5,7 +5,7 @@ import { getPolicyBySlug } from '@/lib/data/policies';
 
 export const metadata = {
   title: 'Privacy Policy - QwikConnect Service Marketplace',
-  description: 'Understand how QwikConnect collects, protects, and handles personal data and privacy under GDPR, CCPA, and global regulations.',
+  description: 'Understand how QwikConnect collects, protects, and handles personal data and privacy under the Nigeria Data Protection Act (NDPA) and NDPR.',
 };
 
 export default async function PrivacyPolicyPage() {

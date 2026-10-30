@@ -19,26 +19,48 @@ export default function FrontendLayout({
   copyrightText = 'Copyright © 2026 QwikConnect. All Rights Reserved.',
 }: FrontendLayoutProps) {
   const { data: session } = useSession();
-  const [settings, setSettings] = useState<any>(null);
+
+  // Instant synchronous hydration from localStorage on client to eliminate logo/title flicker
+  const [settings, setSettings] = useState<any>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem('qixer_settings');
+        if (cached) return JSON.parse(cached);
+      } catch (e) {}
+    }
+    return null;
+  });
+
+  const isSameSettings = (a: any, b: any) => {
+    if (!a && !b) return true;
+    if (!a || !b) return false;
+    return (
+      a.siteTitle === b.siteTitle &&
+      a.siteLogo === b.siteLogo &&
+      a.siteFavicon === b.siteFavicon &&
+      a.siteTagline === b.siteTagline &&
+      a.contactPhone === b.contactPhone &&
+      a.contactEmail === b.contactEmail &&
+      a.siteAddress === b.siteAddress &&
+      a.currencySymbol === b.currencySymbol &&
+      a.currencyCode === b.currencyCode &&
+      a.maintenanceMode === b.maintenanceMode &&
+      a.copyrightText === b.copyrightText
+    );
+  };
 
   const loadSettings = async () => {
     try {
-      // 1. Instant hydration from localStorage if available
-      if (typeof window !== 'undefined') {
-        const cached = localStorage.getItem('qixer_settings');
-        if (cached) {
-          try {
-            setSettings(JSON.parse(cached));
-          } catch (e) {}
-        }
-      }
-
-      // 2. Fetch latest settings from server with cache busting
       const res = await fetch(`/api/settings?t=${Date.now()}`, { cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
         if (data?.settings) {
-          setSettings(data.settings);
+          setSettings((prev: any) => {
+            if (isSameSettings(prev, data.settings)) {
+              return prev; // Prevent re-render and visual flicker
+            }
+            return data.settings;
+          });
           if (typeof window !== 'undefined') {
             localStorage.setItem('qixer_settings', JSON.stringify(data.settings));
           }
@@ -53,7 +75,14 @@ export default function FrontendLayout({
     loadSettings();
 
     // Listen for instant updates dispatched when admin saves settings in any tab or component
-    const handleUpdate = () => loadSettings();
+    const handleUpdate = (e?: any) => {
+      if (e?.detail) {
+        setSettings((prev: any) => (isSameSettings(prev, e.detail) ? prev : e.detail));
+        return;
+      }
+      loadSettings();
+    };
+
     window.addEventListener('settings-updated', handleUpdate);
     window.addEventListener('storage', handleUpdate);
 

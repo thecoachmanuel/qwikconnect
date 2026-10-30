@@ -34,18 +34,17 @@ export default function CategorySidebar({
   query = '',
   location = '',
 }: CategorySidebarProps) {
-  const isSearchActive = Boolean(categorySlug || query.trim() || (location && location !== 'all'));
+  // Check if user is actively on a search page with a query or category filter
+  const isSearchPage = Boolean(query.trim() || categorySlug);
 
-  // When a search is made, collapse categories by default on mobile unless expanded
-  const [isOpen, setIsOpen] = useState(!isSearchActive);
+  // Always collapsed by default on mobile unless on an active search page
+  const [isOpen, setIsOpen] = useState(isSearchPage);
   const [availableLocations, setAvailableLocations] = useState<string[]>(['Lagos', 'Abuja']);
 
-  // Automatically collapse categories on mobile whenever a new search or filter is applied
+  // Sync state if user navigates between a search query and a non-search page
   useEffect(() => {
-    if (isSearchActive) {
-      setIsOpen(false);
-    }
-  }, [categorySlug, query, location, isSearchActive]);
+    setIsOpen(isSearchPage);
+  }, [isSearchPage]);
 
   // Load only locations that currently have live services available
   useEffect(() => {
@@ -162,7 +161,7 @@ export default function CategorySidebar({
       </div>
 
       {/* Selected Filters Pill on Mobile when collapsed */}
-      {!isOpen && isSearchActive && (
+      {!isOpen && isSearchPage && (
         <div
           className="d-lg-none mt-2 pt-2 border-top d-flex align-items-center justify-content-between flex-wrap gap-2"
           style={{ fontSize: '13px' }}

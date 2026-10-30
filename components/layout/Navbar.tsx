@@ -55,16 +55,79 @@ export default function Navbar({ sessionUser, siteLogo, siteTitle, settings }: N
 
   const [mounted, setMounted] = useState(false);
 
-  // Initial state strictly deterministic and identical between server and client
+  // Synchronous profile initialization from localStorage or sessionUser to eliminate avatar/name flicker
   const [profile, setProfile] = useState<{
     name: string | null;
     image: string | null;
     email: string | null;
-  }>({
-    name: sessionUser?.name || null,
-    image: sessionUser?.image || null,
-    email: sessionUser?.email || null,
+  }>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const cached =
+          localStorage.getItem('qixer_user_profile') ||
+          localStorage.getItem('qixer_profile_seller') ||
+          localStorage.getItem('qixer_profile_buyer') ||
+          localStorage.getItem('qixer_profile_admin');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (parsed && typeof parsed === 'object') {
+            return {
+              name: parsed.name && !isGenericName(parsed.name) ? parsed.name : (sessionUser?.name || null),
+              image: parsed.image && !isGenericImage(parsed.image) ? parsed.image : (sessionUser?.image || null),
+              email: parsed.email || sessionUser?.email || null,
+            };
+          }
+        }
+      } catch (e) {}
+    }
+    return {
+      name: sessionUser?.name || null,
+      image: sessionUser?.image || null,
+      email: sessionUser?.email || null,
+    };
   });
+
+  // Synchronous logo initialization from props or cached settings
+  const [currentLogo, setCurrentLogo] = useState<string>(() => {
+    if (siteLogo) return siteLogo;
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem('qixer_settings');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (parsed?.siteLogo) return parsed.siteLogo;
+        }
+      } catch (e) {}
+    }
+    return '';
+  });
+
+  useEffect(() => {
+    if (siteLogo) {
+      setCurrentLogo((prev) => (prev === siteLogo ? prev : siteLogo));
+    }
+    const handleSettingsUpdate = (e?: any) => {
+      if (e?.detail?.siteLogo) {
+        setCurrentLogo((prev) => (prev === e.detail.siteLogo ? prev : e.detail.siteLogo));
+        return;
+      }
+      if (typeof window !== 'undefined') {
+        try {
+          const cached = localStorage.getItem('qixer_settings');
+          if (cached) {
+            const parsed = JSON.parse(cached);
+            if (parsed?.siteLogo) setCurrentLogo((prev) => (prev === parsed.siteLogo ? prev : parsed.siteLogo));
+          }
+        } catch (e) {}
+      }
+    };
+    window.addEventListener('settings-updated', handleSettingsUpdate);
+    window.addEventListener('storage', handleSettingsUpdate);
+    return () => {
+      window.removeEventListener('settings-updated', handleSettingsUpdate);
+      window.removeEventListener('storage', handleSettingsUpdate);
+    };
+  }, [siteLogo]);
 
   // Client-side hydration from localStorage after mount
   useEffect(() => {
@@ -82,8 +145,12 @@ export default function Navbar({ sessionUser, siteLogo, siteTitle, settings }: N
             const hasCustomParsedImg = parsed.image && !isGenericImage(parsed.image);
             const hasCustomPrevImg = prev.image && !isGenericImage(prev.image);
             const bestImg = hasCustomParsedImg ? parsed.image : (hasCustomPrevImg ? prev.image : (parsed.image || prev.image));
+            const newName = parsed.name && !isGenericName(parsed.name) ? parsed.name : prev.name;
+            if (prev.name === newName && prev.image === bestImg && prev.email === (parsed.email || prev.email)) {
+              return prev; // Prevent re-render flicker
+            }
             return {
-              name: parsed.name && !isGenericName(parsed.name) ? parsed.name : prev.name,
+              name: newName,
               image: bestImg,
               email: parsed.email || prev.email,
             };
@@ -103,8 +170,12 @@ export default function Navbar({ sessionUser, siteLogo, siteTitle, settings }: N
       const hasCustomRawImg = rawImage && !isGenericImage(rawImage);
       const hasCustomPrevImg = prev.image && !isGenericImage(prev.image);
       const bestImg = hasCustomPrevImg ? prev.image : (hasCustomRawImg ? rawImage : (prev.image || rawImage));
+      const newName = rawName && !isGenericName(rawName) ? rawName : prev.name;
+      if (prev.name === newName && prev.image === bestImg && prev.email === (rawEmail || prev.email)) {
+        return prev; // Prevent re-render flicker
+      }
       return {
-        name: rawName && !isGenericName(rawName) ? rawName : prev.name,
+        name: newName,
         image: bestImg ?? null,
         email: rawEmail || prev.email,
       };
@@ -139,8 +210,8 @@ export default function Navbar({ sessionUser, siteLogo, siteTitle, settings }: N
         : effectiveRole === 'admin'
           ? 'Super Admin'
           : effectiveRole === 'seller'
-            ? 'Chioma Adebayo'
-            : 'Emma Watson';
+            ? ((activeUser as any)?.username || 'Seller')
+            : ((activeUser as any)?.username || 'Buyer');
 
   const currentDisplayImage =
     (profile.image && !isGenericImage(profile.image) ? profile.image : null) ||
@@ -163,8 +234,12 @@ export default function Navbar({ sessionUser, siteLogo, siteTitle, settings }: N
             const u = data.user;
             setProfile((prev) => {
               const updatedImg = u.image && !isGenericImage(u.image) ? u.image : (prev.image || u.image);
+              const updatedName = u.name && !isGenericName(u.name) ? u.name : (prev.name || u.name);
+              if (prev.name === updatedName && prev.image === updatedImg && prev.email === (u.email || prev.email)) {
+                return prev; // Prevent re-render flicker
+              }
               const next = {
-                name: u.name && !isGenericName(u.name) ? u.name : (prev.name || u.name),
+                name: updatedName,
                 image: updatedImg ?? null,
                 email: u.email || prev.email,
               };
@@ -187,7 +262,19 @@ export default function Navbar({ sessionUser, siteLogo, siteTitle, settings }: N
       fetchLiveProfile();
     }
 
-    const handleProfileUpdated = () => {
+    const handleProfileUpdated = (e?: any) => {
+      if (e?.detail?.name && !isGenericName(e.detail.name)) {
+        setProfile((prev) => {
+          const nextImg = e.detail.image && !isGenericImage(e.detail.image) ? e.detail.image : prev.image;
+          if (prev.name === e.detail.name && prev.image === nextImg) return prev;
+          return {
+            name: e.detail.name,
+            image: nextImg ?? null,
+            email: e.detail.email || prev.email,
+          };
+        });
+        return;
+      }
       try {
         const cached =
           localStorage.getItem('qixer_user_profile') ||
@@ -197,11 +284,16 @@ export default function Navbar({ sessionUser, siteLogo, siteTitle, settings }: N
         if (cached) {
           const parsed = JSON.parse(cached);
           if (parsed) {
-            setProfile((prev) => ({
-              name: parsed.name && !isGenericName(parsed.name) ? parsed.name : prev.name,
-              image: (parsed.image || prev.image) ?? null,
-              email: parsed.email || prev.email,
-            }));
+            setProfile((prev) => {
+              const nextName = parsed.name && !isGenericName(parsed.name) ? parsed.name : prev.name;
+              const nextImg = (parsed.image || prev.image) ?? null;
+              if (prev.name === nextName && prev.image === nextImg) return prev;
+              return {
+                name: nextName,
+                image: nextImg,
+                email: parsed.email || prev.email,
+              };
+            });
           }
         }
       } catch (e) { }
@@ -962,35 +1054,19 @@ export default function Navbar({ sessionUser, siteLogo, siteTitle, settings }: N
           <div className="responsive-mobile-menu">
             <div className="logo-wrapper" style={{ flex: '1 1 auto', minWidth: 0, overflow: 'hidden' }}>
               <Link href="/" className="logo" style={{ display: 'inline-flex', alignItems: 'center', minWidth: 0, maxWidth: '100%' }}>
-                {siteLogo ? (
-                  <img
-                    src={siteLogo}
-                    alt={siteTitle || "QwikConnect Logo"}
-                    className="navbar-brand-logo-img"
-                    style={{
-                      maxHeight: isScrolled ? '42px' : '48px',
-                      maxWidth: '100%',
-                      width: 'auto',
-                      height: 'auto',
-                      transition: 'max-height 0.25s ease',
-                      objectFit: 'contain',
-                    }}
-                  />
-                ) : (
-                  <img
-                    src="/assets/uploads/media-uploader/logo-footer1642310896.png"
-                    alt={siteTitle || "QwikConnect Logo"}
-                    className="navbar-brand-logo-img"
-                    style={{
-                      maxHeight: isScrolled ? '42px' : '48px',
-                      maxWidth: '100%',
-                      width: 'auto',
-                      height: 'auto',
-                      transition: 'max-height 0.25s ease',
-                      objectFit: 'contain',
-                    }}
-                  />
-                )}
+                <img
+                  src={currentLogo || siteLogo || "/assets/uploads/media-uploader/logo-footer1642310896.png"}
+                  alt={siteTitle || "QwikConnect Logo"}
+                  className="navbar-brand-logo-img"
+                  style={{
+                    maxHeight: isScrolled ? '42px' : '48px',
+                    maxWidth: '100%',
+                    width: 'auto',
+                    height: 'auto',
+                    transition: 'max-height 0.25s ease',
+                    objectFit: 'contain',
+                  }}
+                />
               </Link>
             </div>
 

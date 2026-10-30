@@ -39,19 +39,34 @@ export default function DashboardLayout({
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [unreadCount, setUnreadCount] = useState<number>(unreadNotificationsCount);
-  const [siteLogo, setSiteLogo] = useState<string>('');
+  const [siteLogo, setSiteLogo] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem('qixer_settings');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (parsed?.siteLogo) return parsed.siteLogo;
+        }
+      } catch (e) {}
+    }
+    return '';
+  });
   const profileRef = useRef<HTMLDivElement>(null);
   const bellRef = useRef<HTMLDivElement>(null);
 
   // Sync site logo from platform settings
   useEffect(() => {
-    const updateLogo = () => {
+    const updateLogo = (e?: any) => {
+      if (e?.detail?.siteLogo) {
+        setSiteLogo((prev) => (prev === e.detail.siteLogo ? prev : e.detail.siteLogo));
+        return;
+      }
       if (typeof window !== 'undefined') {
         const cached = localStorage.getItem('qixer_settings');
         if (cached) {
           try {
             const parsed = JSON.parse(cached);
-            if (parsed?.siteLogo) setSiteLogo(parsed.siteLogo);
+            if (parsed?.siteLogo) setSiteLogo((prev) => (prev === parsed.siteLogo ? prev : parsed.siteLogo));
           } catch (e) {}
         }
       }
@@ -80,15 +95,40 @@ export default function DashboardLayout({
     );
   };
 
-  // Persistent user profile state initialized identically on server and client
+  // Persistent user profile state initialized synchronously on client to eliminate dashboard flicker
   const [profile, setProfile] = useState<{
     name: string;
     image: string | null;
     email?: string;
-  }>({
-    name: !isGenericName(userName) ? (userName as string) : activeRole === 'admin' ? 'Super Admin' : activeRole === 'seller' ? 'Chioma Adebayo' : 'Emma Watson',
-    image: userImage || (activeRole === 'seller' ? '/assets/uploads/media-uploader/banner11638279446.png' : '/assets/frontend/img/static/user_profile.png'),
-    email: '',
+  }>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const cached =
+          localStorage.getItem(`qixer_profile_${activeRole}`) ||
+          localStorage.getItem('qixer_user_profile');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (parsed?.name && !isGenericName(parsed.name)) {
+            const hasCustomParsed = parsed.image && !isGenericImage(parsed.image);
+            const bestImg = hasCustomParsed
+              ? parsed.image
+              : activeRole === 'seller'
+              ? '/assets/uploads/media-uploader/banner11638279446.png'
+              : '/assets/frontend/img/static/user_profile.png';
+            return {
+              name: !isGenericName(userName) ? (userName as string) : parsed.name,
+              image: bestImg ?? null,
+              email: parsed.email || '',
+            };
+          }
+        }
+      } catch (e) {}
+    }
+    return {
+      name: !isGenericName(userName) ? (userName as string) : activeRole === 'admin' ? 'Super Admin' : activeRole === 'seller' ? 'Chioma Adebayo' : 'Emma Watson',
+      image: userImage || (activeRole === 'seller' ? '/assets/uploads/media-uploader/banner11638279446.png' : '/assets/frontend/img/static/user_profile.png'),
+      email: '',
+    };
   });
 
   // Hydrate client-side profile from localStorage safely after mount
@@ -104,8 +144,12 @@ export default function DashboardLayout({
             const hasCustomParsed = parsed.image && !isGenericImage(parsed.image);
             const hasCustomPrev = prev.image && !isGenericImage(prev.image);
             const bestImg = hasCustomParsed ? parsed.image : (hasCustomPrev ? prev.image : (parsed.image || prev.image));
+            const newName = !isGenericName(userName) ? (userName as string) : parsed.name;
+            if (prev.name === newName && prev.image === bestImg && prev.email === (parsed.email || prev.email)) {
+              return prev; // Prevent re-render flicker
+            }
             return {
-              name: !isGenericName(userName) ? (userName as string) : parsed.name,
+              name: newName,
               image: bestImg ?? null,
               email: parsed.email || prev.email,
             };
@@ -122,6 +166,9 @@ export default function DashboardLayout({
         const hasCustomUserImg = userImage && !isGenericImage(userImage);
         const hasCustomPrev = prev.image && !isGenericImage(prev.image);
         const bestImg = hasCustomPrev ? prev.image : (hasCustomUserImg ? userImage : (prev.image || userImage || null));
+        if (prev.name === userName && prev.image === bestImg) {
+          return prev;
+        }
         const next = {
           name: userName as string,
           image: bestImg ?? null,
@@ -144,8 +191,12 @@ export default function DashboardLayout({
         const hasCustomSess = sUser.image && !isGenericImage(sUser.image);
         const hasCustomPrev = prev.image && !isGenericImage(prev.image);
         const bestImg = hasCustomPrev ? prev.image : (hasCustomSess ? sUser.image : (prev.image || sUser.image || null));
+        const newName = sUser.name || prev.name;
+        if (prev.name === newName && prev.image === bestImg && prev.email === (sUser.email || prev.email)) {
+          return prev;
+        }
         const next = {
-          name: sUser.name || prev.name,
+          name: newName,
           image: bestImg ?? null,
           email: sUser.email || prev.email,
         };
@@ -167,9 +218,13 @@ export default function DashboardLayout({
           const data = await res.json();
           if (data?.user?.name && !isGenericName(data.user.name)) {
             setProfile((prev) => {
+              const updatedImg = (data.user.image || prev.image || (data.user.user_type === 2 ? '/assets/uploads/media-uploader/banner11638279446.png' : null)) ?? null;
+              if (prev.name === data.user.name && prev.image === updatedImg && prev.email === (data.user.email || prev.email)) {
+                return prev; // Prevent re-render flicker
+              }
               const next = {
                 name: data.user.name,
-                image: (data.user.image || prev.image || (data.user.user_type === 2 ? '/assets/uploads/media-uploader/banner11638279446.png' : null)) ?? null,
+                image: updatedImg,
                 email: data.user.email || prev.email,
               };
               try {
@@ -185,7 +240,22 @@ export default function DashboardLayout({
 
     fetchProfile();
 
-    const handleProfileUpdate = () => fetchProfile();
+    const handleProfileUpdate = (e?: any) => {
+      if (e?.detail?.name && !isGenericName(e.detail.name)) {
+        setProfile((prev) => {
+          const nextImg = e.detail.image && !isGenericImage(e.detail.image) ? e.detail.image : prev.image;
+          if (prev.name === e.detail.name && prev.image === nextImg) return prev;
+          return {
+            name: e.detail.name,
+            image: nextImg,
+            email: e.detail.email || prev.email,
+          };
+        });
+        return;
+      }
+      fetchProfile();
+    };
+
     window.addEventListener('qixer-profile-updated', handleProfileUpdate);
     window.addEventListener('storage', handleProfileUpdate);
 
@@ -369,21 +439,22 @@ export default function DashboardLayout({
         .db-sidebar{width:260px;flex-shrink:0;background:linear-gradient(180deg,#0f172a 0%,#1e293b 100%);display:flex;flex-direction:column;height:100vh;position:fixed;top:0;left:0;z-index:200;overflow-y:auto;overflow-x:hidden;transition:transform .3s cubic-bezier(.4,0,.2,1);}
         .db-sidebar::-webkit-scrollbar{width:3px;} .db-sidebar::-webkit-scrollbar-thumb{background:#334155;border-radius:4px;}
         .db-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:199;backdrop-filter:blur(2px);}
-        .db-main{flex:1;display:flex;flex-direction:column;min-width:0;max-width:100%;margin-left:260px;width:calc(100% - 260px);height:100vh;overflow-y:auto;overflow-x:hidden;position:relative;}
+        .db-main{flex:1;display:flex;flex-direction:column;min-width:0;max-width:100%;margin-left:260px;width:calc(100% - 260px);height:100vh;overflow-y:auto;overflow-x:clip;position:relative;}
         @media(min-width:992px){
           .db-wrapper{height:100vh!important;max-height:100vh!important;overflow:hidden!important;}
           .db-sidebar{position:fixed!important;top:0!important;left:0!important;height:100vh!important;width:260px!important;z-index:1200!important;}
-          .db-main{margin-left:260px!important;width:calc(100% - 260px)!important;height:100vh!important;overflow-y:auto!important;overflow-x:hidden!important;}
+          .db-main{margin-left:260px!important;width:calc(100% - 260px)!important;height:100vh!important;overflow-y:auto!important;overflow-x:clip!important;}
+          .db-topbar{position:-webkit-sticky!important;position:sticky!important;top:0!important;z-index:1000!important;}
         }
         @media(max-width:991px){
-          .db-wrapper{height:auto!important;min-height:100vh!important;overflow-x:clip!important;}
-          .db-sidebar{position:fixed!important;top:0!important;left:0!important;height:100dvh!important;width:260px!important;transform:translateX(-100%);z-index:300;}
+          .db-wrapper{height:auto!important;min-height:100vh!important;overflow:visible!important;}
+          .db-sidebar{position:fixed!important;top:0!important;left:0!important;height:100dvh!important;width:260px!important;transform:translateX(-100%);z-index:1300;}
           .db-sidebar.db-open{transform:translateX(0);box-shadow:8px 0 40px rgba(0,0,0,.4);}
           .db-overlay.db-open{display:block;}
           .db-hamburger{display:flex!important;}
           .db-close-btn{display:flex!important;}
-          .db-main{margin-left:0!important;width:100%!important;height:auto!important;min-height:100vh!important;}
-          .db-topbar{position:sticky!important;top:0!important;z-index:150!important;box-shadow:0 2px 10px rgba(0,0,0,.08)!important;}
+          .db-main{margin-left:0!important;width:100%!important;height:auto!important;min-height:100vh!important;overflow:visible!important;}
+          .db-topbar{position:-webkit-sticky!important;position:sticky!important;top:0!important;z-index:1000!important;box-shadow:0 2px 10px rgba(0,0,0,.08)!important;}
         }
         .db-sidebar-hdr{padding:20px 18px;border-bottom:1px solid #1e293b;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
         .db-user-card{padding:14px 18px;border-bottom:1px solid rgba(255,255,255,.05);display:flex;align-items:center;gap:12px;flex-shrink:0;}
@@ -400,7 +471,7 @@ export default function DashboardLayout({
         .db-logout-btn{margin:8px 12px 14px;padding:10px 14px;border-radius:8px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);color:#f87171;font-size:13.5px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:10px;width:calc(100% - 24px);transition:all .2s ease;flex-shrink:0;}
         .db-logout-btn:hover{background:rgba(239,68,68,.2);color:#fff;}
         .db-logout-btn i{font-size:17px;}
-        .db-topbar{height:64px;background:#fff;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;padding:0 24px;position:sticky!important;top:0!important;z-index:150!important;box-shadow:0 1px 6px rgba(0,0,0,.04);flex-shrink:0;width:100%;}
+        .db-topbar{height:64px;background:rgba(255,255,255,0.98);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-bottom:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;padding:0 24px;position:-webkit-sticky!important;position:sticky!important;top:0!important;z-index:1000!important;box-shadow:0 2px 10px rgba(0,0,0,.05);flex-shrink:0;width:100%;}
         .db-topbar-left{display:flex;align-items:center;gap:14px;min-width:0;}
         .db-hamburger{background:none;border:none;font-size:24px;color:#1e293b;cursor:pointer;padding:4px;display:none;align-items:center;justify-content:center;line-height:1;}
         .db-page-title{font-size:18px;font-weight:800;color:#1e293b;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -408,7 +479,7 @@ export default function DashboardLayout({
         .db-view-site{font-size:12.5px;color:var(--main-color-one,#1DBF73);font-weight:600;display:flex;align-items:center;gap:4px;white-space:nowrap;text-decoration:none;}
         @media(max-width:768px){
           .db-view-site{display:none!important;}
-          .db-topbar{padding:0 14px!important;height:56px!important;}
+          .db-topbar{padding:0 14px!important;height:56px!important;position:-webkit-sticky!important;position:sticky!important;top:0!important;z-index:1000!important;}
           .db-page-title{font-size:15.5px!important;}
           .db-content{padding:14px 10px!important;}
         }
@@ -440,7 +511,7 @@ export default function DashboardLayout({
         .db-dd-item.db-danger{color:#ef4444;} .db-dd-item.db-danger:hover{background:#fff5f5;}
         .db-dd-divider{height:1px;background:#f1f5f9;margin:4px 0;}
         .db-dd-user{padding:8px 16px 7px;border-bottom:1px solid #f1f5f9;}
-        .db-content{flex:1;padding:24px 22px;overflow-y:auto;overflow-x:hidden;max-width:100%;width:100%;}
+        .db-content{flex:1;padding:24px 22px;max-width:100%;width:100%;}
         .db-close-btn{background:none;border:none;color:#94a3b8;font-size:20px;cursor:pointer;line-height:1;padding:2px;display:none;align-items:center;justify-content:center;}
         .db-table-wrap, .table-responsive{width:100%!important;max-width:100%!important;overflow-x:auto!important;-webkit-overflow-scrolling:touch!important;margin-bottom:0;}
         .db-table-wrap::-webkit-scrollbar, .table-responsive::-webkit-scrollbar{height:5px;}

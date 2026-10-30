@@ -32,30 +32,70 @@ export default function SellerProfilePage() {
   const [tagInput, setTagInput] = useState('');
   const [sellerServices, setSellerServices] = useState<any[]>([]);
 
-  const [profileData, setProfileData] = useState({
-    name: '',
-    email: '',
-    username: '',
-    phone: '',
-    country: 'Nigeria',
-    country_id: 1,
-    service_city: 'Lagos',
-    service_area: '',
-    address: '',
-    post_code: '',
-    tax_number: '',
-    experience: '',
-    about: '',
-    specialities: '',
-    fb_url: '',
-    tw_url: '',
-    li_url: '',
-    in_url: '',
-    yo_url: '',
-    image: '',
-    profile_background: '',
-    is_identity_verified: false,
-    verification: null as any,
+  // Synchronously initialize profileData from localStorage to prevent input flickering
+  const [profileData, setProfileData] = useState(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const cached =
+          localStorage.getItem('qixer_profile_seller') ||
+          localStorage.getItem('qixer_user_profile');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (parsed && typeof parsed === 'object') {
+            return {
+              name: parsed.name || '',
+              email: parsed.email || '',
+              username: parsed.username || '',
+              phone: parsed.phone || '',
+              country: parsed.country || 'Nigeria',
+              country_id: parsed.country_id || 1,
+              service_city: parsed.service_city || 'Lagos',
+              service_area: parsed.service_area || '',
+              address: parsed.address || '',
+              post_code: parsed.post_code || '',
+              tax_number: parsed.tax_number || '',
+              experience: parsed.experience || '',
+              about: parsed.about || '',
+              specialities: parsed.specialities || '',
+              fb_url: parsed.fb_url || '',
+              tw_url: parsed.tw_url || '',
+              li_url: parsed.li_url || '',
+              in_url: parsed.in_url || '',
+              yo_url: parsed.yo_url || '',
+              image: parsed.image || '',
+              profile_background: parsed.profile_background || '',
+              is_identity_verified: Boolean(parsed.is_identity_verified),
+              verification: parsed.verification || null,
+            };
+          }
+        }
+      } catch (e) {}
+    }
+    return {
+      name: '',
+      email: '',
+      username: '',
+      phone: '',
+      country: 'Nigeria',
+      country_id: 1,
+      service_city: 'Lagos',
+      service_area: '',
+      address: '',
+      post_code: '',
+      tax_number: '',
+      experience: '',
+      about: '',
+      specialities: '',
+      fb_url: '',
+      tw_url: '',
+      li_url: '',
+      in_url: '',
+      yo_url: '',
+      image: '',
+      profile_background: '',
+      is_identity_verified: false,
+      verification: null as any,
+    };
   });
 
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -82,7 +122,7 @@ export default function SellerProfilePage() {
         if (res.ok) {
           const json = await res.json();
           if (json.user) {
-            setProfileData({
+            const updated = {
               name: json.user.name || '',
               email: json.user.email || '',
               username: json.user.username || '',
@@ -106,7 +146,16 @@ export default function SellerProfilePage() {
               profile_background: json.user.profile_background || '',
               is_identity_verified: Boolean(json.user.is_identity_verified),
               verification: json.user.verification,
-            });
+            };
+            setProfileData((prev) => (JSON.stringify(prev) === JSON.stringify(updated) ? prev : updated));
+            try {
+              localStorage.setItem('qixer_profile_seller', JSON.stringify({
+                name: updated.name,
+                image: updated.image,
+                email: updated.email,
+                username: updated.username,
+              }));
+            } catch (e) {}
 
             if (json.user.verification) {
               setVerifyDocs({
@@ -136,18 +185,18 @@ export default function SellerProfilePage() {
     loadProfile();
   }, []);
 
-  const currentTags = useMemo(() => {
+  const currentTags: string[] = useMemo(() => {
     if (!profileData.specialities) return [];
-    return profileData.specialities
+    return String(profileData.specialities)
       .split(/[,;\n]+/)
-      .map((s) => s.trim())
+      .map((s: string) => s.trim())
       .filter(Boolean);
   }, [profileData.specialities]);
 
   const handleAddTag = (tag: string) => {
     const clean = tag.trim();
     if (!clean) return;
-    const exists = currentTags.some((t) => t.toLowerCase() === clean.toLowerCase());
+    const exists = currentTags.some((t: string) => t.toLowerCase() === clean.toLowerCase());
     if (exists) return;
     const updated = [...currentTags, clean].join(', ');
     setProfileData((prev) => ({ ...prev, specialities: updated }));
@@ -156,13 +205,13 @@ export default function SellerProfilePage() {
 
   const handleRemoveTag = (tagToRemove: string) => {
     const updated = currentTags
-      .filter((t) => t.toLowerCase() !== tagToRemove.toLowerCase())
+      .filter((t: string) => t.toLowerCase() !== tagToRemove.toLowerCase())
       .join(', ');
     setProfileData((prev) => ({ ...prev, specialities: updated }));
   };
 
   const handleTogglePreset = (preset: string) => {
-    const exists = currentTags.some((t) => t.toLowerCase() === preset.toLowerCase());
+    const exists = currentTags.some((t: string) => t.toLowerCase() === preset.toLowerCase());
     if (exists) {
       handleRemoveTag(preset);
     } else {
@@ -204,7 +253,8 @@ export default function SellerProfilePage() {
             };
             localStorage.setItem('qixer_profile_seller', JSON.stringify(prof));
             localStorage.setItem('qixer_user_profile', JSON.stringify(prof));
-            window.dispatchEvent(new Event('qixer-profile-updated'));
+            window.dispatchEvent(new CustomEvent('qixer-profile-updated', { detail: prof }));
+            window.dispatchEvent(new Event('storage'));
           } catch (e) {}
           setMessage({
             type: 'success',
@@ -245,7 +295,8 @@ export default function SellerProfilePage() {
         };
         localStorage.setItem('qixer_profile_seller', JSON.stringify(prof));
         localStorage.setItem('qixer_user_profile', JSON.stringify(prof));
-        window.dispatchEvent(new Event('qixer-profile-updated'));
+        window.dispatchEvent(new CustomEvent('qixer-profile-updated', { detail: prof }));
+        window.dispatchEvent(new Event('storage'));
       }
       setMessage({ type: 'success', text: 'Profile information updated successfully! Public seller page updated.' });
     } catch (err: any) {
@@ -825,7 +876,7 @@ export default function SellerProfilePage() {
                         </div>
                       ) : (
                         <div className="d-flex flex-wrap gap-2 align-items-center">
-                          {currentTags.map((tag, idx) => (
+                          {currentTags.map((tag: string, idx: number) => (
                             <span
                               key={idx}
                               className="d-inline-flex align-items-center gap-1 px-3 py-1 text-white rounded-pill shadow-sm"
@@ -895,8 +946,8 @@ export default function SellerProfilePage() {
                         Quick Select Popular Trade Badges (Click to Add / Remove):
                       </span>
                       <div className="d-flex flex-wrap gap-2">
-                        {POPULAR_SPECIALITY_PRESETS.map((preset) => {
-                          const isSelected = currentTags.some((t) => t.toLowerCase() === preset.toLowerCase());
+                        {POPULAR_SPECIALITY_PRESETS.map((preset: string) => {
+                          const isSelected = currentTags.some((t: string) => t.toLowerCase() === preset.toLowerCase());
                           return (
                             <button
                               key={preset}

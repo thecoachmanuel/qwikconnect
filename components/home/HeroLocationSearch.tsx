@@ -27,7 +27,18 @@ export const NIGERIAN_CITIES = [
 export default function HeroLocationSearch() {
   const router = useRouter();
   const [selectedCity, setSelectedCity] = useState('');
-  const [availableCities, setAvailableCities] = useState<string[]>(['Lagos', 'Abuja']);
+  const [availableCities, setAvailableCities] = useState<string[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem('qixer_available_cities');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        }
+      } catch (e) {}
+    }
+    return ['Lagos', 'Abuja'];
+  });
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -41,7 +52,14 @@ export default function HeroLocationSearch() {
       .then((res) => res.json())
       .then((data) => {
         if (isMounted && data.locations && Array.isArray(data.locations) && data.locations.length > 0) {
-          setAvailableCities(data.locations.map((l: any) => l.service_city));
+          const cities = data.locations.map((l: any) => l.service_city);
+          setAvailableCities((prev) => {
+            if (JSON.stringify(prev) === JSON.stringify(cities)) return prev;
+            return cities;
+          });
+          try {
+            localStorage.setItem('qixer_available_cities', JSON.stringify(cities));
+          } catch (e) {}
         }
       })
       .catch(() => {});
@@ -61,15 +79,11 @@ export default function HeroLocationSearch() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Debounced live search
+  // Debounced live search - only triggers when actively typing a query (never on city select alone)
   useEffect(() => {
-    if (!query.trim() && !selectedCity) {
+    if (!query.trim() || query.trim().length < 2) {
       setResults([]);
       setShowDropdown(false);
-      return;
-    }
-
-    if (query.trim().length < 2 && !selectedCity) {
       return;
     }
 
@@ -77,7 +91,7 @@ export default function HeroLocationSearch() {
       try {
         setLoading(true);
         const params = new URLSearchParams();
-        if (query.trim()) params.set('q', query.trim());
+        params.set('q', query.trim());
         if (selectedCity) params.set('city', selectedCity);
         params.set('limit', '5');
 

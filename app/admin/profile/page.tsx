@@ -11,15 +11,40 @@ export default function AdminProfilePage() {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [message, setMessage] = useState<{ type: string; text: string }>({ type: '', text: '' });
 
-  const [profileData, setProfileData] = useState({
-    name: '',
-    email: '',
-    username: '',
-    phone: '',
-    address: '',
-    post_code: '',
-    about: '',
-    image: '',
+  // Synchronously initialize profileData from localStorage to eliminate form input flicker
+  const [profileData, setProfileData] = useState(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const cached =
+          localStorage.getItem('qixer_profile_admin') ||
+          localStorage.getItem('qixer_user_profile');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (parsed && typeof parsed === 'object') {
+            return {
+              name: parsed.name || '',
+              email: parsed.email || '',
+              username: parsed.username || '',
+              phone: parsed.phone || '',
+              address: parsed.address || '',
+              post_code: parsed.post_code || '',
+              about: parsed.about || '',
+              image: parsed.image || '',
+            };
+          }
+        }
+      } catch (e) { }
+    }
+    return {
+      name: '',
+      email: '',
+      username: '',
+      phone: '',
+      address: '',
+      post_code: '',
+      about: '',
+      image: '',
+    };
   });
 
   const [passwordData, setPasswordData] = useState({
@@ -31,12 +56,11 @@ export default function AdminProfilePage() {
   useEffect(() => {
     async function loadProfile() {
       try {
-        setLoading(true);
         const res = await fetch('/api/user/profile');
         if (res.ok) {
           const json = await res.json();
           if (json.user) {
-            setProfileData({
+            const updated = {
               name: json.user.name || '',
               email: json.user.email || '',
               username: json.user.username || '',
@@ -45,7 +69,12 @@ export default function AdminProfilePage() {
               post_code: json.user.post_code || '',
               about: json.user.about || '',
               image: json.user.image || '',
-            });
+            };
+            setProfileData((prev) => (JSON.stringify(prev) === JSON.stringify(updated) ? prev : updated));
+            try {
+              localStorage.setItem('qixer_profile_admin', JSON.stringify(updated));
+              localStorage.setItem('qixer_user_profile', JSON.stringify(updated));
+            } catch (e) { }
           }
         }
       } catch (err) {
@@ -83,8 +112,9 @@ export default function AdminProfilePage() {
         };
         localStorage.setItem('qixer_profile_admin', JSON.stringify(prof));
         localStorage.setItem('qixer_user_profile', JSON.stringify(prof));
-        window.dispatchEvent(new Event('qixer-profile-updated'));
-      } catch (e) {}
+        window.dispatchEvent(new CustomEvent('qixer-profile-updated', { detail: prof }));
+        window.dispatchEvent(new Event('storage'));
+      } catch (e) { }
       setMessage({ type: 'success', text: 'Avatar uploaded and profile updated successfully!' });
     } catch (err: any) {
       setMessage({ type: 'danger', text: err.message || 'Image upload failed' });
@@ -113,7 +143,8 @@ export default function AdminProfilePage() {
         };
         localStorage.setItem('qixer_profile_admin', JSON.stringify(prof));
         localStorage.setItem('qixer_user_profile', JSON.stringify(prof));
-        window.dispatchEvent(new Event('qixer-profile-updated'));
+        window.dispatchEvent(new CustomEvent('qixer-profile-updated', { detail: prof }));
+        window.dispatchEvent(new Event('storage'));
       }
       setMessage({ type: 'success', text: 'Administrator profile updated successfully!' });
     } catch (err: any) {
@@ -154,11 +185,10 @@ export default function AdminProfilePage() {
       <div className="d-flex border-bottom mb-4 gap-2">
         <button
           onClick={() => { setActiveTab('profile'); setMessage({ type: '', text: '' }); }}
-          className={`btn py-2 px-4 fw-semibold border-0 rounded-0 ${
-            activeTab === 'profile'
+          className={`btn py-2 px-4 fw-semibold border-0 rounded-0 ${activeTab === 'profile'
               ? 'border-bottom border-3 text-white'
               : 'text-muted'
-          }`}
+            }`}
           style={{
             borderColor: activeTab === 'profile' ? '#6366f1 !important' : 'transparent',
             backgroundColor: activeTab === 'profile' ? '#6366f1' : 'transparent',
@@ -169,11 +199,10 @@ export default function AdminProfilePage() {
         </button>
         <button
           onClick={() => { setActiveTab('password'); setMessage({ type: '', text: '' }); }}
-          className={`btn py-2 px-4 fw-semibold border-0 rounded-0 ${
-            activeTab === 'password'
+          className={`btn py-2 px-4 fw-semibold border-0 rounded-0 ${activeTab === 'password'
               ? 'border-bottom border-3 text-white'
               : 'text-muted'
-          }`}
+            }`}
           style={{
             borderColor: activeTab === 'password' ? '#6366f1 !important' : 'transparent',
             backgroundColor: activeTab === 'password' ? '#6366f1' : 'transparent',

@@ -38,7 +38,7 @@ export default async function ContactPage() {
   ];
 
   return (
-    <FrontendLayout>
+    <FrontendLayout siteLogo={settings?.siteLogo} siteTitle={settings?.siteTitle} copyrightText={settings?.copyrightText}>
       {/* Banner / Breadcrumb */}
       <div className="banner-inner-area section-bg-2 padding-top-50 padding-bottom-50" style={{ backgroundColor: '#f1f5f9' }}>
         <div className="container container-two">

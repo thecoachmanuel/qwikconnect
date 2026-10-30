@@ -1,7 +1,7 @@
 import React from 'react';
 import FrontendLayout from '@/components/layout/FrontendLayout';
 import ProvidersDirectory, { ProviderItem } from '@/components/sellers/ProvidersDirectory';
-import { getUsers, getReviews, getOrders, getServices, getAllSellerVerifications } from '@/lib/mongodb';
+import { getUsers, getReviews, getOrders, getServices, getAllSellerVerifications, getPlatformSettings } from '@/lib/mongodb';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -12,11 +12,14 @@ export const metadata = {
 };
 
 export default async function AllSellersPage() {
-  const allUsers = await getUsers();
-  const allReviews = await getReviews();
-  const allOrders = await getOrders();
-  const allServices = await getServices();
-  const allVerifications = await getAllSellerVerifications();
+  const [allUsers, allReviews, allOrders, allServices, allVerifications, settings] = await Promise.all([
+    getUsers(),
+    getReviews(),
+    getOrders(),
+    getServices(),
+    getAllSellerVerifications(),
+    getPlatformSettings(),
+  ]);
 
   // Verification lookup by seller_id
   const verifyMap = new Map(allVerifications.map((v: any) => [Number(v.seller_id), v]));
@@ -142,7 +145,7 @@ export default async function AllSellersPage() {
   });
 
   return (
-    <FrontendLayout>
+    <FrontendLayout siteLogo={settings?.siteLogo} siteTitle={settings?.siteTitle} copyrightText={settings?.copyrightText}>
       <ProvidersDirectory initialSellers={sellerCards} />
     </FrontendLayout>
   );

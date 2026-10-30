@@ -4,7 +4,7 @@ import FrontendLayout from '@/components/layout/FrontendLayout';
 import ServiceCard from '@/components/services/ServiceCard';
 import CategorySidebar from '@/components/services/CategorySidebar';
 import ServiceSearchFilterBar from '@/components/services/ServiceSearchFilterBar';
-import { getCategories, getServices } from '@/lib/mongodb';
+import { getCategories, getServices, getPlatformSettings } from '@/lib/mongodb';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -36,11 +36,13 @@ export default async function ServiceListPage({ searchParams }: ServiceListProps
 
   let categories: any[] = [];
   let allServices: any[] = [];
+  let settings: any = null;
 
   try {
-    [categories, allServices] = await Promise.all([
+    [categories, allServices, settings] = await Promise.all([
       getCategories(),
       getServices({ status: 1 }),
+      getPlatformSettings(),
     ]);
   } catch (error) {
     console.warn('Failed to load categories/services from MongoDB:', error);
@@ -218,7 +220,7 @@ export default async function ServiceListPage({ searchParams }: ServiceListProps
 
 
   return (
-    <FrontendLayout>
+    <FrontendLayout siteLogo={settings?.siteLogo} siteTitle={settings?.siteTitle} copyrightText={settings?.copyrightText}>
       {/* Breadcrumb banner */}
       <div className="banner-inner-area section-bg-2 padding-top-50 padding-bottom-50" style={{ backgroundColor: '#f1f5f9' }}>
         <div className="container container-two">
