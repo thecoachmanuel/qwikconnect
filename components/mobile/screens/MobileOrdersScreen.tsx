@@ -3,7 +3,15 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 
-export default function MobileOrdersScreen() {
+interface MobileOrdersScreenProps {
+  onSelectOrder?: (order: any) => void;
+  onExploreServices?: () => void;
+}
+
+export default function MobileOrdersScreen({
+  onSelectOrder,
+  onExploreServices,
+}: MobileOrdersScreenProps = {}) {
   const [filter, setFilter] = useState<'all' | 'pending' | 'active' | 'completed' | 'cancelled'>('all');
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -121,7 +129,13 @@ export default function MobileOrdersScreen() {
             return (
               <div
                 key={order.id}
-                onClick={() => setSelectedOrder(order)}
+                onClick={() => {
+                  if (onSelectOrder) {
+                    onSelectOrder(order);
+                  } else {
+                    setSelectedOrder(order);
+                  }
+                }}
                 className="card bg-white cursor-pointer"
                 style={{
                   border: '1px solid #EAECF0',

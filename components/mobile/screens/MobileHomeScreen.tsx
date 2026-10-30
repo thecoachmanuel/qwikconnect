@@ -7,12 +7,16 @@ interface MobileHomeScreenProps {
   onGoToSearch: (query?: string, category?: string) => void;
   onOpenMapView: () => void;
   selectedCity: string;
+  onSelectService?: (service: any) => void;
+  onBookService?: (service: any) => void;
 }
 
 export default function MobileHomeScreen({
   onGoToSearch,
   onOpenMapView,
   selectedCity,
+  onSelectService,
+  onBookService,
 }: MobileHomeScreenProps) {
   const [searchInput, setSearchInput] = useState('');
   const [categories, setCategories] = useState<any[]>([]);
@@ -408,6 +412,12 @@ export default function MobileHomeScreen({
                 {/* Upper: ServiceCardContents (Thumbnail 75x78, Rating pill, Title & By seller) */}
                 <Link
                   href={`/service-list/${service.slug}`}
+                  onClick={(e) => {
+                    if (onSelectService) {
+                      e.preventDefault();
+                      onSelectService(service);
+                    }
+                  }}
                   className="d-flex text-decoration-none"
                   style={{ gap: '13px', alignItems: 'flex-start' }}
                 >
@@ -523,8 +533,15 @@ export default function MobileHomeScreen({
                     </button>
 
                     {/* Book Now Button */}
-                    <Link
-                      href={`/service-list/book/${service.slug}`}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (onBookService) {
+                          onBookService(service);
+                        } else {
+                          window.location.href = `/service-list/book/${service.slug}`;
+                        }
+                      }}
                       className="btn btn-sm fw-medium text-white px-3 py-1.5"
                       style={{
                         backgroundColor: 'var(--main-color-one, #1DBF73)',
@@ -534,7 +551,7 @@ export default function MobileHomeScreen({
                       }}
                     >
                       Book Now
-                    </Link>
+                    </button>
                   </div>
                 </div>
               </div>
@@ -578,6 +595,12 @@ export default function MobileHomeScreen({
               >
                 <Link
                   href={`/service-list/${service.slug}`}
+                  onClick={(e) => {
+                    if (onSelectService) {
+                      e.preventDefault();
+                      onSelectService(service);
+                    }
+                  }}
                   className="d-flex text-decoration-none"
                   style={{ gap: '13px', alignItems: 'flex-start' }}
                 >
@@ -688,8 +711,15 @@ export default function MobileHomeScreen({
                       />
                     </button>
 
-                    <Link
-                      href={`/service-list/book/${service.slug}`}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (onBookService) {
+                          onBookService(service);
+                        } else {
+                          window.location.href = `/service-list/book/${service.slug}`;
+                        }
+                      }}
                       className="btn btn-sm fw-medium text-white px-3 py-1.5"
                       style={{
                         backgroundColor: 'var(--main-color-one, #1DBF73)',
@@ -699,7 +729,7 @@ export default function MobileHomeScreen({
                       }}
                     >
                       Book Now
-                    </Link>
+                    </button>
                   </div>
                 </div>
               </div>

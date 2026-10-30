@@ -14,12 +14,20 @@ interface MobileMenuScreenProps {
   };
   onOpenWallet: () => void;
   onOpenJobs: () => void;
+  onOpenTickets?: () => void;
+  onOpenReports?: () => void;
+  onOpenProfileEdit?: () => void;
+  onOpenChangePassword?: () => void;
 }
 
 export default function MobileMenuScreen({
   permissions,
   onOpenWallet,
   onOpenJobs,
+  onOpenTickets,
+  onOpenReports,
+  onOpenProfileEdit,
+  onOpenChangePassword,
 }: MobileMenuScreenProps) {
   const { data: session } = useSession();
   const [profile, setProfile] = useState<{
@@ -309,9 +317,10 @@ export default function MobileMenuScreen({
         )}
 
         {/* Support Tickets */}
-        <Link
-          href="/buyer/support-tickets"
-          className="d-flex align-items-center justify-content-between px-3 py-2.5 text-decoration-none"
+        <div
+          onClick={onOpenTickets}
+          className="d-flex align-items-center justify-content-between px-3 py-2.5 cursor-pointer"
+          style={{ cursor: 'pointer' }}
         >
           <div className="d-flex align-items-center gap-3">
             <img
@@ -324,12 +333,13 @@ export default function MobileMenuScreen({
             </span>
           </div>
           <i className="las la-angle-right" style={{ color: '#94a3b8', fontSize: '17px' }}></i>
-        </Link>
+        </div>
 
         {/* Order Disputes & Reports */}
-        <Link
-          href="/buyer/reports"
-          className="d-flex align-items-center justify-content-between px-3 py-2.5 text-decoration-none"
+        <div
+          onClick={onOpenReports}
+          className="d-flex align-items-center justify-content-between px-3 py-2.5 cursor-pointer"
+          style={{ cursor: 'pointer' }}
         >
           <div className="d-flex align-items-center gap-3">
             <img
@@ -342,12 +352,13 @@ export default function MobileMenuScreen({
             </span>
           </div>
           <i className="las la-angle-right" style={{ color: '#94a3b8', fontSize: '17px' }}></i>
-        </Link>
+        </div>
 
         {/* Edit Profile */}
-        <Link
-          href="/buyer/profile"
-          className="d-flex align-items-center justify-content-between px-3 py-2.5 text-decoration-none"
+        <div
+          onClick={onOpenProfileEdit}
+          className="d-flex align-items-center justify-content-between px-3 py-2.5 cursor-pointer"
+          style={{ cursor: 'pointer' }}
         >
           <div className="d-flex align-items-center gap-3">
             <img
@@ -360,12 +371,13 @@ export default function MobileMenuScreen({
             </span>
           </div>
           <i className="las la-angle-right" style={{ color: '#94a3b8', fontSize: '17px' }}></i>
-        </Link>
+        </div>
 
         {/* Change Password */}
-        <Link
-          href="/buyer/profile#password"
-          className="d-flex align-items-center justify-content-between px-3 py-2.5 text-decoration-none"
+        <div
+          onClick={onOpenChangePassword}
+          className="d-flex align-items-center justify-content-between px-3 py-2.5 cursor-pointer"
+          style={{ cursor: 'pointer' }}
         >
           <div className="d-flex align-items-center gap-3">
             <img
@@ -378,7 +390,7 @@ export default function MobileMenuScreen({
             </span>
           </div>
           <i className="las la-angle-right" style={{ color: '#94a3b8', fontSize: '17px' }}></i>
-        </Link>
+        </div>
       </div>
 
       {/* Flutter Bold Divider: thickness 4px, color: #EAECF0 */}

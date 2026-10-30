@@ -6,11 +6,15 @@ import Link from 'next/link';
 interface MobileSearchScreenProps {
   initialQuery?: string;
   initialCategory?: string;
+  onSelectService?: (service: any) => void;
+  onBookService?: (service: any) => void;
 }
 
 export default function MobileSearchScreen({
   initialQuery = '',
   initialCategory = '',
+  onSelectService,
+  onBookService,
 }: MobileSearchScreenProps) {
   const [query, setQuery] = useState(initialQuery);
   const [selectedCategory, setSelectedCategory] = useState(initialCategory);
@@ -259,6 +263,12 @@ export default function MobileSearchScreen({
               >
                 <Link
                   href={`/service-list/${service.slug}`}
+                  onClick={(e) => {
+                    if (onSelectService) {
+                      e.preventDefault();
+                      onSelectService(service);
+                    }
+                  }}
                   className="d-flex text-decoration-none"
                   style={{ gap: '13px', alignItems: 'flex-start' }}
                 >
@@ -369,8 +379,15 @@ export default function MobileSearchScreen({
                       />
                     </button>
 
-                    <Link
-                      href={`/service-list/book/${service.slug}`}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (onBookService) {
+                          onBookService(service);
+                        } else {
+                          window.location.href = `/service-list/book/${service.slug}`;
+                        }
+                      }}
                       className="btn btn-sm fw-medium text-white px-3 py-1.5"
                       style={{
                         backgroundColor: 'var(--main-color-one, #1DBF73)',
@@ -380,7 +397,7 @@ export default function MobileSearchScreen({
                       }}
                     >
                       Book Now
-                    </Link>
+                    </button>
                   </div>
                 </div>
               </div>

@@ -5,9 +5,15 @@ import Link from 'next/link';
 
 interface MobileSavedScreenProps {
   onGoToSearch: () => void;
+  onSelectService?: (service: any) => void;
+  onBookService?: (service: any) => void;
 }
 
-export default function MobileSavedScreen({ onGoToSearch }: MobileSavedScreenProps) {
+export default function MobileSavedScreen({
+  onGoToSearch,
+  onSelectService,
+  onBookService,
+}: MobileSavedScreenProps) {
   const [savedServices, setSavedServices] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -109,6 +115,12 @@ export default function MobileSavedScreen({ onGoToSearch }: MobileSavedScreenPro
                 {/* Upper: ServiceCardContents (Thumbnail 75x78, Rating badge, Title & By seller) */}
                 <Link
                   href={`/service-list/${slug}`}
+                  onClick={(e) => {
+                    if (onSelectService) {
+                      e.preventDefault();
+                      onSelectService(service.service || service);
+                    }
+                  }}
                   className="d-flex text-decoration-none"
                   style={{ gap: '13px', alignItems: 'flex-start' }}
                 >
@@ -225,8 +237,15 @@ export default function MobileSavedScreen({ onGoToSearch }: MobileSavedScreenPro
                     </button>
 
                     {/* Book Now Button */}
-                    <Link
-                      href={`/service-list/book/${slug}`}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (onBookService) {
+                          onBookService(service.service || service);
+                        } else {
+                          window.location.href = `/service-list/book/${slug}`;
+                        }
+                      }}
                       className="btn btn-sm fw-medium text-white px-3 py-1.5"
                       style={{
                         backgroundColor: 'var(--main-color-one, #1DBF73)',
@@ -236,7 +255,7 @@ export default function MobileSavedScreen({ onGoToSearch }: MobileSavedScreenPro
                       }}
                     >
                       Book Now
-                    </Link>
+                    </button>
                   </div>
                 </div>
               </div>
