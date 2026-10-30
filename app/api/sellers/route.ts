@@ -134,8 +134,28 @@ export async function GET(request: NextRequest) {
       };
     });
 
+    const { searchParams } = new URL(request.url);
+    const q = (searchParams.get('q') || '').toLowerCase().trim();
+    const cityParam = (searchParams.get('city') || searchParams.get('location') || '').toLowerCase().trim();
+
+    let filteredCards = sellerCards;
+    if (cityParam && cityParam !== 'all') {
+      filteredCards = filteredCards.filter((s: any) =>
+        (s.service_city || '').toLowerCase() === cityParam ||
+        (s.location || '').toLowerCase().includes(cityParam)
+      );
+    }
+    if (q) {
+      filteredCards = filteredCards.filter((s: any) =>
+        s.name.toLowerCase().includes(q) ||
+        s.username.toLowerCase().includes(q) ||
+        (s.specialities || '').toLowerCase().includes(q) ||
+        (s.about || '').toLowerCase().includes(q)
+      );
+    }
+
     return NextResponse.json(
-      { sellers: sellerCards, success: true },
+      { sellers: filteredCards, total: filteredCards.length, success: true },
       {
         headers: {
           'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',

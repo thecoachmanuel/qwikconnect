@@ -3,6 +3,7 @@ import Link from 'next/link';
 import FrontendLayout from '@/components/layout/FrontendLayout';
 import ServiceCard from '@/components/services/ServiceCard';
 import CategorySidebar from '@/components/services/CategorySidebar';
+import ServiceSearchFilterBar from '@/components/services/ServiceSearchFilterBar';
 import { getCategories, getServices } from '@/lib/mongodb';
 
 export const dynamic = 'force-dynamic';
@@ -12,6 +13,9 @@ interface ServiceListProps {
   searchParams: Promise<{
     q?: string;
     category?: string;
+    location?: string;
+    city?: string;
+    rating?: string;
     sortby?: string;
     page?: string;
   }>;
@@ -19,9 +23,14 @@ interface ServiceListProps {
 
 export default async function ServiceListPage({ searchParams }: ServiceListProps) {
   const resolvedParams = await searchParams;
-  const query = (resolvedParams.q || '').toLowerCase();
+  const rawQuery = resolvedParams.q || '';
+  const query = rawQuery.toLowerCase().trim();
+  const rawLocation = resolvedParams.location || resolvedParams.city || '';
+  const locationParam = rawLocation.toLowerCase().trim();
+  const rawRating = resolvedParams.rating || '';
+  const ratingParam = parseInt(rawRating || '0', 10);
   const categorySlug = resolvedParams.category || '';
-  const sortby = resolvedParams.sortby || 'newest';
+  const sortby = resolvedParams.sortby || 'latest_service';
   const page = parseInt(resolvedParams.page || '1', 10);
   const pageSize = 12;
 
@@ -46,18 +55,37 @@ export default async function ServiceListPage({ searchParams }: ServiceListProps
     );
   }
 
+  // Filter by Nigerian City / Location (PHP Parity: search_by_location)
+  if (locationParam && locationParam !== 'all') {
+    filteredServices = filteredServices.filter((s: any) =>
+      (s.city || '').toLowerCase() === locationParam ||
+      (s.seller?.service_city || '').toLowerCase() === locationParam ||
+      (s.seller?.city || '').toLowerCase() === locationParam
+    );
+  }
+
+  // Filter by Rating Star (PHP Parity: search_by_rating)
+  if (ratingParam > 0) {
+    filteredServices = filteredServices.filter((s: any) => {
+      const rating = Number(s.avg_rating || s.seller?.avgRating || 5);
+      return rating >= ratingParam;
+    });
+  }
+
+  // Filter by Keyword
   if (query) {
     filteredServices = filteredServices.filter((s: any) =>
       s.title?.toLowerCase().includes(query) ||
+      s.description?.toLowerCase().includes(query) ||
       s.city?.toLowerCase().includes(query) ||
       s.seller?.name?.toLowerCase().includes(query)
     );
   }
 
   // Sort
-  if (sortby === 'price_low') {
+  if (sortby === 'price_low' || sortby === 'lowest_price') {
     filteredServices.sort((a, b) => Number(a.price || 0) - Number(b.price || 0));
-  } else if (sortby === 'price_high') {
+  } else if (sortby === 'price_high' || sortby === 'highest_price') {
     filteredServices.sort((a, b) => Number(b.price || 0) - Number(a.price || 0));
   } else {
     filteredServices.sort((a, b) => Number(b.id || 0) - Number(a.id || 0));
@@ -161,10 +189,16 @@ export default async function ServiceListPage({ searchParams }: ServiceListProps
       ? defaultServices.filter((s) => s.category_slug === categorySlug)
       : defaultServices;
 
+    // Apply location filter (Nigeria Cities)
+    if (locationParam && locationParam !== 'all') {
+      filtered = filtered.filter((s) => (s.city || '').toLowerCase() === locationParam);
+    }
+
     // Apply keyword filter
     if (query) {
       filtered = filtered.filter((s) =>
-        s.title.toLowerCase().includes(query.toLowerCase())
+        s.title.toLowerCase().includes(query) ||
+        (s.city || '').toLowerCase().includes(query)
       );
     }
 
@@ -213,110 +247,23 @@ export default async function ServiceListPage({ searchParams }: ServiceListProps
 
       <div className="service-list-area padding-top-70 padding-bottom-100">
         <div className="container container-two">
-          {/* Filter Bar */}
-          <div
-            className="service-filter-bar mb-4 p-3 radius-10"
-            style={{
-              backgroundColor: '#fff',
-              border: '1px solid #e2e8f0',
-              borderRadius: '10px',
-              display: 'flex',
-              flexWrap: 'wrap',
-              gap: '15px',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}
-          >
-            {/* Search Input Form */}
-            <form action="/service-list" method="get" style={{ display: 'flex', gap: '8px', flex: 1, minWidth: '260px' }}>
-              {categorySlug && <input type="hidden" name="category" value={categorySlug} />}
-              <input
-                type="text"
-                name="q"
-                defaultValue={query}
-                placeholder="Search services by keyword..."
-                style={{
-                  flex: 1,
-                  height: '42px',
-                  padding: '0 14px',
-                  border: '1px solid #cbd5e1',
-                  borderRadius: '6px',
-                  fontSize: '14px',
-                  outline: 'none',
-                }}
-              />
-              <button
-                type="submit"
-                style={{
-                  height: '42px',
-                  padding: '0 18px',
-                  backgroundColor: 'var(--main-color-one)',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: '6px',
-                  fontSize: '14px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                }}
-              >
-                Filter
-              </button>
-            </form>
-
-            {/* Sort Options */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <span style={{ fontSize: '14px', color: '#64748b', whiteSpace: 'nowrap' }}>Sort By:</span>
-              <div style={{ display: 'flex', gap: '6px' }}>
-                <Link
-                  href={`/service-list?${query ? `q=${query}&` : ''}${categorySlug ? `category=${categorySlug}&` : ''}sortby=newest`}
-                  style={{
-                    padding: '6px 12px',
-                    borderRadius: '6px',
-                    fontSize: '13px',
-                    backgroundColor: sortby === 'newest' ? 'var(--main-color-one)' : '#f1f5f9',
-                    color: sortby === 'newest' ? '#fff' : '#334155',
-                    fontWeight: 500,
-                  }}
-                >
-                  Newest
-                </Link>
-                <Link
-                  href={`/service-list?${query ? `q=${query}&` : ''}${categorySlug ? `category=${categorySlug}&` : ''}sortby=price_low`}
-                  style={{
-                    padding: '6px 12px',
-                    borderRadius: '6px',
-                    fontSize: '13px',
-                    backgroundColor: sortby === 'price_low' ? 'var(--main-color-one)' : '#f1f5f9',
-                    color: sortby === 'price_low' ? '#fff' : '#334155',
-                    fontWeight: 500,
-                  }}
-                >
-                  Price: Low to High
-                </Link>
-                <Link
-                  href={`/service-list?${query ? `q=${query}&` : ''}${categorySlug ? `category=${categorySlug}&` : ''}sortby=price_high`}
-                  style={{
-                    padding: '6px 12px',
-                    borderRadius: '6px',
-                    fontSize: '13px',
-                    backgroundColor: sortby === 'price_high' ? 'var(--main-color-one)' : '#f1f5f9',
-                    color: sortby === 'price_high' ? '#fff' : '#334155',
-                    fontWeight: 500,
-                  }}
-                >
-                  Price: High to Low
-                </Link>
-              </div>
-            </div>
-          </div>
+          {/* 4-Column Search & Location Filter Bar (PHP Parity: category-services.blade.php & ServiceListOne) */}
+          <ServiceSearchFilterBar
+            initialQuery={rawQuery}
+            initialLocation={rawLocation}
+            initialRating={rawRating}
+            initialSortBy={sortby}
+            categorySlug={categorySlug}
+          />
 
           <div className="row g-4">
-            {/* Left Sidebar: Categories */}
+            {/* Left Sidebar: Categories & Location Filter */}
             <div className="col-lg-3">
               <CategorySidebar
                 categories={categories}
                 categorySlug={categorySlug}
-                query={query}
+                query={rawQuery}
+                location={rawLocation}
               />
             </div>
 

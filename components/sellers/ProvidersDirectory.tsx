@@ -127,9 +127,10 @@ export default function ProvidersDirectory({ initialSellers }: ProvidersDirector
     };
   }, []);
 
-  // Locations list extracted from active sellers
+  // Locations list extracted from active sellers + Nigerian hub cities
   const locationList = useMemo(() => {
     const set = new Set<string>();
+    ['Lagos', 'Abuja', 'Port Harcourt', 'Ibadan', 'Kano', 'Benin City', 'Enugu', 'Abeokuta'].forEach((c) => set.add(c));
     sellers.forEach((s) => {
       if (s.service_city && s.service_city.trim()) {
         set.add(s.service_city.trim());
@@ -262,12 +263,12 @@ export default function ProvidersDirectory({ initialSellers }: ProvidersDirector
                   className="form-select"
                   value={selectedLocation}
                   onChange={(e) => setSelectedLocation(e.target.value)}
-                  style={{ borderRadius: '10px', height: '42px', fontSize: '13.5px', minWidth: '150px' }}
+                  style={{ borderRadius: '10px', height: '42px', fontSize: '13.5px', minWidth: '180px' }}
                 >
-                  <option value="all">All Locations</option>
+                  <option value="all">All Locations (Nigeria)</option>
                   {locationList.map((loc) => (
                     <option key={loc} value={loc}>
-                      {loc}
+                      {loc}, Nigeria
                     </option>
                   ))}
                 </select>

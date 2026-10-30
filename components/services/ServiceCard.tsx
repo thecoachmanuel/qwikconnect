@@ -134,7 +134,7 @@ export default function ServiceCard({
             style={{ display: 'flex', alignItems: 'center', gap: '5px', color: '#888', fontSize: '13px' }}
           >
             <i className="fa-solid fa-location-dot" style={{ color: 'var(--main-color-one)' }}></i>
-            {city ? `${city}, ` : ''}{country || 'Worldwide'}
+            {city ? `${city}, ` : ''}{country && country !== 'Worldwide' ? country : 'Nigeria'}
           </span>
         )}
 

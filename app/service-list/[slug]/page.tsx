@@ -60,7 +60,7 @@ export default async function ServiceDetailsPage({ params }: ServiceDetailsProps
   try {
     const sellerServices = await getServices({ seller_id: service.seller_id || seller.id, status: 1 });
     moreServices = (sellerServices as any[]).filter((s: any) => s.id !== service.id).slice(0, 2);
-  } catch (e) {}
+  } catch (e) { }
 
   const includes = service.includes || [];
   const additionals = service.additionals || [];
@@ -195,8 +195,9 @@ export default async function ServiceDetailsPage({ params }: ServiceDetailsProps
                         <span style={{ fontSize: '14px', fontWeight: 600, color: '#1e293b', display: 'block' }}>
                           {seller.name}
                         </span>
-                        <span style={{ fontSize: '12px', color: '#64748b' }}>
-                          {seller.service_city || seller.city || 'Service Provider'}
+                        <span style={{ fontSize: '12px', color: '#64748b', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                          <i className="las la-map-marker-alt text-success"></i>
+                          {seller.service_city || seller.city || 'Lagos'}, Nigeria
                         </span>
                       </div>
                     </Link>

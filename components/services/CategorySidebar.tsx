@@ -14,12 +14,25 @@ interface CategorySidebarProps {
   categories: Category[];
   categorySlug?: string;
   query?: string;
+  location?: string;
 }
+
+export const SIDEBAR_CITIES = [
+  'Lagos',
+  'Abuja',
+  'Port Harcourt',
+  'Ibadan',
+  'Kano',
+  'Benin City',
+  'Enugu',
+  'Abeokuta',
+];
 
 export default function CategorySidebar({
   categories,
   categorySlug = '',
   query = '',
+  location = '',
 }: CategorySidebarProps) {
   // If a category is selected, start collapsed on mobile. Otherwise start open.
   const [isOpen, setIsOpen] = useState(!categorySlug);
@@ -240,6 +253,83 @@ export default function CategorySidebar({
             );
           })}
         </ul>
+
+        {/* Location Filter Widget (PHP Parity: ServiceCity Widget) */}
+        <div className="mt-4 pt-3 border-top">
+          <div className="d-flex align-items-center justify-content-between mb-3">
+            <h5
+              style={{
+                fontSize: '15px',
+                fontWeight: 700,
+                margin: 0,
+                color: '#1e293b',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+              }}
+            >
+              <i className="las la-map-marker-alt text-success fs-5"></i>
+              <span>Locations in Nigeria</span>
+            </h5>
+            {location && (
+              <Link
+                href={`/service-list?${categorySlug ? `category=${categorySlug}&` : ''}${query ? `q=${query}` : ''}`}
+                className="small text-danger text-decoration-none"
+                style={{ fontSize: '12px' }}
+              >
+                Clear
+              </Link>
+            )}
+          </div>
+
+          <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+            <li style={{ marginBottom: '4px' }}>
+              <Link
+                href={`/service-list?${categorySlug ? `category=${categorySlug}&` : ''}${query ? `q=${query}` : ''}`}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '7px 10px',
+                  borderRadius: '6px',
+                  fontSize: '13.5px',
+                  backgroundColor: !location ? 'rgba(29, 191, 115, 0.1)' : 'transparent',
+                  color: !location ? 'var(--main-color-one)' : '#475569',
+                  fontWeight: !location ? 600 : 400,
+                  textDecoration: 'none',
+                }}
+              >
+                <span>All Locations (Nigeria)</span>
+                {!location && <i className="las la-check" style={{ fontSize: '13px' }}></i>}
+              </Link>
+            </li>
+            {SIDEBAR_CITIES.map((city) => {
+              const isCityActive = location?.toLowerCase() === city.toLowerCase();
+              return (
+                <li key={city} style={{ marginBottom: '3px' }}>
+                  <Link
+                    href={`/service-list?${categorySlug ? `category=${categorySlug}&` : ''}${query ? `q=${query}&` : ''}location=${city}`}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '7px 10px',
+                      borderRadius: '6px',
+                      fontSize: '13.5px',
+                      backgroundColor: isCityActive ? 'rgba(29, 191, 115, 0.1)' : 'transparent',
+                      color: isCityActive ? 'var(--main-color-one)' : '#475569',
+                      fontWeight: isCityActive ? 600 : 400,
+                      textDecoration: 'none',
+                    }}
+                  >
+                    <span>{city}</span>
+                    {isCityActive && <i className="las la-check text-success" style={{ fontSize: '13px' }}></i>}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
       </div>
     </div>
   );

@@ -3,6 +3,7 @@ import Link from 'next/link';
 import FrontendLayout from '@/components/layout/FrontendLayout';
 import ServiceCard from '@/components/services/ServiceCard';
 import CategoryCard from '@/components/categories/CategoryCard';
+import HeroLocationSearch from '@/components/home/HeroLocationSearch';
 import { getCategories, getServices } from '@/lib/mongodb';
 import { getAttachmentUrlById } from '@/lib/media';
 
@@ -85,45 +86,9 @@ export default async function HomePage() {
                   Connect with trusted, background-checked local professionals for cleaning, repair, maintenance, and hundreds of on-demand services.
                 </p>
 
-                {/* Search Bar */}
+                {/* Location-Aware Search Bar (PHP Parity: home_search & header-five.blade.php) */}
                 <div className="new_banner__search mt-4 mt-lg-5">
-                  <form action="/service-list" method="get" className="new_banner__search__form mt-4" style={{ display: 'flex', maxWidth: '540px' }}>
-                    <div className="new_banner__search__input" style={{ flex: 1, position: 'relative' }}>
-                      <input
-                        className="form--control"
-                        type="text"
-                        name="q"
-                        placeholder="What service are you looking for?"
-                        style={{
-                          width: '100%',
-                          height: '56px',
-                          padding: '0 20px',
-                          border: '1px solid #e2e8f0',
-                          borderRadius: '8px 0 0 8px',
-                          fontSize: '15px',
-                          outline: 'none',
-                        }}
-                      />
-                    </div>
-                    <button
-                      type="submit"
-                      className="new_banner__search__button"
-                      style={{
-                        height: '56px',
-                        padding: '0 28px',
-                        backgroundColor: 'var(--main-color-one)',
-                        color: '#fff',
-                        border: 'none',
-                        borderRadius: '0 8px 8px 0',
-                        fontWeight: 600,
-                        fontSize: '15px',
-                        cursor: 'pointer',
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      <i className="las la-search" style={{ marginRight: '6px' }}></i> Search
-                    </button>
-                  </form>
+                  <HeroLocationSearch />
                 </div>
 
                 {/* Popular Search Tags */}
