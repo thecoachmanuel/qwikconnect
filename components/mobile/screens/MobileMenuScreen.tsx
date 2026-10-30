@@ -18,6 +18,7 @@ interface MobileMenuScreenProps {
   onOpenReports?: () => void;
   onOpenProfileEdit?: () => void;
   onOpenChangePassword?: () => void;
+  onOpenLiveChat?: () => void;
 }
 
 export default function MobileMenuScreen({
@@ -28,6 +29,7 @@ export default function MobileMenuScreen({
   onOpenReports,
   onOpenProfileEdit,
   onOpenChangePassword,
+  onOpenLiveChat,
 }: MobileMenuScreenProps) {
   const { data: session } = useSession();
   const [profile, setProfile] = useState<{
@@ -310,6 +312,37 @@ export default function MobileMenuScreen({
               />
               <span style={{ color: '#475467', fontSize: '14.5px', fontWeight: 500 }}>
                 My Jobs & Job Requests
+              </span>
+            </div>
+            <i className="las la-angle-right" style={{ color: '#94a3b8', fontSize: '17px' }}></i>
+          </div>
+        )}
+
+        {/* Live Chat & Messages */}
+        {permissions.LiveChat && (
+          <div
+            onClick={onOpenLiveChat}
+            className="d-flex align-items-center justify-content-between px-3 py-2.5 cursor-pointer"
+            style={{ cursor: 'pointer' }}
+          >
+            <div className="d-flex align-items-center gap-3">
+              <div
+                style={{
+                  width: '35px',
+                  height: '35px',
+                  borderRadius: '8px',
+                  backgroundColor: 'rgba(29, 191, 115, 0.1)',
+                  color: 'var(--main-color-one, #1DBF73)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '20px',
+                }}
+              >
+                <i className="las la-comments"></i>
+              </div>
+              <span style={{ color: '#475467', fontSize: '14.5px', fontWeight: 500 }}>
+                Live Chat & Conversations
               </span>
             </div>
             <i className="las la-angle-right" style={{ color: '#94a3b8', fontSize: '17px' }}></i>

@@ -49,6 +49,7 @@ export default function MobileAppShell({ children }: { children?: React.ReactNod
   const [reportOrderId, setReportOrderId] = useState<number | undefined>(undefined);
   const [showProfileEdit, setShowProfileEdit] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
+  const [showLiveChatModal, setShowLiveChatModal] = useState(false);
 
   // Flow states
   const [activeServiceDetails, setActiveServiceDetails] = useState<any>(null);
@@ -99,12 +100,8 @@ export default function MobileAppShell({ children }: { children?: React.ReactNod
   const handleChatClick = (seller: any) => {
     setActiveServiceDetails(null);
     setSelectedOrder(null);
-    setActiveChatSeller(seller || {
-      id: 2,
-      name: 'Chioma Adebayo',
-      phone: '+234 801 234 5678',
-      image: '/assets/flutter/images/avatar.png',
-    });
+    setActiveChatSeller(seller || null);
+    setShowLiveChatModal(true);
   };
 
   const handleOpenReview = (serviceId: number, orderId?: number) => {
@@ -180,15 +177,14 @@ export default function MobileAppShell({ children }: { children?: React.ReactNod
             onOpenReports={() => setShowReports(true)}
             onOpenProfileEdit={() => setShowProfileEdit(true)}
             onOpenChangePassword={() => setShowChangePassword(true)}
+            onOpenLiveChat={() => handleChatClick(null)}
           />
         )}
       </main>
 
       {/* 3. Floating Live Chat (if enabled by Admin) */}
       {permissions.LiveChat && currentTab !== 4 && (
-        <div onClick={() => handleChatClick(null)}>
-          <FloatingLiveChat unreadCount={0} />
-        </div>
+        <FloatingLiveChat unreadCount={0} onClick={() => handleChatClick(null)} />
       )}
 
       {/* 4. Fixed 5-Tab Bottom Navigation Bar */}
@@ -274,11 +270,14 @@ export default function MobileAppShell({ children }: { children?: React.ReactNod
         />
       )}
 
-      {/* Live Chat Screen */}
-      {activeChatSeller && (
+      {/* Live Chat Screen (Conversations List or Direct Thread) */}
+      {(showLiveChatModal || activeChatSeller) && (
         <MobileLiveChatModal
           seller={activeChatSeller}
-          onClose={() => setActiveChatSeller(null)}
+          onClose={() => {
+            setActiveChatSeller(null);
+            setShowLiveChatModal(false);
+          }}
         />
       )}
 

@@ -1,32 +1,42 @@
 'use client';
 
 import React from 'react';
-import Link from 'next/link';
 
 interface FloatingLiveChatProps {
   unreadCount?: number;
+  onClick?: () => void;
 }
 
-export default function FloatingLiveChat({ unreadCount = 0 }: FloatingLiveChatProps) {
+export default function FloatingLiveChat({ unreadCount = 0, onClick }: FloatingLiveChatProps) {
+  const handleClick = (e: React.MouseEvent) => {
+    if (onClick) {
+      e.preventDefault();
+      onClick();
+    }
+  };
+
   return (
     <div
       className="position-fixed"
       style={{
         right: '20px',
-        bottom: '88px', // Floating just above bottom navigation bar
+        bottom: 'calc(88px + env(safe-area-inset-bottom, 0px))',
         zIndex: 1040,
       }}
     >
-      <Link
-        href="/buyer/live-chat"
-        className="d-block position-relative text-decoration-none"
+      <button
+        type="button"
+        onClick={handleClick}
+        className="d-block position-relative border-0 p-0 bg-transparent"
         style={{
           width: '52px',
           height: '52px',
           borderRadius: '50%',
           boxShadow: '0 5px 15px rgba(0, 0, 0, 0.15)',
           transition: 'transform 0.15s ease',
+          cursor: 'pointer',
         }}
+        title="Live Chat"
       >
         <img
           src="/assets/flutter/svg/message-green.svg"
@@ -53,7 +63,7 @@ export default function FloatingLiveChat({ unreadCount = 0 }: FloatingLiveChatPr
             {unreadCount}
           </span>
         )}
-      </Link>
+      </button>
     </div>
   );
 }

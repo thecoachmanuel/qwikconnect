@@ -2026,12 +2026,13 @@ export async function getMessages(fromUser: number, toUser: number) {
   );
 }
 
-export async function sendMessage(fromUser: number, toUser: number, messageText: string) {
+export async function sendMessage(fromUser: number, toUser: number, messageText: string, attachment?: string) {
   const newMsg = {
     id: Date.now(),
     from_user: fromUser,
     to_user: toUser,
     message: messageText,
+    attachment: attachment || null,
     created_at: new Date().toISOString(),
   };
 

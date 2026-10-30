@@ -42,17 +42,17 @@ export async function POST(request: NextRequest) {
     const currentUserId = session?.user?.id ? parseInt(session.user.id, 10) : 2;
 
     const body = await request.json();
-    const { to_user, message } = body;
+    const { to_user, message, attachment } = body;
 
-    if (!to_user || !message?.trim()) {
+    if (!to_user || (!message?.trim() && !attachment)) {
       return NextResponse.json(
-        { message: 'Recipient and message are required' },
+        { message: 'Recipient and message or attachment are required' },
         { status: 400 }
       );
     }
 
     const targetUserId = parseInt(to_user, 10);
-    const newMessage = await sendMessage(currentUserId, targetUserId, message.trim());
+    const newMessage = await sendMessage(currentUserId, targetUserId, (message || '').trim(), attachment);
 
     if (pusherServer) {
       try {
