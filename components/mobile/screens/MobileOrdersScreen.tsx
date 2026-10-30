@@ -25,7 +25,7 @@ export default function MobileOrdersScreen({
           setOrders(data.orders);
         }
       })
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setLoading(false));
   };
 

@@ -3,6 +3,26 @@
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 
+const NIGERIAN_CITIES = [
+  'Lagos',
+  'Abuja (FCT)',
+  'Port Harcourt (Rivers)',
+  'Ibadan (Oyo)',
+  'Kano',
+  'Abeokuta (Ogun)',
+  'Enugu',
+  'Benin City (Edo)',
+  'Warri (Delta)',
+  'Asaba (Delta)',
+  'Calabar (Cross River)',
+  'Kaduna',
+  'Jos (Plateau)',
+  'Uyo (Akwa Ibom)',
+  'Owerri (Imo)',
+  'Akure (Ondo)',
+  'Ilorin (Kwara)',
+];
+
 export default function BuyerProfilePage() {
   const [activeTab, setActiveTab] = useState<'profile' | 'password'>('profile');
   const [loading, setLoading] = useState(true);
@@ -25,6 +45,8 @@ export default function BuyerProfilePage() {
               email: parsed.email || '',
               username: parsed.username || '',
               phone: parsed.phone || '',
+              city: parsed.city || parsed.service_city || 'Lagos',
+              country: parsed.country || 'Nigeria',
               address: parsed.address || '',
               post_code: parsed.post_code || '',
               about: parsed.about || '',
@@ -39,6 +61,8 @@ export default function BuyerProfilePage() {
       email: '',
       username: '',
       phone: '',
+      city: 'Lagos',
+      country: 'Nigeria',
       address: '',
       post_code: '',
       about: '',
@@ -66,6 +90,8 @@ export default function BuyerProfilePage() {
               email: json.user.email || '',
               username: json.user.username || '',
               phone: json.user.phone || '',
+              city: json.user.city || json.user.service_city || 'Lagos',
+              country: json.user.country || 'Nigeria',
               address: json.user.address || '',
               post_code: json.user.post_code || '',
               about: json.user.about || '',
@@ -107,13 +133,13 @@ export default function BuyerProfilePage() {
           body: JSON.stringify({ ...profileData, image: data.url }),
         });
         const prof = {
-          name: profileData.name,
+          ...profileData,
           image: data.url,
-          email: profileData.email,
         };
         localStorage.setItem('qixer_profile_buyer', JSON.stringify(prof));
         localStorage.setItem('qixer_user_profile', JSON.stringify(prof));
         window.dispatchEvent(new CustomEvent('qixer-profile-updated', { detail: prof }));
+        window.dispatchEvent(new CustomEvent('qixer-profile-changed', { detail: prof }));
         window.dispatchEvent(new Event('storage'));
       } catch (e) {}
       setMessage({ type: 'success', text: 'Photo uploaded and profile updated successfully!' });
@@ -138,13 +164,12 @@ export default function BuyerProfilePage() {
       if (!res.ok) throw new Error(json.message || 'Failed to update profile');
       if (typeof window !== 'undefined') {
         const prof = {
-          name: profileData.name,
-          image: profileData.image,
-          email: profileData.email,
+          ...profileData,
         };
         localStorage.setItem('qixer_profile_buyer', JSON.stringify(prof));
         localStorage.setItem('qixer_user_profile', JSON.stringify(prof));
         window.dispatchEvent(new CustomEvent('qixer-profile-updated', { detail: prof }));
+        window.dispatchEvent(new CustomEvent('qixer-profile-changed', { detail: prof }));
         window.dispatchEvent(new Event('storage'));
       }
       setMessage({ type: 'success', text: 'Your profile has been updated successfully!' });
@@ -188,29 +213,31 @@ export default function BuyerProfilePage() {
           onClick={() => { setActiveTab('profile'); setMessage({ type: '', text: '' }); }}
           className={`btn py-2 px-4 fw-semibold border-0 rounded-0 ${
             activeTab === 'profile'
-              ? 'border-bottom border-3 border-success text-success'
+              ? 'border-bottom border-3 text-success'
               : 'text-muted'
           }`}
           style={{
-            borderColor: activeTab === 'profile' ? 'var(--main-color-one) !important' : 'transparent',
+            borderColor: activeTab === 'profile' ? 'var(--main-color-one, #1DBF73)' : 'transparent',
+            color: activeTab === 'profile' ? 'var(--main-color-one, #1DBF73)' : '#64748b',
             backgroundColor: 'transparent',
           }}
         >
-          <i className="las la-user-circle me-1"></i> My Profile
+          <i className="las la-user-circle me-1"></i> Edit Profile
         </button>
         <button
           onClick={() => { setActiveTab('password'); setMessage({ type: '', text: '' }); }}
           className={`btn py-2 px-4 fw-semibold border-0 rounded-0 ${
             activeTab === 'password'
-              ? 'border-bottom border-3 border-success text-success'
+              ? 'border-bottom border-3 text-success'
               : 'text-muted'
           }`}
           style={{
-            borderColor: activeTab === 'password' ? 'var(--main-color-one) !important' : 'transparent',
+            borderColor: activeTab === 'password' ? 'var(--main-color-one, #1DBF73)' : 'transparent',
+            color: activeTab === 'password' ? 'var(--main-color-one, #1DBF73)' : '#64748b',
             backgroundColor: 'transparent',
           }}
         >
-          <i className="las la-shield-alt me-1"></i> Security & Password
+          <i className="las la-shield-alt me-1"></i> Change Password
         </button>
       </div>
 
@@ -223,40 +250,78 @@ export default function BuyerProfilePage() {
 
       {loading ? (
         <div className="text-center py-5">
-          <div className="spinner-border text-success" role="status">
+          <div className="spinner-border text-success" role="status" style={{ color: 'var(--main-color-one, #1DBF73)' }}>
             <span className="visually-hidden">Loading profile...</span>
           </div>
         </div>
       ) : activeTab === 'profile' ? (
-        <div className="card border-0 shadow-sm rounded-3 bg-white">
+        <div className="card border-0 shadow-sm rounded-4 bg-white" style={{ maxWidth: '820px' }}>
           <div className="card-header bg-white border-bottom py-3 px-4">
-            <h5 className="fw-bold mb-0" style={{ fontSize: '16px' }}>
-              Personal Details & Shipping Address
+            <h5 className="fw-bold mb-0 text-dark" style={{ fontSize: '16.5px' }}>
+              Personal Details & Service Delivery Location
             </h5>
           </div>
+
           <div className="card-body p-4">
-            {/* Avatar Photo Section */}
+            {/* Flutter Avatar Photo Section (105x105 container, 85x85 image with camera badge) */}
             <div className="d-flex align-items-center gap-4 mb-4 pb-4 border-bottom flex-wrap">
-              <div style={{ position: 'relative' }}>
-                <img
-                  src={profileData.image || '/assets/frontend/img/static/user_profile.png'}
-                  alt={profileData.name || 'Buyer'}
+              <div style={{ position: 'relative', width: 95, height: 95 }}>
+                <div
                   style={{
-                    width: 88,
-                    height: 88,
-                    borderRadius: '50%',
-                    objectFit: 'cover',
-                    border: '3px solid #0284c7',
-                    background: '#f8fafc',
+                    width: 85,
+                    height: 85,
+                    borderRadius: '10px',
+                    border: '2px solid #EAECF0',
+                    overflow: 'hidden',
+                    backgroundColor: '#F8F9FA',
                   }}
-                />
+                >
+                  <img
+                    src={profileData.image || '/assets/frontend/img/static/user_profile.png'}
+                    alt={profileData.name || 'Buyer'}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
+                </div>
+
+                {/* Circular camera icon badge (Flutter Positioned bottom: 4, right: 4) */}
+                <label
+                  style={{
+                    position: 'absolute',
+                    bottom: 4,
+                    right: 4,
+                    width: 32,
+                    height: 32,
+                    borderRadius: '50%',
+                    backgroundColor: 'var(--main-color-one, #1DBF73)',
+                    color: '#FFFFFF',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    boxShadow: '0 2px 6px rgba(0,0,0,0.18)',
+                    margin: 0,
+                  }}
+                >
+                  <i className="las la-camera" style={{ fontSize: '17px' }}></i>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    disabled={uploadingImage}
+                    style={{ display: 'none' }}
+                  />
+                </label>
+
                 {uploadingImage && (
                   <div
                     style={{
                       position: 'absolute',
-                      inset: 0,
+                      top: 0,
+                      left: 0,
+                      width: 85,
+                      height: 85,
+                      borderRadius: '10px',
                       background: 'rgba(0,0,0,0.5)',
-                      borderRadius: '50%',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -266,96 +331,184 @@ export default function BuyerProfilePage() {
                   </div>
                 )}
               </div>
+
               <div>
-                <h6 className="fw-bold mb-1 text-dark">Profile Photo</h6>
-                <p className="text-muted small mb-2">Upload a profile picture (JPEG, PNG, WEBP)</p>
-                <label className="btn btn-sm btn-outline-primary fw-semibold shadow-sm" style={{ cursor: 'pointer' }}>
-                  <i className="las la-camera me-1"></i> {uploadingImage ? 'Uploading...' : 'Change Photo'}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                    disabled={uploadingImage}
-                    style={{ display: 'none' }}
-                  />
-                </label>
+                <h6 className="fw-bold mb-1 text-dark" style={{ fontSize: '16px' }}>
+                  {profileData.name || 'Account Holder'}
+                </h6>
+                <p className="text-muted small mb-1" style={{ fontSize: '13px' }}>
+                  {profileData.email || 'buyer@qixer.com'}
+                </p>
+                <span className="badge px-2.5 py-1" style={{ backgroundColor: '#ECFDF3', color: '#027A48', fontSize: '11px', fontWeight: 600 }}>
+                  Active Buyer Account
+                </span>
               </div>
             </div>
 
+            {/* Profile Edit Form with Flutter Input Prefix Icons */}
             <form onSubmit={handleProfileSubmit}>
-              <div className="row g-4">
+              <div className="row g-3">
+                {/* Full Name */}
                 <div className="col-md-6">
-                  <label className="form-label fw-semibold text-muted small">Full Name *</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    value={profileData.name}
-                    onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
-                    required
-                  />
+                  <label className="form-label fw-semibold text-dark small mb-1">Full Name *</label>
+                  <div className="input-group">
+                    <span className="input-group-text bg-white border-end-0 text-muted">
+                      <i className="las la-user fs-5"></i>
+                    </span>
+                    <input
+                      type="text"
+                      className="form-control border-start-0 ps-0"
+                      value={profileData.name}
+                      onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
+                      required
+                    />
+                  </div>
                 </div>
+
+                {/* Email Address */}
                 <div className="col-md-6">
-                  <label className="form-label fw-semibold text-muted small">Username</label>
-                  <input
-                    type="text"
-                    className="form-control bg-light"
-                    value={profileData.username}
-                    readOnly
-                    disabled
-                  />
+                  <label className="form-label fw-semibold text-dark small mb-1">Email Address</label>
+                  <div className="input-group">
+                    <span className="input-group-text bg-light border-end-0 text-muted">
+                      <i className="las la-envelope fs-5"></i>
+                    </span>
+                    <input
+                      type="email"
+                      className="form-control bg-light border-start-0 ps-0"
+                      value={profileData.email}
+                      readOnly
+                      disabled
+                    />
+                  </div>
                 </div>
+
+                {/* Phone Number */}
                 <div className="col-md-6">
-                  <label className="form-label fw-semibold text-muted small">Email Address</label>
-                  <input
-                    type="email"
-                    className="form-control bg-light"
-                    value={profileData.email}
-                    readOnly
-                    disabled
-                  />
+                  <label className="form-label fw-semibold text-dark small mb-1">Contact Phone Number *</label>
+                  <div className="input-group">
+                    <span className="input-group-text bg-white border-end-0 text-muted">
+                      <i className="las la-phone fs-5"></i>
+                    </span>
+                    <input
+                      type="tel"
+                      className="form-control border-start-0 ps-0"
+                      value={profileData.phone}
+                      onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })}
+                      placeholder="e.g. +234 803 123 4567"
+                    />
+                  </div>
                 </div>
+
+                {/* Post Code */}
                 <div className="col-md-6">
-                  <label className="form-label fw-semibold text-muted small">Contact Phone Number</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    value={profileData.phone}
-                    onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })}
-                    placeholder="Enter phone number"
-                  />
+                  <label className="form-label fw-semibold text-dark small mb-1">Postal / Zip Code</label>
+                  <div className="input-group">
+                    <span className="input-group-text bg-white border-end-0 text-muted">
+                      <i className="las la-map-pin fs-5"></i>
+                    </span>
+                    <input
+                      type="text"
+                      className="form-control border-start-0 ps-0"
+                      value={profileData.post_code}
+                      onChange={(e) => setProfileData({ ...profileData, post_code: e.target.value })}
+                      placeholder="e.g. 100001"
+                    />
+                  </div>
                 </div>
-                <div className="col-md-8">
-                  <label className="form-label fw-semibold text-muted small">Delivery Address</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    value={profileData.address}
-                    onChange={(e) => setProfileData({ ...profileData, address: e.target.value })}
-                    placeholder="Enter home/office address for on-site services"
-                  />
+
+                {/* Country */}
+                <div className="col-md-6">
+                  <label className="form-label fw-semibold text-dark small mb-1">Country</label>
+                  <div className="input-group">
+                    <span className="input-group-text bg-white border-end-0 text-muted">
+                      <i className="las la-globe fs-5"></i>
+                    </span>
+                    <select
+                      className="form-select border-start-0 ps-0"
+                      value={profileData.country}
+                      onChange={(e) => setProfileData({ ...profileData, country: e.target.value })}
+                    >
+                      <option value="Nigeria">Nigeria</option>
+                    </select>
+                  </div>
                 </div>
-                <div className="col-md-4">
-                  <label className="form-label fw-semibold text-muted small">Postal / Zip Code</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    value={profileData.post_code}
-                    onChange={(e) => setProfileData({ ...profileData, post_code: e.target.value })}
-                    placeholder="Postal code"
-                  />
+
+                {/* City / State */}
+                <div className="col-md-6">
+                  <label className="form-label fw-semibold text-dark small mb-1">State / City</label>
+                  <div className="input-group">
+                    <span className="input-group-text bg-white border-end-0 text-muted">
+                      <i className="las la-map-marker fs-5"></i>
+                    </span>
+                    <select
+                      className="form-select border-start-0 ps-0"
+                      value={profileData.city}
+                      onChange={(e) => setProfileData({ ...profileData, city: e.target.value })}
+                    >
+                      {NIGERIAN_CITIES.map((city) => (
+                        <option key={city} value={city}>
+                          {city}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
+
+                {/* Address */}
                 <div className="col-12">
+                  <label className="form-label fw-semibold text-dark small mb-1">Delivery Address</label>
+                  <div className="input-group">
+                    <span className="input-group-text bg-white border-end-0 text-muted align-items-start pt-2.5">
+                      <i className="las la-home fs-5"></i>
+                    </span>
+                    <textarea
+                      rows={2}
+                      className="form-control border-start-0 ps-0"
+                      value={profileData.address}
+                      onChange={(e) => setProfileData({ ...profileData, address: e.target.value })}
+                      placeholder="e.g. Flat 4, Block B, Admiralty Way, Lekki Phase 1"
+                    />
+                  </div>
+                </div>
+
+                {/* About You */}
+                <div className="col-12">
+                  <label className="form-label fw-semibold text-dark small mb-1">About Me</label>
+                  <div className="input-group">
+                    <span className="input-group-text bg-white border-end-0 text-muted align-items-start pt-2.5">
+                      <i className="las la-info-circle fs-5"></i>
+                    </span>
+                    <textarea
+                      rows={3}
+                      className="form-control border-start-0 ps-0"
+                      value={profileData.about}
+                      onChange={(e) => setProfileData({ ...profileData, about: e.target.value })}
+                      placeholder="Brief notes about your home or service preferences..."
+                    />
+                  </div>
+                </div>
+
+                <div className="col-12 pt-2">
                   <button
                     type="submit"
                     disabled={profileSaving}
-                    className="btn btn-success px-4 py-2"
+                    className="btn text-white px-4 py-2.5 fw-semibold d-inline-flex align-items-center gap-2"
                     style={{
-                      backgroundColor: 'var(--main-color-one)',
-                      borderColor: 'var(--main-color-one)',
-                      fontWeight: 600,
+                      backgroundColor: 'var(--main-color-one, #1DBF73)',
+                      borderColor: 'var(--main-color-one, #1DBF73)',
+                      borderRadius: '8px',
                     }}
                   >
-                    {profileSaving ? 'Saving Changes...' : 'Save Profile Changes'}
+                    {profileSaving ? (
+                      <>
+                        <span className="spinner-border spinner-border-sm" role="status"></span>
+                        Saving Changes...
+                      </>
+                    ) : (
+                      <>
+                        <i className="las la-save fs-5"></i> Save Profile Changes
+                      </>
+                    )}
                   </button>
                 </div>
               </div>
@@ -363,60 +516,87 @@ export default function BuyerProfilePage() {
           </div>
         </div>
       ) : (
-        <div className="card border-0 shadow-sm rounded-3 bg-white" style={{ maxWidth: '600px' }}>
+        <div className="card border-0 shadow-sm rounded-4 bg-white" style={{ maxWidth: '580px' }}>
           <div className="card-header bg-white border-bottom py-3 px-4">
-            <h5 className="fw-bold mb-0" style={{ fontSize: '16px' }}>
+            <h5 className="fw-bold mb-0 text-dark" style={{ fontSize: '16.5px' }}>
               Change Account Password
             </h5>
           </div>
           <div className="card-body p-4">
             <form onSubmit={handlePasswordSubmit}>
               <div className="mb-3">
-                <label className="form-label fw-semibold text-muted small">Current Password *</label>
-                <input
-                  type="password"
-                  className="form-control"
-                  value={passwordData.current_password}
-                  onChange={(e) => setPasswordData({ ...passwordData, current_password: e.target.value })}
-                  placeholder="Enter current password"
-                  required
-                />
+                <label className="form-label fw-semibold text-dark small mb-1">Current Password *</label>
+                <div className="input-group">
+                  <span className="input-group-text bg-white border-end-0 text-muted">
+                    <i className="las la-lock fs-5"></i>
+                  </span>
+                  <input
+                    type="password"
+                    className="form-control border-start-0 ps-0"
+                    value={passwordData.current_password}
+                    onChange={(e) => setPasswordData({ ...passwordData, current_password: e.target.value })}
+                    placeholder="Enter current password"
+                    required
+                  />
+                </div>
               </div>
+
               <div className="mb-3">
-                <label className="form-label fw-semibold text-muted small">New Password *</label>
-                <input
-                  type="password"
-                  className="form-control"
-                  value={passwordData.new_password}
-                  onChange={(e) => setPasswordData({ ...passwordData, new_password: e.target.value })}
-                  placeholder="At least 6 characters"
-                  required
-                  minLength={6}
-                />
+                <label className="form-label fw-semibold text-dark small mb-1">New Password *</label>
+                <div className="input-group">
+                  <span className="input-group-text bg-white border-end-0 text-muted">
+                    <i className="las la-key fs-5"></i>
+                  </span>
+                  <input
+                    type="password"
+                    className="form-control border-start-0 ps-0"
+                    value={passwordData.new_password}
+                    onChange={(e) => setPasswordData({ ...passwordData, new_password: e.target.value })}
+                    placeholder="At least 6 characters"
+                    required
+                    minLength={6}
+                  />
+                </div>
               </div>
+
               <div className="mb-4">
-                <label className="form-label fw-semibold text-muted small">Confirm New Password *</label>
-                <input
-                  type="password"
-                  className="form-control"
-                  value={passwordData.confirm_password}
-                  onChange={(e) => setPasswordData({ ...passwordData, confirm_password: e.target.value })}
-                  placeholder="Confirm new password"
-                  required
-                  minLength={6}
-                />
+                <label className="form-label fw-semibold text-dark small mb-1">Confirm New Password *</label>
+                <div className="input-group">
+                  <span className="input-group-text bg-white border-end-0 text-muted">
+                    <i className="las la-shield-alt fs-5"></i>
+                  </span>
+                  <input
+                    type="password"
+                    className="form-control border-start-0 ps-0"
+                    value={passwordData.confirm_password}
+                    onChange={(e) => setPasswordData({ ...passwordData, confirm_password: e.target.value })}
+                    placeholder="Confirm new password"
+                    required
+                    minLength={6}
+                  />
+                </div>
               </div>
+
               <button
                 type="submit"
                 disabled={passwordSaving}
-                className="btn btn-success px-4 py-2"
+                className="btn text-white px-4 py-2.5 fw-semibold d-inline-flex align-items-center gap-2"
                 style={{
-                  backgroundColor: 'var(--main-color-one)',
-                  borderColor: 'var(--main-color-one)',
-                  fontWeight: 600,
+                  backgroundColor: 'var(--main-color-one, #1DBF73)',
+                  borderColor: 'var(--main-color-one, #1DBF73)',
+                  borderRadius: '8px',
                 }}
               >
-                {passwordSaving ? 'Updating Password...' : 'Change Password'}
+                {passwordSaving ? (
+                  <>
+                    <span className="spinner-border spinner-border-sm" role="status"></span>
+                    Updating Password...
+                  </>
+                ) : (
+                  <>
+                    <i className="las la-check-circle fs-5"></i> Change Password
+                  </>
+                )}
               </button>
             </form>
           </div>

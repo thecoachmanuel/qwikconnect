@@ -75,11 +75,10 @@ export default function MobileMenuScreen({
           });
         }
       })
-      .catch(() => {});
+      .catch(() => { });
   };
 
-  useEffect(() => {
-    // 1. Fetch live user profile
+  const loadProfile = () => {
     fetch('/api/user/profile')
       .then((res) => res.json())
       .then((data) => {
@@ -93,7 +92,12 @@ export default function MobileMenuScreen({
           });
         }
       })
-      .catch(() => {});
+      .catch(() => { });
+  };
+
+  useEffect(() => {
+    // 1. Fetch live user profile
+    loadProfile();
 
     // 2. Fetch order counts for 2x2 grid
     loadCounts();
@@ -102,9 +106,15 @@ export default function MobileMenuScreen({
       loadCounts();
     };
 
+    const handleProfileChanged = () => {
+      loadProfile();
+    };
+
     window.addEventListener('qixer-orders-changed', handleOrdersChanged);
+    window.addEventListener('qixer-profile-changed', handleProfileChanged);
     return () => {
       window.removeEventListener('qixer-orders-changed', handleOrdersChanged);
+      window.removeEventListener('qixer-profile-changed', handleProfileChanged);
     };
   }, []);
 

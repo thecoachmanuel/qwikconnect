@@ -365,6 +365,7 @@ export default function DashboardLayout({
     { label: 'My Services', href: '/seller/services', icon: 'las la-cogs' },
     { label: 'Add New Service', href: '/seller/services/create', icon: 'las la-plus-circle' },
     { label: 'Service Orders', href: '/seller/orders', icon: 'las la-list-alt' },
+    { label: 'Job Board & Bids', href: '/seller/jobs', icon: 'las la-briefcase' },
     { label: 'Todo Checklist', href: '/seller/to-do-list', icon: 'las la-tasks' },
     { label: 'Schedules & Slots', href: '/seller/schedules', icon: 'las la-calendar-check' },
     { label: 'Subscription Plan', href: '/seller/subscriptions', icon: 'las la-crown' },

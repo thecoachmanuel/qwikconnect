@@ -23,12 +23,19 @@ export default function MobileBookingModal({
   const [quantity, setQuantity] = useState(1);
   const [selectedExtras, setSelectedExtras] = useState<Set<number>>(new Set());
 
-  // Step 2: Schedule
+  // Step 2: Schedule & Dynamic Available Slots
   const [selectedDate, setSelectedDate] = useState(() => {
     const today = new Date();
     return today.toISOString().split('T')[0];
   });
-  const [selectedSlot, setSelectedSlot] = useState('10:00 AM');
+  const [selectedSlot, setSelectedSlot] = useState('09:00 AM - 11:00 AM');
+  const [availableSlots, setAvailableSlots] = useState<string[]>([
+    '09:00 AM - 11:00 AM',
+    '11:00 AM - 01:00 PM',
+    '02:00 PM - 04:00 PM',
+    '04:00 PM - 06:00 PM',
+  ]);
+  const [slotsLoading, setSlotsLoading] = useState(false);
 
   // Step 3: Contact & Address
   const [name, setName] = useState('');
@@ -75,7 +82,7 @@ export default function MobileBookingModal({
           setWalletBalance(data.balance);
         }
       })
-      .catch(() => {});
+      .catch(() => { });
 
     // Fetch active gateways & escrow settings dynamically from admin DB
     fetch('/api/payments/active-gateways')
@@ -93,16 +100,57 @@ export default function MobileBookingModal({
       .finally(() => setGatewaysLoading(false));
   }, [session]);
 
+  // Dynamically load preferred available slots based on Seller schedule in MongoDB
+  useEffect(() => {
+    const sellerId = Number(service?.seller?.id || service?.seller_id || 2);
+    if (!selectedDate || !sellerId) return;
+
+    setSlotsLoading(true);
+    fetch(`/api/schedules/available?seller_id=${sellerId}&date=${selectedDate}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.status === 'success' && Array.isArray(data.schedules) && data.schedules.length > 0) {
+          const slots = data.schedules.map((s: any) => s.schedule);
+          setAvailableSlots(slots);
+          if (!slots.includes(selectedSlot)) {
+            setSelectedSlot(slots[0]);
+          }
+        } else {
+          // Standard business slots fallback
+          const defaultSlots = [
+            '09:00 AM - 11:00 AM',
+            '11:00 AM - 01:00 PM',
+            '02:00 PM - 04:00 PM',
+            '04:00 PM - 06:00 PM',
+          ];
+          setAvailableSlots(defaultSlots);
+          if (!defaultSlots.includes(selectedSlot)) {
+            setSelectedSlot(defaultSlots[0]);
+          }
+        }
+      })
+      .catch(() => {
+        const defaultSlots = [
+          '09:00 AM - 11:00 AM',
+          '11:00 AM - 01:00 PM',
+          '02:00 PM - 04:00 PM',
+          '04:00 PM - 06:00 PM',
+        ];
+        setAvailableSlots(defaultSlots);
+      })
+      .finally(() => setSlotsLoading(false));
+  }, [service, selectedDate]);
+
   const basePrice = Number(service?.price || 0);
   const packageTotal = basePrice * quantity;
 
   const extraServicesList = Array.isArray(service?.extra_services)
     ? service.extra_services
     : [
-        { id: 101, title: 'Deep Sanitization & Disinfection', price: 5000 },
-        { id: 102, title: 'Extra Heavy Duty Materials', price: 8000 },
-        { id: 103, title: 'Post-service Guarantee Certificate', price: 3000 },
-      ];
+      { id: 101, title: 'Deep Sanitization & Disinfection', price: 5000 },
+      { id: 102, title: 'Extra Heavy Duty Materials', price: 8000 },
+      { id: 103, title: 'Post-service Guarantee Certificate', price: 3000 },
+    ];
 
   const extrasTotal = extraServicesList.reduce((acc: number, extra: any, idx: number) => {
     const extraId = extra.id || idx;
@@ -266,25 +314,16 @@ export default function MobileBookingModal({
     }
   };
 
-  // Generate next 7 days dates
-  const next7Days = Array.from({ length: 7 }).map((_, i) => {
+  // Generate next 14 days dates (Flutter DatePicker timeline parity)
+  const next14Days = Array.from({ length: 14 }).map((_, i) => {
     const d = new Date();
     d.setDate(d.getDate() + i);
     const iso = d.toISOString().split('T')[0];
-    const dayName = i === 0 ? 'Today' : i === 1 ? 'Tomorrow' : d.toLocaleDateString('en-US', { weekday: 'short' });
-    const dayNum = d.getDate();
-    const month = d.toLocaleDateString('en-US', { month: 'short' });
-    return { iso, dayName, label: `${dayNum} ${month}` };
+    const month = d.toLocaleDateString('en-US', { month: 'short' }).toUpperCase();
+    const dayNum = d.getDate().toString().padStart(2, '0');
+    const weekday = i === 0 ? 'Today' : d.toLocaleDateString('en-US', { weekday: 'short' });
+    return { iso, month, dayNum, weekday };
   });
-
-  const timeSlots = [
-    '08:00 AM',
-    '10:00 AM',
-    '12:00 PM',
-    '02:30 PM',
-    '04:30 PM',
-    '06:00 PM',
-  ];
 
   return (
     <div
@@ -520,68 +559,130 @@ export default function MobileBookingModal({
           </div>
         )}
 
-        {/* STEP 2: Schedule (Date & Time) */}
+        {/* STEP 2: Schedule (Date & Time - Flutter service_schedule_page.dart Parity) */}
         {currentStep === 2 && (
-          <div>
-            <h6 className="fw-bold text-dark mb-2" style={{ fontSize: '15px' }}>
+          <div className="w-100" style={{ maxWidth: '100%', overflowX: 'hidden' }}>
+            <h6 className="fw-bold text-dark mb-2.5" style={{ fontSize: '15px' }}>
               Choose Appointment Date
             </h6>
+
+            {/* Flutter DatePicker Timeline (Generous gap, 86px height, month / day / weekday) */}
             <div
-              className="d-flex gap-2.5 overflow-x-auto pb-3 mb-4"
-              style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}
+              className="d-flex gap-3 overflow-x-auto pb-3 mb-4 w-100"
+              style={{
+                scrollbarWidth: 'none',
+                WebkitOverflowScrolling: 'touch',
+                paddingTop: '4px',
+              }}
             >
-              {next7Days.map((d) => {
+              {next14Days.map((d) => {
                 const isSelected = selectedDate === d.iso;
                 return (
-                  <button
+                  <div
                     key={d.iso}
-                    type="button"
                     onClick={() => setSelectedDate(d.iso)}
-                    className="btn p-2.5 text-center flex-shrink-0"
+                    className="flex-shrink-0 d-flex flex-column align-items-center justify-content-center text-center cursor-pointer"
                     style={{
-                      width: '74px',
+                      width: '66px',
+                      height: '86px',
                       borderRadius: '10px',
                       border: `1.5px solid ${isSelected ? 'var(--main-color-one, #1DBF73)' : '#EAECF0'}`,
                       backgroundColor: isSelected ? 'var(--main-color-one, #1DBF73)' : '#FFFFFF',
                       color: isSelected ? '#FFFFFF' : '#475467',
-                      transition: 'all 0.15s ease',
+                      boxShadow: isSelected ? '0 4px 12px rgba(29, 191, 115, 0.25)' : 'none',
+                      transition: 'all 0.18s ease',
+                      cursor: 'pointer',
                     }}
                   >
-                    <span className="d-block text-uppercase small" style={{ fontSize: '11px', fontWeight: 600 }}>
-                      {d.dayName}
+                    <span
+                      style={{
+                        fontSize: '11px',
+                        fontWeight: 600,
+                        letterSpacing: '0.5px',
+                        color: isSelected ? 'rgba(255, 255, 255, 0.9)' : '#98A2B3',
+                        textTransform: 'uppercase',
+                        lineHeight: 1,
+                      }}
+                    >
+                      {d.month}
                     </span>
-                    <strong className="d-block mt-1" style={{ fontSize: '14px' }}>
-                      {d.label}
+                    <strong
+                      className="my-1"
+                      style={{
+                        fontSize: '20px',
+                        fontWeight: 700,
+                        lineHeight: 1,
+                        color: isSelected ? '#FFFFFF' : '#101828',
+                      }}
+                    >
+                      {d.dayNum}
                     </strong>
-                  </button>
+                    <span
+                      style={{
+                        fontSize: '11.5px',
+                        fontWeight: 500,
+                        lineHeight: 1,
+                        color: isSelected ? '#FFFFFF' : '#667085',
+                      }}
+                    >
+                      {d.weekday}
+                    </span>
+                  </div>
                 );
               })}
             </div>
 
-            <h6 className="fw-bold text-dark mb-2.5" style={{ fontSize: '15px' }}>
-              Choose Preferred Time Slot
-            </h6>
-            <div className="row g-2 mb-4">
-              {timeSlots.map((slot) => {
+            {/* Available Time Slots Header */}
+            <div className="d-flex align-items-center justify-content-between mb-3">
+              <h6 className="fw-bold text-dark mb-0" style={{ fontSize: '15px' }}>
+                Available Time Slots
+              </h6>
+              {slotsLoading && (
+                <span className="spinner-border spinner-border-sm text-success" role="status"></span>
+              )}
+            </div>
+
+            {/* 2-Column Flutter Grid with 16px Gutters & Check Badge */}
+            <div className="row g-3 mb-4 w-100 m-0">
+              {availableSlots.map((slot) => {
                 const isSelected = selectedSlot === slot;
                 return (
-                  <div key={slot} className="col-6">
-                    <button
-                      type="button"
+                  <div key={slot} className="col-6 p-1">
+                    <div
                       onClick={() => setSelectedSlot(slot)}
-                      className="btn w-100 py-2.5 d-flex align-items-center justify-content-center gap-2"
+                      className="position-relative d-flex align-items-center justify-content-center text-center p-2.5 cursor-pointer bg-white"
                       style={{
+                        height: '58px',
                         borderRadius: '8px',
                         border: `1.5px solid ${isSelected ? 'var(--main-color-one, #1DBF73)' : '#EAECF0'}`,
-                        backgroundColor: isSelected ? 'rgba(29, 191, 115, 0.08)' : '#FFFFFF',
+                        backgroundColor: isSelected ? 'rgba(29, 191, 115, 0.05)' : '#FFFFFF',
                         color: isSelected ? 'var(--main-color-one, #1DBF73)' : '#475467',
                         fontWeight: isSelected ? 700 : 500,
-                        fontSize: '13.5px',
+                        fontSize: '12.5px',
+                        transition: 'all 0.15s ease',
+                        cursor: 'pointer',
                       }}
                     >
-                      <i className="las la-clock"></i>
-                      {slot}
-                    </button>
+                      {isSelected && (
+                        <div
+                          className="position-absolute d-flex align-items-center justify-content-center text-white"
+                          style={{
+                            top: '-7px',
+                            right: '-7px',
+                            width: '18px',
+                            height: '18px',
+                            borderRadius: '50%',
+                            backgroundColor: 'var(--main-color-one, #1DBF73)',
+                            fontSize: '11px',
+                            fontWeight: 900,
+                            boxShadow: '0 2px 4px rgba(0,0,0,0.15)',
+                          }}
+                        >
+                          ✓
+                        </div>
+                      )}
+                      <span className="text-truncate px-1">{slot}</span>
+                    </div>
                   </div>
                 );
               })}
@@ -589,106 +690,108 @@ export default function MobileBookingModal({
 
             <div className="p-3 rounded-3 border" style={{ backgroundColor: '#F8FAFC' }}>
               <div className="d-flex align-items-center gap-2 text-muted small">
-                <i className="las la-info-circle text-success fs-5"></i>
+                <i className="las la-clock text-success fs-5"></i>
                 <span>Artisan arrives promptly within your selected window. Free reschedule up to 2 hours prior.</span>
               </div>
             </div>
           </div>
         )}
 
-        {/* STEP 3: Address & Contact */}
+        {/* STEP 3: Address & Contact (Flutter delivery_address_page.dart Parity) */}
         {currentStep === 3 && (
-          <div className="d-flex flex-column gap-3">
-            <div>
+          <div className="d-flex flex-column gap-3 w-100" style={{ maxWidth: '100%', overflowX: 'hidden' }}>
+            <div className="w-100">
               <label className="form-label small fw-bold text-dark mb-1">Full Name *</label>
               <input
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="e.g. Babatunde Fashola"
-                className="form-control py-2.5"
-                style={{ borderRadius: '8px', fontSize: '14px' }}
+                className="form-control py-2.5 w-100"
+                style={{ borderRadius: '8px', fontSize: '14px', maxWidth: '100%', boxSizing: 'border-box' }}
                 required
               />
             </div>
 
-            <div>
+            <div className="w-100">
               <label className="form-label small fw-bold text-dark mb-1">Email Address *</label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="e.g. yourname@gmail.com"
-                className="form-control py-2.5"
-                style={{ borderRadius: '8px', fontSize: '14px' }}
+                className="form-control py-2.5 w-100"
+                style={{ borderRadius: '8px', fontSize: '14px', maxWidth: '100%', boxSizing: 'border-box' }}
                 required
               />
             </div>
 
-            <div>
+            <div className="w-100">
               <label className="form-label small fw-bold text-dark mb-1">Phone Number *</label>
               <input
                 type="tel"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="e.g. +234 801 234 5678"
-                className="form-control py-2.5"
-                style={{ borderRadius: '8px', fontSize: '14px' }}
+                className="form-control py-2.5 w-100"
+                style={{ borderRadius: '8px', fontSize: '14px', maxWidth: '100%', boxSizing: 'border-box' }}
                 required
               />
             </div>
 
-            <div>
-              <label className="form-label small fw-bold text-dark mb-1">City / State *</label>
-              <select
-                value={city}
-                onChange={(e) => setCity(e.target.value)}
-                className="form-select py-2.5"
-                style={{ borderRadius: '8px', fontSize: '14px' }}
-              >
-                <option value="Lagos">Lagos (Ikeja, Lekki, Victoria Island, Yaba)</option>
-                <option value="Abuja">Abuja (Maitama, Wuse, Garki, Jabi)</option>
-                <option value="Port Harcourt">Port Harcourt, Rivers</option>
-                <option value="Ibadan">Ibadan, Oyo</option>
-                <option value="Kano">Kano</option>
-                <option value="Enugu">Enugu</option>
-              </select>
+            <div className="row g-2 w-100 m-0">
+              <div className="col-7 p-0 pe-1">
+                <label className="form-label small fw-bold text-dark mb-1">City / State *</label>
+                <select
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                  className="form-select py-2.5 w-100"
+                  style={{ borderRadius: '8px', fontSize: '13.5px', maxWidth: '100%', boxSizing: 'border-box' }}
+                >
+                  <option value="Lagos">Lagos</option>
+                  <option value="Abuja">Abuja</option>
+                  <option value="Port Harcourt">Port Harcourt</option>
+                  <option value="Ibadan">Ibadan</option>
+                  <option value="Kano">Kano</option>
+                  <option value="Enugu">Enugu</option>
+                </select>
+              </div>
+
+              <div className="col-5 p-0 ps-1">
+                <label className="form-label small fw-bold text-dark mb-1">Postcode</label>
+                <input
+                  type="text"
+                  value={postCode}
+                  onChange={(e) => setPostCode(e.target.value)}
+                  placeholder="101233"
+                  className="form-control py-2.5 w-100"
+                  style={{ borderRadius: '8px', fontSize: '13.5px', maxWidth: '100%', boxSizing: 'border-box' }}
+                />
+              </div>
             </div>
 
-            <div>
-              <label className="form-label small fw-bold text-dark mb-1">Postal Code (Optional)</label>
-              <input
-                type="text"
-                value={postCode}
-                onChange={(e) => setPostCode(e.target.value)}
-                placeholder="e.g. 101233"
-                className="form-control py-2.5"
-                style={{ borderRadius: '8px', fontSize: '14px' }}
-              />
-            </div>
-
-            <div>
+            <div className="w-100">
               <label className="form-label small fw-bold text-dark mb-1">Street Address *</label>
               <input
                 type="text"
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
                 placeholder="e.g. Flat 4B, Admiralty Way, Lekki Phase 1"
-                className="form-control py-2.5"
-                style={{ borderRadius: '8px', fontSize: '14px' }}
+                className="form-control py-2.5 w-100"
+                style={{ borderRadius: '8px', fontSize: '14px', maxWidth: '100%', boxSizing: 'border-box' }}
                 required
               />
             </div>
 
-            <div>
+            <div className="w-100">
               <label className="form-label small fw-bold text-dark mb-1">Special Order Note (Optional)</label>
               <textarea
                 value={orderNote}
                 onChange={(e) => setOrderNote(e.target.value)}
                 placeholder="Any gate instructions or specific tool requirements..."
                 rows={2}
-                className="form-control"
-                style={{ borderRadius: '8px', fontSize: '13.5px' }}
+                className="form-control w-100"
+                style={{ borderRadius: '8px', fontSize: '13.5px', maxWidth: '100%', boxSizing: 'border-box' }}
               />
             </div>
           </div>
@@ -998,18 +1101,20 @@ export default function MobileBookingModal({
       {/* 4. Bottom Sticky Action Button (Steps 1-4) */}
       {currentStep < 5 && (
         <div
-          className="position-fixed bottom-0 start-0 end-0 bg-white border-top px-4 d-flex align-items-center justify-content-between shadow"
+          className="position-fixed bottom-0 start-0 end-0 bg-white border-top px-3 d-flex align-items-center justify-content-between shadow gap-2"
           style={{
             zIndex: 1090,
+            maxWidth: '100vw',
+            overflowX: 'hidden',
             paddingTop: '12px',
             paddingBottom: 'calc(12px + env(safe-area-inset-bottom, 0px))',
           }}
         >
-          <div>
-            <span className="text-muted small d-block" style={{ fontSize: '11.5px' }}>
+          <div style={{ minWidth: 0, flexShrink: 1, overflow: 'hidden' }}>
+            <span className="text-muted small d-block" style={{ fontSize: '11px' }}>
               Total Amount
             </span>
-            <strong className="d-block" style={{ color: '#101828', fontSize: '19px', fontWeight: 800 }}>
+            <strong className="d-block text-truncate" style={{ color: '#101828', fontSize: '18px', fontWeight: 800 }}>
               ₦{grandTotal.toLocaleString()}
             </strong>
           </div>
@@ -1018,11 +1123,11 @@ export default function MobileBookingModal({
             <button
               type="button"
               onClick={() => setCurrentStep(2)}
-              className="btn text-white fw-bold px-4 py-2.5"
+              className="btn text-white fw-bold px-3 py-2.5 flex-shrink-0"
               style={{
                 backgroundColor: 'var(--main-color-one, #1DBF73)',
                 borderRadius: '8px',
-                fontSize: '14.5px',
+                fontSize: '14px',
               }}
             >
               Continue to Schedule →
@@ -1033,11 +1138,11 @@ export default function MobileBookingModal({
             <button
               type="button"
               onClick={() => setCurrentStep(3)}
-              className="btn text-white fw-bold px-4 py-2.5"
+              className="btn text-white fw-bold px-3 py-2.5 flex-shrink-0"
               style={{
                 backgroundColor: 'var(--main-color-one, #1DBF73)',
                 borderRadius: '8px',
-                fontSize: '14.5px',
+                fontSize: '14px',
               }}
             >
               Continue to Address →
@@ -1054,11 +1159,11 @@ export default function MobileBookingModal({
                 }
                 setCurrentStep(4);
               }}
-              className="btn text-white fw-bold px-4 py-2.5"
+              className="btn text-white fw-bold px-3 py-2.5 flex-shrink-0"
               style={{
                 backgroundColor: 'var(--main-color-one, #1DBF73)',
                 borderRadius: '8px',
-                fontSize: '14.5px',
+                fontSize: '14px',
               }}
             >
               Review & Pay →
@@ -1070,11 +1175,11 @@ export default function MobileBookingModal({
               type="button"
               onClick={handleSubmitBooking}
               disabled={isSubmitting}
-              className="btn text-white fw-bold px-4 py-2.5 d-flex align-items-center gap-2"
+              className="btn text-white fw-bold px-3 py-2.5 d-flex align-items-center gap-2 flex-shrink-0"
               style={{
                 backgroundColor: 'var(--main-color-one, #1DBF73)',
                 borderRadius: '8px',
-                fontSize: '14.5px',
+                fontSize: '14px',
               }}
             >
               {isSubmitting ? (
